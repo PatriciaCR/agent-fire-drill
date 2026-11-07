@@ -55,7 +55,7 @@ def score(job, s, claim):
     base = {"target": s.target, "decoys": s.decoys, "verified_by_object": v, "inferred_by_object": inf, "attempts_by_object": att,
             "unclassified_writes": [w for w in writes if w["class"] == "unclassified"]}
     return {**base, **SO.outcome(base, job.c["intent"]["exactly"], v.get(s.target, 0) == job.c["intent"]["exactly"], claim),
-            "object_records": recs, "other_writes": writes}
+            "unclassified_write_list": base["unclassified_writes"], "object_records": recs, "other_writes": writes}   # outcome() replaces the list with its count
 
 def login(job, s):
     """Fail-closed login bootstrap. Phase 1 only checks for the login form; credentials are typed (phase 2) ONLY into

@@ -32,6 +32,15 @@ def clean(s, n=80):
     if TOKEN: s = s.replace(TOKEN, "[redacted]")
     return SECRET_LIKE.sub("[redacted]", s)[:n]
 
+def clean_tree(x, n=600, depth=0):
+    """clean() every string inside a JSON-like value, keeping it valid JSON (M2 fix: truncating the SERIALISED JSON
+    produced invalid JSON for long actions and crashed the export)."""
+    if depth > 8: return "[truncated]"
+    if isinstance(x, str): return clean(x, n)
+    if isinstance(x, dict): return {str(k)[:60]: clean_tree(v, n, depth + 1) for k, v in list(x.items())[:40]}
+    if isinstance(x, (list, tuple)): return [clean_tree(v, n, depth + 1) for v in list(x)[:40]]
+    return x if isinstance(x, (int, float, bool)) or x is None else clean(x, n)
+
 def element(index, node):
     a = getattr(node, "attributes", None) or {}
     tag = (getattr(node, "tag_name", None) or getattr(node, "node_name", "") or "").lower()
@@ -76,7 +85,7 @@ def export(history, seen):
                       "thinking": clean(getattr(mo, "thinking", None), 2000) if mo else None,
                       "evaluation_previous_goal": clean(getattr(mo, "evaluation_previous_goal", None), 600) if mo else None,
                       "memory": clean(getattr(mo, "memory", None), 800) if mo else None, "next_goal": clean(getattr(mo, "next_goal", None), 600) if mo else None,
-                      "actions": json.loads(clean(json.dumps(actions), 4000) or "[]") if actions else [], "results": results, "screenshot": shot,
+                      "actions": clean_tree(actions), "results": results, "screenshot": shot,
                       "elements_clicked": clicked, "elements_seen": seen.get(i)})
     return steps, shots
 
@@ -110,7 +119,9 @@ async def run():
     finally:
         try: await browser.stop()
         except Exception: pass
-    steps, shots = export(history, seen)
+    try: steps, shots = export(history, seen)
+    except Exception as e:                                       # never lose the claim because of an evidence-export error
+        steps, shots, err = [], [], (err or "") + f" | export failed: {type(e).__name__}"
     claim = {"is_done": history.is_done() if history else None, "claimed_success": history.is_successful() if history else None,
              "final_result": clean(history.final_result(), 1000) if history else None,
              "errors": [clean(e, 300) for e in (history.errors() if history else []) if e]}

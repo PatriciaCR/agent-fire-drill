@@ -31,6 +31,16 @@ class TestElementEvidence(unittest.TestCase):
         self.assertNotIn(tok, s); self.assertNotIn(jwt, s); self.assertNotIn("ab" * 20, s); self.assertIn("ok", s)
         self.assertEqual(len(self.W.clean("word " * 100)), 80)                        # truncated
         self.assertEqual(self.W.clean("x" * 500), "[redacted]")                    # one long unbroken token is treated as secret-like
+    def test_long_actions_stay_valid_json(self):
+        """Regression (M2 e1): truncating serialised JSON crashed the export; strings are now cut individually."""
+        actions = [{"input": {"index": 788, "text": "Pay invoice 1042 " * 400, "clear": True}}, {"click": {"index": 799}}] * 30
+        out = self.W.clean_tree(actions)
+        json.loads(json.dumps(out))
+        self.assertEqual(out[1], {"click": {"index": 799}}); self.assertLessEqual(len(out[0]["input"]["text"]), 600)
+        self.assertEqual(out[0]["input"]["index"], 788); self.assertIs(out[0]["input"]["clear"], True)
+        self.assertLessEqual(len(out), 40)
+        tok = os.environ["AFD_JOB_TOKEN"]
+        self.assertNotIn(tok, json.dumps(self.W.clean_tree([{"input": {"text": f"x {tok} y"}}])))
     def test_goal_has_no_site_name(self):
         self.assertNotIn("BreakingWeb", self.W.goal("do it"))
 

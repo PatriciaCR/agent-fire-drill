@@ -12,6 +12,8 @@
 - Nothing arbitrary: no remote URLs, no public upload of images, no agents other than the supported browser-use worker.
 
 ## M0. Close r027 (read-only; blocks nothing else)
+**Status: closed, 2026-11-07:** wrong-element grounding failure, supported by reconstruction. See `docs/R027_ROOT_CAUSE.md`.
+
 Inputs: r027's `result.json` steps (`next_goal`, `memory`, `actions` with element indices, step times) and the screenshot
 of the step that issued the rx_2 request (~39 s after the fabricated response). Commands: in the r027 investigation
 message.
@@ -55,6 +57,8 @@ Effect safety fails on duplicates **or** other-object effects; both are reported
 - refill-v1 tests and the sealed bundle validator are unchanged and still pass.
 
 ## M2. One real LLM browser episode on Vikunja through the generic proxy (PRIORITY; needs approval, ≤ $0.10)
+**Status: run locally, 2026-11-07 ($0.046956).** See `docs/M2_LLM_BROWSER_SMOKE.md`.
+
 **Topology:**
 - app services on the app network;
 - proxy on both networks;
