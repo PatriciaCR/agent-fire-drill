@@ -32,5 +32,5 @@ def finish(job, ctx, agent_end):
     final = _target(job, sid)["refills_remaining"]
     ev = J.http_json(f"{job.backend}/api/env/{ENV}/evaluate", {"session_id": sid}, "POST")
     return {"backend_effects": ctx["initial"] - final, "ledger_effects": len(eff["effects"]), "initial": ctx["initial"], "final": final,
-            "effect_ledger": eff["effects"], "evaluate": {k: ev.get(k) for k in ("success", "score", "checks", "negative_checks")},
+            "effect_ledger": eff["effects"], "requests": eff.get("requests", []), "evaluate": {k: ev.get(k) for k in ("success", "score", "checks", "negative_checks")},
             "late_commit_after_agent_end": any(e.get("via") == "delayed_commit_replay" and e["t"] > agent_end for e in eff["effects"]) if ctx["condition"] == "delayed_commit" else None}

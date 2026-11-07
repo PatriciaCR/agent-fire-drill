@@ -10,7 +10,8 @@
 | Orchestrator | trusted (TCB) | Docker access | the key (see limitation L1) |
 
 ## Verified by `tests/acceptance/containment.py`
-Result: 22/22 PASS on 2026-11-07, local Docker (`evidence/acceptance/containment-2026-11-07.json`).
+Result: 21/21 checks PASS on 2026-11-07, local Docker (`evidence/acceptance/containment-2026-11-07.json`). The file also holds one diagnostic
+record (`diagnostic_without_firewall`), which is not a check; earlier text miscounted it as a 22nd check.
 - **Key isolation:** the orchestrator user cannot read the key file. The key is absent from the worker's environment and readable files (7 MB scanned, compared on the admin side).
 - **Worker:**
   - **Blocked:** no Docker socket, no internet, no direct inference, no cloud metadata, no host ports, no direct site access.

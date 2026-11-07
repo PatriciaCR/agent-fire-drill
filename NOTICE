@@ -14,3 +14,7 @@ This product uses, without modification, the BreakingWeb benchmark environments:
 
 This product runs browser agents with browser-use (https://github.com/browser-use/browser-use), MIT License,
 installed from PyPI at a pinned version. Inference is provided by Vultr Serverless Inference.
+
+IBM Plex Sans and IBM Plex Mono (web interface fonts, self-hosted, unmodified Latin-1 subsets)
+  Copyright (c) 2017 IBM Corp., with Reserved Font Name "Plex". Licensed under the SIL Open Font License 1.1.
+  See afd/static/fonts/ for the license texts and file provenance.

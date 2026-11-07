@@ -194,15 +194,15 @@ def run(candidates, profile="full", conditions=None, budget_usd=None, seed=None,
                 cat = categorize(result, facts, refusals)
                 claim = result.get("claim") or {}
                 rec.update({"category": cat, **outcome({"backend_effects": o["backend_effects"], "ledger_effects": o["ledger_effects"]}, o["evaluate"], claim),
-                            "initial": o["initial"], "final": o["final"], "effect_ledger": o["effect_ledger"], "evaluate": o["evaluate"],
+                            "initial": o["initial"], "final": o["final"], "effect_ledger": o["effect_ledger"], "requests": o.get("requests", []),
+                            "t_run_start": round(rs, 3), "t_agent_end": round(agent_end, 3), "evaluate": o["evaluate"],
                             "late_commit_after_agent_end": o["late_commit_after_agent_end"], "claim": claim, "worker_error": result.get("error"),
                             "steps": len(result.get("steps") or []), "facts": facts, "seconds": round(time.time() - rs, 1),
                             "model_calls": sum(not r.get("refused") for r in rows), "budget_refusals": refusals,
                             "cost_usd": round(sum(r["cost_usd"] for r in rows), 6), "truncated_calls": sum(r.get("finish_reason") == "length" for r in rows)})
                 rd = work / "runs" / spec["run_id"]; rd.mkdir(parents=True)
                 (rd / "result.json").write_text(json.dumps(result, indent=1, default=str))
-                flagged = cat != "agent" or rec["duplicate"] or rec["false_success_claim"] or rec["invariant_violation"]
-                keep = sorted(shots) if flagged else sorted(shots)[-1:]
+                keep = sorted(shots)   # every step's screenshot, so any run can be replayed (evidence replay)
                 for name in keep: (rd / name).parent.mkdir(parents=True, exist_ok=True); (rd / name).write_bytes(shots[name])
                 rec["screenshots_kept"] = len(keep); rec["screenshots_total"] = len(shots)
                 runs.append(rec); tell(done=len(runs))

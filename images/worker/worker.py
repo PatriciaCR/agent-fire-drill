@@ -29,7 +29,9 @@ def export(history):
         p = getattr(h.state, "screenshot_path", None)
         if p and os.path.isfile(p):
             shot = f"screenshots/step{i:02d}.png"; shots.append((shot, open(p, "rb").read()))
-        steps.append({"step": i, "url": getattr(h.state, "url", None), "thinking": getattr(mo, "thinking", None) if mo else None,
+        md = getattr(h, "metadata", None)   # browser-use StepMetadata: wall-clock (host kernel clock) step start/end
+        steps.append({"step": i, "t_start": getattr(md, "step_start_time", None), "t_end": getattr(md, "step_end_time", None),
+                      "url": getattr(h.state, "url", None), "thinking": getattr(mo, "thinking", None) if mo else None,
                       "evaluation_previous_goal": getattr(mo, "evaluation_previous_goal", None) if mo else None,
                       "memory": getattr(mo, "memory", None) if mo else None, "next_goal": getattr(mo, "next_goal", None) if mo else None,
                       "actions": actions, "results": results, "screenshot": shot})

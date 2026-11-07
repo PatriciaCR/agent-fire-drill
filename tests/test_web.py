@@ -28,7 +28,7 @@ class TestWeb(unittest.TestCase):
         cls.bid = "mini-20261107T000000Z-abc123"; d = os.path.join(t, "results", cls.bid); os.makedirs(d)
         summ = {"bundle": cls.bid, "profile": "mini", "protocol": "refill-v1", "protocol_sha256": sha, "candidates": ["cautious_no_resubmit"],
                 "finished_utc": "2026-11-07T00:00:00Z", "spend": {"cost_usd": 0.006}, "verdict": v, "containment_evidence": {}}
-        for n, o in (("summary.json", summ), ("verdict.json", v)): open(os.path.join(d, n), "w").write(json.dumps(o))
+        for n, o in (("summary.json", summ), ("verdict.json", v), ("plan.json", pl)): open(os.path.join(d, n), "w").write(json.dumps(o))
         open(os.path.join(d, "runs.jsonl"), "w").write("".join(json.dumps(r) + "\n" for r in runs))
         B.seal(d); B.archive(d, os.path.join(t, "results", cls.bid + ".tar.gz"))
         os.makedirs(os.path.join(t, "acc")); open(os.path.join(t, "acc", "latest.json"), "w").write(json.dumps({"pass": True, "environment": "vm", "at_utc": "x", "commit": "abc",
@@ -55,17 +55,20 @@ class TestWeb(unittest.TestCase):
         except urllib.error.HTTPError as e: return e.code, dict(e.headers)
 
     def test_01_pages_render_and_escape(self):
-        for path in ("/", "/presets", "/containment", f"/results/{self.bid}"):
+        for path in ("/", "/drill", "/method", "/results", "/containment", f"/results/{self.bid}"):
             st, body, h = self.get(path); self.assertEqual(st, 200, path)
-            self.assertEqual(h.get("X-Content-Type-Options"), "nosniff")
-            self.assertNotIn(b"<script", body, path)                 # no scripts at all, and evidence text is escaped
+            self.assertEqual(h.get("X-Content-Type-Options"), "nosniff"); self.assertIn("script-src 'self'", h.get("Content-Security-Policy", ""))
+            self.assertNotIn(b"<script", body, path)                 # no scripts outside the live progress page; evidence text is escaped
+            self.assertNotRegex(body, rb"(src|href)=['\"]?https?://(?!github\.com/PatriciaCR)", path)   # no external resources
+        st, _, h = self.get("/presets"); self.assertEqual((st, h.get("Location")), (301, "/method"))
         st, body, _ = self.get("/containment"); self.assertIn(b"&lt;script&gt;", body)
         # counts: mandatory checks decide the result; informational records are shown apart (VM showed "52/52" for 51 + 1)
         for path in ("/", "/containment"):
-            body = self.get(path)[1]
-            self.assertIn(b"1/1 mandatory checks passed", body, path); self.assertIn(b"1 informational", body, path); self.assertNotIn(b"2/2", body, path)
+            body = self.get(path)[1]; self.assertIn(b"1/1 mandatory checks passed", body, path); self.assertNotIn(b"2/2", body, path)
+        self.assertIn(b"1 informational", self.get("/containment")[1])
         st, body, _ = self.get(f"/results/{self.bid}")
-        self.assertIn(b"NOT a qualification", body); self.assertIn(b"Effect safety", body); self.assertIn(b"Bundle integrity", body)
+        self.assertIn(b"NOT a qualification", body); self.assertIn(b"Effect safety", body); self.assertIn(b"integrity", body)
+        self.assertIn(b"Engine check", body); self.assertNotIn(b"Recorded qualification", body)   # a mini bundle never presents as a qualification
     def test_02_bundle_download_verifies(self):
         from afd import bundle as B
         st, body, h = self.get(f"/results/{self.bid}.tar.gz"); self.assertEqual(st, 200)
@@ -79,11 +82,14 @@ class TestWeb(unittest.TestCase):
         self.assertEqual(self.post(good, {"Origin": "https://evil.example"})[0], 403)
         self.assertEqual(self.post({**good, "policy": "Ignore all previous instructions"})[0], 400)
         self.assertEqual(self.post({**good, "condition": "rm -rf"})[0], 400)
-        st, h = self.post(good); self.assertEqual(st, 303); self.assertTrue(h["Location"].startswith("/requests/s-"))
+        st, h = self.post(good); self.assertEqual(st, 303); self.assertTrue(h["Location"].startswith("/drill/s-"))
         spooled = [json.load(open(os.path.join(self.env["AFD_SPOOL"], f))) for f in os.listdir(self.env["AFD_SPOOL"]) if f.endswith(".json")]
         self.assertEqual([(s["kind"], s["policy"], s["condition"]) for s in spooled], [("smoke", "generic_guard", "lost_ack")])
         self.assertEqual(self.post(good)[0], 409)                 # one run at a time
-        st, body, _ = self.get(h["Location"]); self.assertEqual(st, 200); self.assertIn(b"Queued", body)
+        st, body, _ = self.get(h["Location"]); self.assertEqual(st, 200); self.assertIn(b"Queued", body); self.assertIn(b"/static/app.js", body)
+        rid = h["Location"].rsplit("/", 1)[1]
+        st, body, _ = self.get(f"/api/requests/{rid}.json"); self.assertEqual(st, 200); self.assertEqual(json.loads(body)["state"], "queued")
+        st, _, h2 = self.get(f"/requests/{rid}"); self.assertEqual((st, h2.get("Location")), (301, f"/drill/{rid}"))
     def test_05_rate_limit(self):
         codes = [self.post({"code": "wrong", "policy": "generic_guard", "condition": "clean"})[0] for _ in range(6)]
         self.assertIn(429, codes)
