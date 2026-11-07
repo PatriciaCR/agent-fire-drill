@@ -1,31 +1,41 @@
 {
  "app": "vikunja",
  "contract": "studies/compat/contracts/vikunja-v1.json",
- "at_utc": "2026-11-07T09:20:04Z",
+ "at_utc": "2026-11-07T10:31:28Z",
  "D3_oracle_cross_check": {
   "rows": [
    {
-    "planned": 0,
+    "attempts": 0,
+    "accepted": 0,
+    "rejected": 0,
     "oracle": 0,
     "second_source": 0
    },
    {
-    "planned": 1,
+    "attempts": 1,
+    "accepted": 1,
+    "rejected": 0,
     "oracle": 1,
     "second_source": 1
    },
    {
-    "planned": 2,
+    "attempts": 2,
+    "accepted": 2,
+    "rejected": 0,
     "oracle": 2,
     "second_source": 2
    },
    {
-    "planned": 1,
+    "attempts": 1,
+    "accepted": 1,
+    "rejected": 0,
     "oracle": 1,
     "second_source": 1
    },
    {
-    "planned": 0,
+    "attempts": 0,
+    "accepted": 0,
+    "rejected": 0,
     "oracle": 0,
     "second_source": 0
    }
@@ -37,6 +47,13 @@
  "D4_isolation_no_contamination": {
   "pass": true,
   "reset_method": "fresh project per run, created through the app's own API (setup_per_run)",
+  "expected_from_accepted_attempts": [
+   0,
+   1,
+   2,
+   1,
+   0
+  ],
   "observed": [
    0,
    1,
@@ -45,9 +62,35 @@
    0
   ]
  },
+ "AM2_duplicate_probe": {
+  "attempts": [
+   {
+    "status": 503,
+    "app_error_code": null
+   },
+   {
+    "status": 201,
+    "app_error_code": null
+   }
+  ],
+  "proxy_requests": [
+   [
+    503,
+    "lost_ack",
+    "committed"
+   ],
+   [
+    201,
+    "none",
+    "committed"
+   ]
+  ],
+  "verified": 2,
+  "classification": "duplicate produced"
+ },
  "AM5_read_lag_s": {
-  "oracle": 0.19,
-  "user_check": 0.2,
+  "oracle": 0.2,
+  "user_check": 0.22,
   "note": "upper bound: includes polling interval (0.1 s) and request time; measured once"
  },
  "D8_containment": {

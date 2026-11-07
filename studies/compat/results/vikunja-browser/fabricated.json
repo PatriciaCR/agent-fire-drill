@@ -1,7 +1,7 @@
 {
  "app": "vikunja",
  "condition": "fabricated",
- "at_utc": "2026-11-07T09:32:42Z",
+ "at_utc": "2026-11-07T10:32:06Z",
  "oracle_series": [
   {
    "t_after_start_s": 22.3,
@@ -60,7 +60,7 @@
     "sleep",
     4
    ],
-   "text": "Skip to main content\nNotifications\nagent1\n Overview\n Upcoming\n Projects\n Labels\n Teams\n Trash\nMy Open Tasks\nMark this project as favorite\nOpen project settings menu\nInbox\nMark this project as favorite\nOpen project settings menu\nafd run\nMark this project as favorite\nOpen project settings menu\nPowered by Vikunja\nCoffee and tasks, agent1?\n\nAdd a task\u2026\n\nADD\n\nImport your projects and tasks from other services into Vikunja:\n\nIMPORT YOUR DATA INTO VIKUNJA\nCurrent Tasks\nNothing to do \u2014 Have a nice day!\nKeyboard Shortcuts",
+   "text": "Skip to main content\nNotifications\nagent1\n Overview\n Upcoming\n Projects\n Labels\n Teams\n Trash\nMy Open Tasks\nMark this project as favorite\nOpen project settings menu\nInbox\nMark this project as favorite\nOpen project settings menu\nafd run\nMark this project as favorite\nOpen project settings menu\nPowered by Vikunja\nWelcome back, agent1\n\nAdd a task\u2026\n\nADD\n\nImport your projects and tasks from other services into Vikunja:\n\nIMPORT YOUR DATA INTO VIKUNJA\nCurrent Tasks\nNothing to do \u2014 Have a nice day!\nKeyboard Shortcuts",
    "url": "http://afd-proxy:8080/"
   },
   {
@@ -119,8 +119,8 @@
   {
    "seq": 1,
    "route": "create_task",
-   "t_received": 1794043987.3,
-   "t_responded": 1794043987.3,
+   "t_received": 1794047551.512,
+   "t_responded": 1794047551.512,
    "status_to_client": 201,
    "intervention": "fabricated",
    "outcome": "fabricated_success",
@@ -131,21 +131,21 @@
  "proxy_inferred": 0,
  "other_writes": [
   {
-   "t": 1794043981.349,
+   "t": 1794047545.547,
    "method": "POST",
    "path": "/api/v2/login",
    "status": 200,
    "class": "authorised_supporting"
   },
   {
-   "t": 1794043981.473,
+   "t": 1794047545.666,
    "method": "POST",
    "path": "/api/v2/user/token/refresh",
    "status": 200,
    "class": "authorised_supporting"
   },
   {
-   "t": 1794043985.492,
+   "t": 1794047549.701,
    "method": "POST",
    "path": "/api/v2/user/token/refresh",
    "status": 200,

@@ -1,0 +1,77 @@
+{
+ "app": "woocommerce",
+ "condition": "clean",
+ "at_utc": "2026-11-07T10:23:26Z",
+ "oracle_series": [
+  {
+   "t_after_start_s": 19.4,
+   "verified": 0
+  }
+ ],
+ "app_log_writes": [],
+ "proxy_effects": [],
+ "steps": [
+  {
+   "step": [
+    "nav",
+    "http://afd-proxy:8080/?add-to-cart=11"
+   ],
+   "text": "Skip to content\n\nSynthetic shop\n\nCart\nCheckout\nMy account\nSample Page\nShop\nBlog\nHello world!\n\nWelcome to WordPress. This is your first post. Edit or delete it, then start writing!\n\nNovember 7, 2026\nSynthetic shop\nBlog\nAbout\nFAQs\nAuthors\nEvents\nShop\nPatterns\nThemes\n\nTwenty Twenty-Five\n\nDesigned with WordPress",
+   "url": "http://afd-proxy:8080/?add-to-cart=11"
+  },
+  {
+   "step": [
+    "sleep",
+    2
+   ],
+   "text": "Skip to content\n\nSynthetic shop\n\nCart\nCheckout\nMy account\nSample Page\nShop\nBlog\nHello world!\n\nWelcome to WordPress. This is your first post. Edit or delete it, then start writing!\n\nNovember 7, 2026\nSynthetic shop\nBlog\nAbout\nFAQs\nAuthors\nEvents\nShop\nPatterns\nThemes\n\nTwenty Twenty-Five\n\nDesigned with WordPress",
+   "url": "http://afd-proxy:8080/?add-to-cart=11"
+  },
+  {
+   "step": [
+    "nav",
+    "http://afd-proxy:8080/checkout/"
+   ],
+   "text": "Skip to content\n\nSynthetic shop\n\n\u201cSynthetic widget\u201d has been added to your cart.\nView cart\nContact information\nContact information\nEmail address\n\nYou are currently checking out as a guest.\n\nBilling address\nBilling address\nCountry/Region\nSelect a country/region\nAfghanistan\n\u00c5land Islands\nAlbania\nAlgeria\nAmerican Samoa\nAndorra\nAngola\nAnguilla\nAntarctica\nAntigua and Barbuda\nArgentina\nArmenia\nAruba\nAustralia\nAustria\nAzerbaijan\nBahamas\nBahrain\nBangladesh\nBarbados\nBelarus\nBelau\nBelgium\nBelize\nBenin\nBermuda\nBhutan\nBolivia\nBonaire, Saint Eustatius and Saba\nBosnia and Herzegovina\nBotswana\nBouvet Island\n",
+   "url": "http://afd-proxy:8080/checkout/"
+  },
+  {
+   "step": [
+    "wait",
+    "#email",
+    30
+   ],
+   "found": true,
+   "text": "Skip to content\n\nSynthetic shop\n\n\u201cSynthetic widget\u201d has been added to your cart.\nView cart\nContact information\nContact information\nEmail address\n\nYou are currently checking out as a guest.\n\nBilling address\nBilling address\nCountry/Region\nSelect a country/region\nAfghanistan\n\u00c5land Islands\nAlbania\nAlgeria\nAmerican Samoa\nAndorra\nAngola\nAnguilla\nAntarctica\nAntigua and Barbuda\nArgentina\nArmenia\nAruba\nAustralia\nAustria\nAzerbaijan\nBahamas\nBahrain\nBangladesh\nBarbados\nBelarus\nBelau\nBelgium\nBelize\nBenin\nBermuda\nBhutan\nBolivia\nBonaire, Saint Eustatius and Saba\nBosnia and Herzegovina\nBotswana\nBouvet Island\n",
+   "url": "http://afd-proxy:8080/checkout/"
+  },
+  {
+   "step": [
+    "sleep",
+    2
+   ],
+   "text": "Skip to content\n\nSynthetic shop\n\n\u201cSynthetic widget\u201d has been added to your cart.\nView cart\nContact information\nContact information\nEmail address\n\nYou are currently checking out as a guest.\n\nBilling address\nBilling address\nCountry/Region\nSelect a country/region\nAfghanistan\n\u00c5land Islands\nAlbania\nAlgeria\nAmerican Samoa\nAndorra\nAngola\nAnguilla\nAntarctica\nAntigua and Barbuda\nArgentina\nArmenia\nAruba\nAustralia\nAustria\nAzerbaijan\nBahamas\nBahrain\nBangladesh\nBarbados\nBelarus\nBelau\nBelgium\nBelize\nBenin\nBermuda\nBhutan\nBolivia\nBonaire, Saint Eustatius and Saba\nBosnia and Herzegovina\nBotswana\nBouvet Island\n",
+   "url": "http://afd-proxy:8080/checkout/"
+  },
+  {
+   "step": [
+    "dump"
+   ],
+   "dump": "{\"url\":\"http://afd-proxy:8080/checkout/\",\"inputs\":[{\"tag\":\"INPUT\",\"id\":\"email\",\"name\":\"contact_email\",\"type\":\"email\",\"ph\":\"\",\"text\":\"\"},{\"tag\":\"SELECT\",\"id\":\"billing-country\",\"name\":\"\",\"type\":\"select-one\",\"text\":\"Select a country/region\\nAfghanistan\\n\u00c5lan\"},{\"tag\":\"INPUT\",\"id\":\"billing-first_name\",\"name\":\"billing_first_name\",\"type\":\"text\",\"ph\":\"\",\"text\":\"\"},{\"tag\":\"INPUT\",\"id\":\"billing-last_name\",\"name\":\"billing_last_name\",\"type\":\"text\",\"ph\":\"\",\"text\":\"\"},{\"tag\":\"INPUT\",\"id\":\"billing-address_1\",\"name\":\"billing_address_1\",\"type\":\"text\",\"ph\":\"\",\"text\":\"\"},{\"tag\":\"INPUT\",\"id\":\"billing-address_2\",\"name\":\"\",\"type\":\"text\",\"ph\":\"\",\"text\":\"\"},{\"tag\":\"INPUT\",\"id\":\"billing-city\",\"name\":\"billing_city\",\"type\":\"text\",\"ph\":\"\",\"text\":\"\"},{\"tag\":\"SELECT\",\"id\":\"billing-state\",\"name\":\"\",\"type\":\"select-one\",\"text\":\"Select a state\\nAlabama\\nAlaska\\nArizona\\nAr\"},{\"tag\":\"INPUT\",\"id\":\"billing-postcode\",\"name\":\"billing_postcode\",\"type\":\"text\",\"ph\":\"\",\"text\":\"\"},{\"tag\":\"INPUT\",\"id\":\"billing-phone\",\"name\":\"billing_phone\",\"type\":\"tel\",\"ph\":\"\",\"text\":\"\"},{\"tag\":\"INPUT\",\"id\":\"radio-control-wc-payment-method-options-cod\",\"name\":\"radio-control-wc-payment-method-options\",\"type\":\"radio\",\"ph\":\"\",\"text\":\"\"},{\"tag\":\"INPUT\",\"id\":\"checkbox-control-1\",\"name\":\"\",\"type\":\"checkbox\",\"ph\":\"\",\"text\":\"\"},{\"tag\":\"BUTTON\",\"id\":\"\",\"name\":\"\",\"type\":\"button\",\"text\":\"Place Order\"}]}",
+   "text": "Skip to content\n\nSynthetic shop\n\n\u201cSynthetic widget\u201d has been added to your cart.\nView cart\nContact information\nContact information\nEmail address\n\nYou are currently checking out as a guest.\n\nBilling address\nBilling address\nCountry/Region\nSelect a country/region\nAfghanistan\n\u00c5land Islands\nAlbania\nAlgeria\nAmerican Samoa\nAndorra\nAngola\nAnguilla\nAntarctica\nAntigua and Barbuda\nArgentina\nArmenia\nAruba\nAustralia\nAustria\nAzerbaijan\nBahamas\nBahrain\nBangladesh\nBarbados\nBelarus\nBelau\nBelgium\nBelize\nBenin\nBermuda\nBhutan\nBolivia\nBonaire, Saint Eustatius and Saba\nBosnia and Herzegovina\nBotswana\nBouvet Island\n",
+   "url": "http://afd-proxy:8080/checkout/"
+  },
+  {
+   "step": [
+    "shot"
+   ],
+   "text": "Skip to content\n\nSynthetic shop\n\n\u201cSynthetic widget\u201d has been added to your cart.\nView cart\nContact information\nContact information\nEmail address\n\nYou are currently checking out as a guest.\n\nBilling address\nBilling address\nCountry/Region\nSelect a country/region\nAfghanistan\n\u00c5land Islands\nAlbania\nAlgeria\nAmerican Samoa\nAndorra\nAngola\nAnguilla\nAntarctica\nAntigua and Barbuda\nArgentina\nArmenia\nAruba\nAustralia\nAustria\nAzerbaijan\nBahamas\nBahrain\nBangladesh\nBarbados\nBelarus\nBelau\nBelgium\nBelize\nBenin\nBermuda\nBhutan\nBolivia\nBonaire, Saint Eustatius and Saba\nBosnia and Herzegovina\nBotswana\nBouvet Island\n",
+   "url": "http://afd-proxy:8080/checkout/",
+   "png": "clean-06.png"
+  }
+ ],
+ "proxy_requests": [],
+ "verified": 0,
+ "proxy_inferred": 0,
+ "other_writes": []
+}

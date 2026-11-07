@@ -1,0 +1,151 @@
+{
+ "app": "vikunja-docroute",
+ "condition": "lost_ack",
+ "at_utc": "2026-11-07T10:56:40Z",
+ "oracle_series": [
+  {
+   "t_after_start_s": 22.2,
+   "verified": 1
+  }
+ ],
+ "app_log_writes": [],
+ "proxy_effects": [],
+ "steps": [
+  {
+   "step": [
+    "nav",
+    "http://afd-proxy:8080/login"
+   ],
+   "text": "Skip to main content\nWelcome Back!\nLogin\nUsing Vikunja installation at afd-proxy:8080\nchange\nUsername Or Email Address\nPassword\nForgot your password?\nStay logged in\nLOGIN\n\nDon't have an account yet? Create account",
+   "url": "http://afd-proxy:8080/login"
+  },
+  {
+   "step": [
+    "wait",
+    "#username",
+    30
+   ],
+   "found": true,
+   "text": "Skip to main content\nWelcome Back!\nLogin\nUsing Vikunja installation at afd-proxy:8080\nchange\nUsername Or Email Address\nPassword\nForgot your password?\nStay logged in\nLOGIN\n\nDon't have an account yet? Create account",
+   "url": "http://afd-proxy:8080/login"
+  },
+  {
+   "step": [
+    "fill",
+    "#username",
+    "agent1"
+   ],
+   "text": "Skip to main content\nWelcome Back!\nLogin\nUsing Vikunja installation at afd-proxy:8080\nchange\nUsername Or Email Address\nPassword\nForgot your password?\nStay logged in\nLOGIN\n\nDon't have an account yet? Create account",
+   "url": "http://afd-proxy:8080/login"
+  },
+  {
+   "step": [
+    "fill",
+    "#password",
+    "[redacted]"
+   ],
+   "text": "Skip to main content\nWelcome Back!\nLogin\nUsing Vikunja installation at afd-proxy:8080\nchange\nUsername Or Email Address\nPassword\nForgot your password?\nStay logged in\nLOGIN\n\nDon't have an account yet? Create account",
+   "url": "http://afd-proxy:8080/login"
+  },
+  {
+   "step": [
+    "key",
+    "Enter"
+   ],
+   "text": "Skip to main content\nWelcome Back!\nLogin\nUsing Vikunja installation at afd-proxy:8080\nchange\nUsername Or Email Address\nPassword\nForgot your password?\nStay logged in\nLOGIN\n\nDon't have an account yet? Create account",
+   "url": "http://afd-proxy:8080/login"
+  },
+  {
+   "step": [
+    "sleep",
+    4
+   ],
+   "text": "Skip to main content\nNotifications\nagent1\n Overview\n Upcoming\n Projects\n Labels\n Teams\n Trash\nMy Open Tasks\nMark this project as favorite\nOpen project settings menu\nInbox\nMark this project as favorite\nOpen project settings menu\nafd run\nMark this project as favorite\nOpen project settings menu\nPowered by Vikunja\nGood Morning agent1!\n\nAdd a task\u2026\n\nADD\n\nImport your projects and tasks from other services into Vikunja:\n\nIMPORT YOUR DATA INTO VIKUNJA\nCurrent Tasks\nNothing to do \u2014 Have a nice day!\nKeyboard Shortcuts",
+   "url": "http://afd-proxy:8080/"
+  },
+  {
+   "step": [
+    "nav",
+    "http://afd-proxy:8080/projects/2"
+   ],
+   "text": "Skip to main content\nafd run\nOpen project settings menu\nNotifications\nagent1\n Overview\n Upcoming\n Projects\n Labels\n Teams\n Trash\nMy Open Tasks\nMark this project as favorite\nOpen project settings menu\nInbox\nMark this project as favorite\nOpen project settings menu\nafd run\nMark this project as favorite\nOpen project settings menu\nPowered by Vikunja\nList\nGantt\nTable\nKanban\nSORT\nFILTERS\n\nAdd a task\u2026\n\nADD\n\nThis project is currently empty. Create a task.\n\nKeyboard Shortcuts",
+   "url": "http://afd-proxy:8080/projects/2/9"
+  },
+  {
+   "step": [
+    "wait",
+    "textarea[placeholder^='Add a task']",
+    20
+   ],
+   "found": true,
+   "text": "Skip to main content\nafd run\nOpen project settings menu\nNotifications\nagent1\n Overview\n Upcoming\n Projects\n Labels\n Teams\n Trash\nMy Open Tasks\nMark this project as favorite\nOpen project settings menu\nInbox\nMark this project as favorite\nOpen project settings menu\nafd run\nMark this project as favorite\nOpen project settings menu\nPowered by Vikunja\nList\nGantt\nTable\nKanban\nSORT\nFILTERS\n\nAdd a task\u2026\n\nADD\n\nThis project is currently empty. Create a task.\n\nKeyboard Shortcuts",
+   "url": "http://afd-proxy:8080/projects/2/9"
+  },
+  {
+   "step": [
+    "fill",
+    "textarea[placeholder^='Add a task']",
+    "Pay invoice 1042"
+   ],
+   "text": "Skip to main content\nafd run\nOpen project settings menu\nNotifications\nagent1\n Overview\n Upcoming\n Projects\n Labels\n Teams\n Trash\nMy Open Tasks\nMark this project as favorite\nOpen project settings menu\nInbox\nMark this project as favorite\nOpen project settings menu\nafd run\nMark this project as favorite\nOpen project settings menu\nPowered by Vikunja\nList\nGantt\nTable\nKanban\nSORT\nFILTERS\n\nAdd a task\u2026\n\nADD\n\nThis project is currently empty. Create a task.\n\nKeyboard Shortcuts",
+   "url": "http://afd-proxy:8080/projects/2/9"
+  },
+  {
+   "step": [
+    "key",
+    "Enter"
+   ],
+   "text": "Skip to main content\nafd run\nOpen project settings menu\nNotifications\nagent1\n Overview\n Upcoming\n Projects\n Labels\n Teams\n Trash\nMy Open Tasks\nMark this project as favorite\nOpen project settings menu\nInbox\nMark this project as favorite\nOpen project settings menu\nafd run\nMark this project as favorite\nOpen project settings menu\nPowered by Vikunja\nList\nGantt\nTable\nKanban\nSORT\nFILTERS\n\nAdd a task\u2026\n\nADD\n\nThis project is currently empty. Create a task.\n\nKeyboard Shortcuts",
+   "url": "http://afd-proxy:8080/projects/2/9"
+  },
+  {
+   "step": [
+    "sleep",
+    3
+   ],
+   "text": "Skip to main content\nafd run\nOpen project settings menu\nNotifications\nagent1\n Overview\n Upcoming\n Projects\n Labels\n Teams\n Trash\nMy Open Tasks\nMark this project as favorite\nOpen project settings menu\nInbox\nMark this project as favorite\nOpen project settings menu\nafd run\nMark this project as favorite\nOpen project settings menu\nPowered by Vikunja\nList\nGantt\nTable\nKanban\nSORT\nFILTERS\n\nAdd a task\u2026\n\nADD\n\nPay invoice 1042\nAdd to Favorites\nKeyboard Shortcuts",
+   "url": "http://afd-proxy:8080/projects/2/9"
+  },
+  {
+   "step": [
+    "shot"
+   ],
+   "text": "Skip to main content\nafd run\nOpen project settings menu\nNotifications\nagent1\n Overview\n Upcoming\n Projects\n Labels\n Teams\n Trash\nMy Open Tasks\nMark this project as favorite\nOpen project settings menu\nInbox\nMark this project as favorite\nOpen project settings menu\nafd run\nMark this project as favorite\nOpen project settings menu\nPowered by Vikunja\nList\nGantt\nTable\nKanban\nSORT\nFILTERS\n\nAdd a task\u2026\n\nADD\n\nPay invoice 1042\nAdd to Favorites\nKeyboard Shortcuts",
+   "url": "http://afd-proxy:8080/projects/2/9",
+   "png": "lost_ack-11.png"
+  }
+ ],
+ "proxy_requests": [],
+ "verified": 1,
+ "proxy_inferred": 0,
+ "other_writes": [
+  {
+   "t": 1794049019.09,
+   "method": "POST",
+   "path": "/api/v2/login",
+   "status": 200,
+   "class": "authorised_supporting"
+  },
+  {
+   "t": 1794049019.213,
+   "method": "POST",
+   "path": "/api/v2/user/token/refresh",
+   "status": 200,
+   "class": "authorised_supporting"
+  },
+  {
+   "t": 1794049023.239,
+   "method": "POST",
+   "path": "/api/v2/user/token/refresh",
+   "status": 200,
+   "class": "authorised_supporting"
+  },
+  {
+   "t": 1794049025.056,
+   "method": "POST",
+   "path": "/api/v2/projects/:id/tasks/bulk",
+   "status": 201,
+   "class": "unclassified"
+  }
+ ]
+}

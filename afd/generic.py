@@ -47,7 +47,7 @@ class GenericJob:
             pub = self.public
             cfg = {"upstream": f"http://{pub['name']}:{pub['port']}", "secret": self.secret, "listen_port": 8080, "scope": self.c["scope"],
                    "watch": [{"name": self.c["action"]["name"], "method": self.c["action"]["method"], "path_regex": self.c["action"]["path_regex"]}],
-                   "success_status": self.c["action"].get("success_status"), "fabricated": self.c["fabricated"]}
+                   "success_status": self.c["action"].get("success_status"), "fabricated": K.render(self.c["fabricated"], **self.vars)}
             D.sh("docker", "run", "-d", "--name", self.proxy, "--network", self.nets["app"], "--network-alias", PROXY_ALIAS, *D.labels(self.id, "proxy"),
                  *D.hardening("gateway", C.GATEWAY_UID), "-v", f"{PROXY_SRC}:/afd/proxy.py:ro", "-e", f"AFD_PROXY_CONFIG={json.dumps(cfg)}",
                  "--entrypoint", "python", RUNTIME_IMAGE, "-I", "/afd/proxy.py")
@@ -62,12 +62,14 @@ class GenericJob:
     def _start_service(self, s):
         name = self.containers[s["name"]]
         env = [x for k, v in K.render(s.get("env") or {}, **self.vars).items() for x in ("-e", f"{k}={v}")]
-        tmp = [x for p in s.get("writable", []) for x in ("--tmpfs", f"{p}:rw,mode=1777,size=512m")]
+        uid = s.get("uid", 65534)    # writable paths are owned by the service's own (non-root) uid, mode 0755: no shared world-writable dirs
+        tmp = [x for p in s.get("writable", []) for x in ("--tmpfs", f"{p}:rw,uid={uid},gid={uid},mode=0755,size=512m")]
+        sysctl = [x for k, v in (s.get("sysctls") or {}).items() for x in ("--sysctl", f"{k}={v}")]
         mounts = [x for m in s.get("mounts", []) for x in ("-v", f"{(ROOT / m['src']).resolve()}:{m['dst']}:ro")]
         ent = ["--entrypoint", s["entrypoint"][0]] if s.get("entrypoint") else []
         args = (s.get("entrypoint") or [])[1:] + K.render(s.get("args") or [], **self.vars)
         D.sh("docker", "run", "-d", "--name", name, "--network", self.nets["app"], "--network-alias", s["name"], *D.labels(self.id, f"svc-{s['name']}"),
-             *D.hardening("site", s.get("uid", 65534)), *tmp, *env, *mounts, *ent, s["image"], *args)
+             *D.hardening("site", uid), *tmp, *sysctl, *env, *mounts, *ent, s["image"], *args)
         ip = D.ip_of(name, self.nets["app"]); self.ips[s["name"]] = ip
         h = s.get("health") or {}
         if "tcp" in h:
@@ -94,7 +96,9 @@ class GenericJob:
 
     def run_step(self, step, vars_):
         """Execute one setup step against a service directly (not through the proxy) and return captured variables."""
-        if "exec" in step:
+        if "set" in step:                                    # define variables (e.g. a per-run scope value)
+            got = {k: str(v) for k, v in K.render(step["set"], **vars_).items()}
+        elif "exec" in step:
             r = D.sh("docker", "exec", self.containers[step["service"]], *K.render(step["exec"], **vars_), check=False, timeout=120)
             if r.returncode != 0 and not step.get("allow_fail"): raise K.ContractError(f"setup exec failed (rc {r.returncode}): {r.stderr.strip()[-300:]}")
             got = K.capture(step.get("capture"), None, None, r.stdout)
@@ -223,7 +227,9 @@ def selftest(job, delay):
           {"first_status": a1, "before_delay": before, "after_delay": after})
     check("G3b_delayed_commit_duplicate_detectable", b1 == 503 and ok(b2) and mid == 1 and fin == 2 and len(job.evidence(sb.scope)["effects"]) == 2,
           {"first_status": b1, "second_status": b2, "before_delay": mid, "after_delay": fin})
-    check("G5_ledger_backend_agreement", all(r["pass"] for r in res.values()), {"note": "proxy-inferred vs verified agree in every case (assumption: success status <=> one committed effect)"})
+    pairs = {k: (r.get("verified", r.get("after_second", r.get("after_delay"))), r.get("proxy_inferred")) for k, r in res.items() if r.get("proxy_inferred") is not None}
+    check("G5_ledger_backend_agreement", all(v == p for v, p in pairs.values()),
+          {"verified_vs_proxy_inferred": pairs, "assumption": "an upstream success status <=> exactly one committed effect (AM-1); a diagnostic, scoring uses verified effects"})
     return {"quick": False, "complete": True, "pass": all(r["pass"] for r in res.values()), "checks": res}
 
 # ------------------------------------------------------------------------------------------------------------ run

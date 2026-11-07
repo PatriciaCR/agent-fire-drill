@@ -1,0 +1,112 @@
+{
+ "generic_afd_code_since_preregistration": {
+  "files": {
+   "afd/agents/scripted.py": {
+    "added": 7,
+    "removed": 6
+   },
+   "afd/contract.py": {
+    "added": 125,
+    "removed": 80
+   },
+   "afd/faults/proxy.py": {
+    "added": 46,
+    "removed": 8
+   },
+   "afd/generic.py": {
+    "added": 177,
+    "removed": 55
+   }
+  },
+  "total_added": 355,
+  "total_removed": 149,
+  "app_specific_lines": 0,
+  "app_specific_check": "tests/test_contract.py::TestNoHardcoding (fails if any study-app identifier appears in proxy/contract/generic/scripted)"
+ },
+ "per_app_integration_effort": {
+  "vikunja": {
+   "contract_json_lines": 216,
+   "services": 2,
+   "config_items": {
+    "env_vars": 11,
+    "writable_paths": 2,
+    "sysctls": 0,
+    "entrypoint_overrides": 1,
+    "readonly_mounts": 0
+   },
+   "setup_steps": {
+    "once": 3,
+    "per_run": 1,
+    "exec_steps": 1
+   },
+   "secret_vars": 3,
+   "browser_steps_data": 12,
+   "app_specific_workarounds": 3,
+   "app_source_changes": 0,
+   "image_modifications": 0
+  },
+  "gitea": {
+   "contract_json_lines": 235,
+   "services": 2,
+   "config_items": {
+    "env_vars": 13,
+    "writable_paths": 4,
+    "sysctls": 0,
+    "entrypoint_overrides": 0,
+    "readonly_mounts": 0
+   },
+   "setup_steps": {
+    "once": 4,
+    "per_run": 1,
+    "exec_steps": 3
+   },
+   "secret_vars": 3,
+   "browser_steps_data": 12,
+   "app_specific_workarounds": 3,
+   "app_source_changes": 0,
+   "image_modifications": 0
+  },
+  "listmonk": {
+   "contract_json_lines": 258,
+   "services": 3,
+   "config_items": {
+    "env_vars": 13,
+    "writable_paths": 2,
+    "sysctls": 0,
+    "entrypoint_overrides": 1,
+    "readonly_mounts": 0
+   },
+   "setup_steps": {
+    "once": 5,
+    "per_run": 1,
+    "exec_steps": 1
+   },
+   "secret_vars": 2,
+   "browser_steps_data": 0,
+   "app_specific_workarounds": 2,
+   "app_source_changes": 0,
+   "image_modifications": 0
+  },
+  "woocommerce": {
+   "contract_json_lines": 338,
+   "services": 2,
+   "config_items": {
+    "env_vars": 8,
+    "writable_paths": 5,
+    "sysctls": 1,
+    "entrypoint_overrides": 0,
+    "readonly_mounts": 2
+   },
+   "setup_steps": {
+    "once": 7,
+    "per_run": 3,
+    "exec_steps": 7
+   },
+   "secret_vars": 4,
+   "browser_steps_data": 19,
+   "app_specific_workarounds": 3,
+   "app_source_changes": 0,
+   "image_modifications": 0
+  }
+ }
+}

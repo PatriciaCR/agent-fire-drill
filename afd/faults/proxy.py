@@ -52,8 +52,11 @@ def forward(method, path, headers, body):
 
 def scope_of(path, query, headers, body):
     f = SCOPE.get("field")
-    if SCOPE.get("in") == "json_body":
-        try: return str(json.loads(body or b"{}").get(f) or "") or None
+    if SCOPE.get("in") == "json_body":                    # "a.b.c" reaches nested fields
+        try:
+            v = json.loads(body or b"{}")
+            for part in f.split("."): v = v.get(part) if isinstance(v, dict) else None
+            return str(v) if v not in (None, "") else None
         except (ValueError, AttributeError): return None
     if SCOPE.get("in") == "query": return (urllib.parse.parse_qs(query).get(f) or [None])[0]
     if SCOPE.get("in") == "header": return dict((k.lower(), v) for k, v in headers).get(f.lower())

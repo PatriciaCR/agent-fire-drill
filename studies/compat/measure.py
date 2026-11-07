@@ -9,6 +9,9 @@ from afd import contract as K, dockerops as D, firewall as F, gateway as G, gene
 def second_source(job, sc, spec):
     """Count from an independent second source (e.g. the app's API with the agent's identity, or another datastore view)."""
     r = K.render(spec, **sc.vars)
+    if "exec" in r:                                  # the app's own CLI (e.g. its order API), run inside its container
+        out = D.sh("docker", "exec", job.containers[r["service"]], *r["exec"], check=False).stdout
+        import re as _re; return int(_re.findall(r"-?\d+", out)[-1])
     st, doc, _, _ = K.http(job.base(r["service"]), r["method"], r["path"], headers=r.get("headers"))
     if st >= 300: raise RuntimeError(f"second source HTTP {st}")
     v = K.pointer(doc, r.get("pointer", ""))
@@ -22,17 +25,36 @@ def main(app):
     F.install(); G.up()
     with GEN.GenericJob(c, "measure") as job:
         # D3 + D4: five scenarios with planned effect counts, then every oracle reading vs the second source, all at the end
-        plan = [0, 1, 2, 1, 0]; scen = []
+        plan = [0, 1, 2, 1, 0]; scen = []; accepted = []; rejected = []
+        succ = c["action"].get("success_status") or list(range(200, 300))
         for n in plan:
-            s = GEN.Scenario(job)
+            s = GEN.Scenario(job); ok = bad = 0
             for _ in range(n):
                 st = GEN.act(job, s)
-                if st not in (c["action"].get("success_status") or range(200, 300)): raise RuntimeError(f"action returned {st}")
-            scen.append(s)
-        rows = [{"planned": n, "oracle": s.effects(), "second_source": second_source(job, s, cfg["second_source"])} for n, s in zip(plan, scen)]
-        out["D3_oracle_cross_check"] = {"rows": rows, "pass": all(r["planned"] == r["oracle"] == r["second_source"] for r in rows),
+                if st in succ: ok += 1
+                else: bad += 1                       # e.g. the app refusing a repeat (native duplicate prevention)
+            scen.append(s); accepted.append(ok); rejected.append(bad)
+        rows = [{"attempts": n, "accepted": a, "rejected": r, "oracle": s.effects(), "second_source": second_source(job, s, cfg["second_source"])}
+                for n, a, r, s in zip(plan, accepted, rejected, scen)]
+        out["D3_oracle_cross_check"] = {"rows": rows, "pass": all(r["accepted"] == r["oracle"] == r["second_source"] for r in rows),
                                         "independence": c["oracle"].get("independence"), "second_source": cfg["second_source"].get("describe")}
-        out["D4_isolation_no_contamination"] = {"pass": [r["oracle"] for r in rows] == plan, "reset_method": cfg.get("reset_method"), "observed": [r["oracle"] for r in rows]}
+        out["D4_isolation_no_contamination"] = {"pass": [r["oracle"] for r in rows] == accepted, "reset_method": cfg.get("reset_method"),
+                                                "expected_from_accepted_attempts": accepted, "observed": [r["oracle"] for r in rows]}
+        # AM-2: duplicate probe - with lost_ack armed, submit twice; record each status, the app's error code (allow-listed
+        # field only), proxy evidence and the oracle. Classifies why a duplicate did or did not occur.
+        s = GEN.Scenario(job); job.arm(s.scope, "lost_ack", 6); a = s.action_request(); probe = []
+        for _ in range(2):
+            st, doc, _, _ = K.http(job.proxy_base, a["method"], a["path"], json_body=a["body"], form=a["form"], headers=a["headers"])
+            code = (doc or {}).get("code") if isinstance(doc, dict) else None
+            probe.append({"status": st, "app_error_code": code})
+        ev = job.evidence(s.scope); n = s.effects()
+        applied = any(r["intervention"] == "lost_ack" for r in ev["requests"])
+        if n >= 2: cls = "duplicate produced"
+        elif not applied or len(ev["requests"]) < 2: cls = "fault-injection failure"
+        elif n == 1 and probe[1]["status"] >= 400: cls = "native duplicate prevention"
+        else: cls = "unclassified (inspect)"
+        out["AM2_duplicate_probe"] = {"attempts": probe, "proxy_requests": [(r["status_to_client"], r["intervention"], r["outcome"]) for r in ev["requests"]],
+                                      "verified": n, "classification": cls}
         # AM-5: read lag after a committed action (user check and oracle)
         s = GEN.Scenario(job); t0 = time.time(); GEN.act(job, s); t_commit = time.time()
         chk = s.check_request(); lag = {}

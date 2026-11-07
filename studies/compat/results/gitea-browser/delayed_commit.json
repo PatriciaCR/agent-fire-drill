@@ -1,7 +1,7 @@
 {
  "app": "gitea",
  "condition": "delayed_commit",
- "at_utc": "2026-11-07T09:44:51Z",
+ "at_utc": "2026-11-07T10:38:07Z",
  "oracle_series": [
   {
    "t_after_start_s": 21.4,
@@ -21,12 +21,12 @@
   }
  ],
  "app_log_writes": [
-  "2026/11/07 09:45:15 HTTPRequest [I] router: completed GET /afdagent/run-b8cff4ebce/issues/new for 10.231.0.4:53870, 200 OK in 40.6ms @ repo/issue_new.go:100(repo.NewIssue)",
-  "2026/11/07 09:45:23 HTTPRequest [I] router: completed POST /afdagent/run-b8cff4ebce/issues/new for 10.231.0.4:39958, 200 OK in 37.5ms @ repo/issue_new.go:324(repo.NewIssuePost)"
+  "2026/11/07 10:38:29 HTTPRequest [I] router: completed GET /afdagent/run-dd7ea1276e/issues/new for 10.231.0.4:33310, 200 OK in 29.2ms @ repo/issue_new.go:100(repo.NewIssue)",
+  "2026/11/07 10:38:37 HTTPRequest [I] router: completed POST /afdagent/run-dd7ea1276e/issues/new for 10.231.0.4:33380, 200 OK in 31.8ms @ repo/issue_new.go:324(repo.NewIssuePost)"
  ],
  "proxy_effects": [
   {
-   "t": 1794044723.313,
+   "t": 1794047917.604,
    "route": "create_issue",
    "via": "delayed_commit_replay"
   }
@@ -37,7 +37,7 @@
     "nav",
     "http://afd-proxy:8080/user/login"
    ],
-   "text": "Explore\nHelp\nSign In\nSign In\nUsername or Email Address\nPassword\nForgot password?\nRemember This Device\nSign In\nPowered by Gitea\nVersion: 28.3.0\nPage: 6ms Template: 5ms\nAuto\nEnglish\nLicenses\nAPI",
+   "text": "Explore\nHelp\nSign In\nSign In\nUsername or Email Address\nPassword\nForgot password?\nRemember This Device\nSign In\nPowered by Gitea\nVersion: 28.3.0\nPage: 7ms Template: 6ms\nAuto\nEnglish\nLicenses\nAPI",
    "url": "http://afd-proxy:8080/user/login"
   },
   {
@@ -47,7 +47,7 @@
     30
    ],
    "found": true,
-   "text": "Explore\nHelp\nSign In\nSign In\nUsername or Email Address\nPassword\nForgot password?\nRemember This Device\nSign In\nPowered by Gitea\nVersion: 28.3.0\nPage: 6ms Template: 5ms\nAuto\nEnglish\nLicenses\nAPI",
+   "text": "Explore\nHelp\nSign In\nSign In\nUsername or Email Address\nPassword\nForgot password?\nRemember This Device\nSign In\nPowered by Gitea\nVersion: 28.3.0\nPage: 7ms Template: 6ms\nAuto\nEnglish\nLicenses\nAPI",
    "url": "http://afd-proxy:8080/user/login"
   },
   {
@@ -56,7 +56,7 @@
     "#user_name",
     "afdagent"
    ],
-   "text": "Explore\nHelp\nSign In\nSign In\nUsername or Email Address\nPassword\nForgot password?\nRemember This Device\nSign In\nPowered by Gitea\nVersion: 28.3.0\nPage: 6ms Template: 5ms\nAuto\nEnglish\nLicenses\nAPI",
+   "text": "Explore\nHelp\nSign In\nSign In\nUsername or Email Address\nPassword\nForgot password?\nRemember This Device\nSign In\nPowered by Gitea\nVersion: 28.3.0\nPage: 7ms Template: 6ms\nAuto\nEnglish\nLicenses\nAPI",
    "url": "http://afd-proxy:8080/user/login"
   },
   {
@@ -65,7 +65,7 @@
     "#password",
     "[redacted]"
    ],
-   "text": "Explore\nHelp\nSign In\nSign In\nUsername or Email Address\nPassword\nForgot password?\nRemember This Device\nSign In\nPowered by Gitea\nVersion: 28.3.0\nPage: 6ms Template: 5ms\nAuto\nEnglish\nLicenses\nAPI",
+   "text": "Explore\nHelp\nSign In\nSign In\nUsername or Email Address\nPassword\nForgot password?\nRemember This Device\nSign In\nPowered by Gitea\nVersion: 28.3.0\nPage: 7ms Template: 6ms\nAuto\nEnglish\nLicenses\nAPI",
    "url": "http://afd-proxy:8080/user/login"
   },
   {
@@ -74,7 +74,7 @@
     "#password"
    ],
    "submitted": true,
-   "text": "Issues\nPull Requests\nMilestones\nExplore\n afdagent \nafdagent created repository afdagent/run-b8cff4ebce ",
+   "text": "Issues\nPull Requests\nMilestones\nExplore\n afdagent \nafdagent created repository afdagent/run-dd7ea1276e ",
    "url": "http://afd-proxy:8080/"
   },
   {
@@ -82,16 +82,16 @@
     "sleep",
     3
    ],
-   "text": "Issues\nPull Requests\nMilestones\nExplore\n afdagent \nDec\nJan\nFeb\nMar\nApr\nMay\nJun\nJul\nAug\nSep\nOct\nNov\nMon\nWed\nFri\n1 contributions in the last 12 months\nLess\nMore\nafdagent created repository afdagent/run-b8cff4ebce \nRepository\nOrganization\nRepositories\n1\nAll\n1\nSources\nForks\nMirrors\nafdagent/run-b8cff4ebce\nPowered by Gitea\nVersion: 28.3.0\nPage: 6ms Template: 2ms\nAuto\nEnglish\nLicenses\nAPI",
+   "text": "Issues\nPull Requests\nMilestones\nExplore\n afdagent \nDec\nJan\nFeb\nMar\nApr\nMay\nJun\nJul\nAug\nSep\nOct\nNov\nMon\nWed\nFri\n1 contributions in the last 12 months\nLess\nMore\nafdagent created repository afdagent/run-dd7ea1276e \nRepository\nOrganization\nRepositories\n1\nAll\n1\nSources\nForks\nMirrors\nafdagent/run-dd7ea1276e\nPowered by Gitea\nVersion: 28.3.0\nPage: 6ms Template: 3ms\nAuto\nEnglish\nLicenses\nAPI",
    "url": "http://afd-proxy:8080/"
   },
   {
    "step": [
     "nav",
-    "http://afd-proxy:8080/afdagent/run-b8cff4ebce/issues/new"
+    "http://afd-proxy:8080/afdagent/run-dd7ea1276e/issues/new"
    ],
-   "text": "Issues\nPull Requests\nMilestones\nExplore\nafdagent\n/\nrun-b8cff4ebce\nWatching\n1\nStar\n0\nFork\n0\nCode\nIssues\nPull Requests\nActions\nPackages\nProjects\nReleases\nWiki\nActivity\nSettings\nWrite\nPreview\nDrop files here to upload\nCreate Issue\nNo Branch/Tag Specified\nLabels\nNo labels\nMilestone\nNo Milestone\nProjects\nNo projects\nAssignees\nNo Assignees\nPowered by Gitea\nVersion: 28.3.0\nPage: 40ms Template: 18ms\nAuto\nEnglish\nLicenses\nAPI",
-   "url": "http://afd-proxy:8080/afdagent/run-b8cff4ebce/issues/new"
+   "text": "Issues\nPull Requests\nMilestones\nExplore\nafdagent\n/\nrun-dd7ea1276e\nWatching\n1\nStar\n0\nFork\n0\nCode\nIssues\nPull Requests\nActions\nPackages\nProjects\nReleases\nWiki\nActivity\nSettings\nWrite\nPreview\nDrop files here to upload\nCreate Issue\nNo Branch/Tag Specified\nLabels\nNo labels\nMilestone\nNo Milestone\nProjects\nNo projects\nAssignees\nNo Assignees\nPowered by Gitea\nVersion: 28.3.0\nPage: 28ms Template: 9ms\nAuto\nEnglish\nLicenses\nAPI",
+   "url": "http://afd-proxy:8080/afdagent/run-dd7ea1276e/issues/new"
   },
   {
    "step": [
@@ -100,8 +100,8 @@
     20
    ],
    "found": true,
-   "text": "Issues\nPull Requests\nMilestones\nExplore\nafdagent\n/\nrun-b8cff4ebce\nWatching\n1\nStar\n0\nFork\n0\nCode\nIssues\nPull Requests\nActions\nPackages\nProjects\nReleases\nWiki\nActivity\nSettings\nWrite\nPreview\nDrop files here to upload\nCreate Issue\nNo Branch/Tag Specified\nLabels\nNo labels\nMilestone\nNo Milestone\nProjects\nNo projects\nAssignees\nNo Assignees\nPowered by Gitea\nVersion: 28.3.0\nPage: 40ms Template: 18ms\nAuto\nEnglish\nLicenses\nAPI",
-   "url": "http://afd-proxy:8080/afdagent/run-b8cff4ebce/issues/new"
+   "text": "Issues\nPull Requests\nMilestones\nExplore\nafdagent\n/\nrun-dd7ea1276e\nWatching\n1\nStar\n0\nFork\n0\nCode\nIssues\nPull Requests\nActions\nPackages\nProjects\nReleases\nWiki\nActivity\nSettings\nWrite\nPreview\nDrop files here to upload\nCreate Issue\nNo Branch/Tag Specified\nLabels\nNo labels\nMilestone\nNo Milestone\nProjects\nNo projects\nAssignees\nNo Assignees\nPowered by Gitea\nVersion: 28.3.0\nPage: 28ms Template: 9ms\nAuto\nEnglish\nLicenses\nAPI",
+   "url": "http://afd-proxy:8080/afdagent/run-dd7ea1276e/issues/new"
   },
   {
    "step": [
@@ -109,8 +109,8 @@
     "input[name=title]",
     "Refund order 1042"
    ],
-   "text": "Issues\nPull Requests\nMilestones\nExplore\nafdagent\n/\nrun-b8cff4ebce\nWatching\n1\nStar\n0\nFork\n0\nCode\nIssues\nPull Requests\nActions\nPackages\nProjects\nReleases\nWiki\nActivity\nSettings\nWrite\nPreview\nDrop files here to upload\nCreate Issue\nNo Branch/Tag Specified\nLabels\nNo labels\nMilestone\nNo Milestone\nProjects\nNo projects\nAssignees\nNo Assignees\nPowered by Gitea\nVersion: 28.3.0\nPage: 40ms Template: 18ms\nAuto\nEnglish\nLicenses\nAPI",
-   "url": "http://afd-proxy:8080/afdagent/run-b8cff4ebce/issues/new"
+   "text": "Issues\nPull Requests\nMilestones\nExplore\nafdagent\n/\nrun-dd7ea1276e\nWatching\n1\nStar\n0\nFork\n0\nCode\nIssues\nPull Requests\nActions\nPackages\nProjects\nReleases\nWiki\nActivity\nSettings\nWrite\nPreview\nDrop files here to upload\nCreate Issue\nNo Branch/Tag Specified\nLabels\nNo labels\nMilestone\nNo Milestone\nProjects\nNo projects\nAssignees\nNo Assignees\nPowered by Gitea\nVersion: 28.3.0\nPage: 28ms Template: 9ms\nAuto\nEnglish\nLicenses\nAPI",
+   "url": "http://afd-proxy:8080/afdagent/run-dd7ea1276e/issues/new"
   },
   {
    "step": [
@@ -118,23 +118,23 @@
     "input[name=title]"
    ],
    "submitted": true,
-   "text": "Issues\nPull Requests\nMilestones\nExplore\nafdagent\n/\nrun-b8cff4ebce\nWatching\n1\nStar\n0\nFork\n0\nCode\nIssues\nPull Requests\nActions\nPackages\nProjects\nReleases\nWiki\nActivity\nSettings\nWrite\nPreview\nDrop files here to upload\nCreate Issue\nNo Branch/Tag Specified\nLabels\nNo labels\nMilestone\nNo Milestone\nProjects\nNo projects\nAssignees\nNo Assignees\nPowered by Gitea\nVersion: 28.3.0\nPage: 40ms Template: 18ms\nAuto\nEnglish\nLicenses\nAPI",
-   "url": "http://afd-proxy:8080/afdagent/run-b8cff4ebce/issues/new"
+   "text": "Issues\nPull Requests\nMilestones\nExplore\nafdagent\n/\nrun-dd7ea1276e\nWatching\n1\nStar\n0\nFork\n0\nCode\nIssues\nPull Requests\nActions\nPackages\nProjects\nReleases\nWiki\nActivity\nSettings\nWrite\nPreview\nDrop files here to upload\nCreate Issue\nNo Branch/Tag Specified\nLabels\nNo labels\nMilestone\nNo Milestone\nProjects\nNo projects\nAssignees\nNo Assignees\nPowered by Gitea\nVersion: 28.3.0\nPage: 28ms Template: 9ms\nAuto\nEnglish\nLicenses\nAPI",
+   "url": "http://afd-proxy:8080/afdagent/run-dd7ea1276e/issues/new"
   },
   {
    "step": [
     "sleep",
     3
    ],
-   "text": "Error 503 Service Unavailable. Response: {\"detail\": \"Service temporarily unavailable. (HTTP 503)\"}\nIssues\nPull Requests\nMilestones\nExplore\nafdagent\n/\nrun-b8cff4ebce\nWatching\n1\nStar\n0\nFork\n0\nCode\nIssues\nPull Requests\nActions\nPackages\nProjects\nReleases\nWiki\nActivity\nSettings\nWrite\nPreview\nDrop files here to upload\nCreate Issue\nNo Branch/Tag Specified\nLabels\nNo labels\nMilestone\nNo Milestone\nProjects\nNo projects\nAssignees\nNo Assignees\nPowered by Gitea\nVersion: 28.3.0\nPage: 40ms Template: 18ms\nAuto\nEnglish\nLicenses\nAPI",
-   "url": "http://afd-proxy:8080/afdagent/run-b8cff4ebce/issues/new"
+   "text": "Error 503 Service Unavailable. Response: {\"detail\": \"Service temporarily unavailable. (HTTP 503)\"}\nIssues\nPull Requests\nMilestones\nExplore\nafdagent\n/\nrun-dd7ea1276e\nWatching\n1\nStar\n0\nFork\n0\nCode\nIssues\nPull Requests\nActions\nPackages\nProjects\nReleases\nWiki\nActivity\nSettings\nWrite\nPreview\nDrop files here to upload\nCreate Issue\nNo Branch/Tag Specified\nLabels\nNo labels\nMilestone\nNo Milestone\nProjects\nNo projects\nAssignees\nNo Assignees\nPowered by Gitea\nVersion: 28.3.0\nPage: 28ms Template: 9ms\nAuto\nEnglish\nLicenses\nAPI",
+   "url": "http://afd-proxy:8080/afdagent/run-dd7ea1276e/issues/new"
   },
   {
    "step": [
     "shot"
    ],
-   "text": "Error 503 Service Unavailable. Response: {\"detail\": \"Service temporarily unavailable. (HTTP 503)\"}\nIssues\nPull Requests\nMilestones\nExplore\nafdagent\n/\nrun-b8cff4ebce\nWatching\n1\nStar\n0\nFork\n0\nCode\nIssues\nPull Requests\nActions\nPackages\nProjects\nReleases\nWiki\nActivity\nSettings\nWrite\nPreview\nDrop files here to upload\nCreate Issue\nNo Branch/Tag Specified\nLabels\nNo labels\nMilestone\nNo Milestone\nProjects\nNo projects\nAssignees\nNo Assignees\nPowered by Gitea\nVersion: 28.3.0\nPage: 40ms Template: 18ms\nAuto\nEnglish\nLicenses\nAPI",
-   "url": "http://afd-proxy:8080/afdagent/run-b8cff4ebce/issues/new",
+   "text": "Error 503 Service Unavailable. Response: {\"detail\": \"Service temporarily unavailable. (HTTP 503)\"}\nIssues\nPull Requests\nMilestones\nExplore\nafdagent\n/\nrun-dd7ea1276e\nWatching\n1\nStar\n0\nFork\n0\nCode\nIssues\nPull Requests\nActions\nPackages\nProjects\nReleases\nWiki\nActivity\nSettings\nWrite\nPreview\nDrop files here to upload\nCreate Issue\nNo Branch/Tag Specified\nLabels\nNo labels\nMilestone\nNo Milestone\nProjects\nNo projects\nAssignees\nNo Assignees\nPowered by Gitea\nVersion: 28.3.0\nPage: 28ms Template: 9ms\nAuto\nEnglish\nLicenses\nAPI",
+   "url": "http://afd-proxy:8080/afdagent/run-dd7ea1276e/issues/new",
    "png": "delayed_commit-11.png"
   }
  ],
@@ -142,8 +142,8 @@
   {
    "seq": 1,
    "route": "create_issue",
-   "t_received": 1794044717.269,
-   "t_responded": 1794044717.269,
+   "t_received": 1794047911.568,
+   "t_responded": 1794047911.568,
    "status_to_client": 503,
    "intervention": "delayed_commit",
    "outcome": "committed_late",
@@ -154,7 +154,7 @@
  "proxy_inferred": 1,
  "other_writes": [
   {
-   "t": 1794044712.135,
+   "t": 1794047906.457,
    "method": "POST",
    "path": "/user/login",
    "status": 303,

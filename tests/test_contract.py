@@ -24,6 +24,12 @@ class TestContracts(unittest.TestCase):
                "mount escapes repo": lambda c: c["app"]["mounts"].append({"src": "../../etc", "dst": "/x"}),
                "bad scope location": lambda c: c["scope"].update({"in": "cookie"}),
                "bad intent": lambda c: c["intent"].update(exactly="one")}
+        v1 = {"privileged sysctl": lambda c: c["services"][0].update(sysctls={"kernel.shm_rmid_forced": "1"}),
+              "root service": lambda c: c["services"][0].update(uid=0)}
+        for why, m in v1.items():
+            c = json.loads((ROOT / "studies" / "compat" / "contracts" / "vikunja-v1.json").read_text()); m(c)
+            f = tempfile.NamedTemporaryFile("w", suffix=".json", delete=False); json.dump(c, f); f.close()
+            with self.assertRaises(K.ContractError, msg=why): K.load(f.name)
         for why, m in bad.items():
             with self.assertRaises(K.ContractError, msg=why): K.load(self.write(m))
     def test_render_select_pointer(self):
@@ -34,7 +40,9 @@ class TestContracts(unittest.TestCase):
 
 class TestNoHardcoding(unittest.TestCase):
     def test_generic_modules_have_no_app_identifiers(self):
-        ids = ["patient_portal", "refill", "lisinopril", "breakingweb", "medication", "expense", "reimburs", "session_id"]
+        ids = ["patient_portal", "refill", "lisinopril", "breakingweb", "medication", "expense", "reimburs", "session_id",
+               # compatibility-study apps: no app-specific code may enter the generic modules
+               "vikunja", "gitea", "listmonk", "mailpit", "woocommerce", "wordpress", "wp-json", "mariadb", "postgres", "i_like", "cart-token"]
         for f in ("afd/faults/proxy.py", "afd/contract.py", "afd/generic.py", "afd/agents/scripted.py"):
             text = (ROOT / f).read_text().lower(); self.assertEqual([i for i in ids if i in text], [], f)
 

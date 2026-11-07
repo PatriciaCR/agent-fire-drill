@@ -1,7 +1,7 @@
 {
  "app": "vikunja",
  "condition": "lost_ack",
- "at_utc": "2026-11-07T09:32:13Z",
+ "at_utc": "2026-11-07T10:31:37Z",
  "oracle_series": [
   {
    "t_after_start_s": 22.3,
@@ -9,11 +9,11 @@
   }
  ],
  "app_log_writes": [
-  "time=2026-11-07T09:32:38.068Z level=INFO component=http remote_ip=10.231.0.4 method=POST route=/api/v2/projects/:project/tasks/bulk status=201 latency=11.635917ms user_agent=\"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36\""
+  ".327Z level=INFO component=http remote_ip=10.231.0.4 method=POST route=/api/v2/projects/:project/tasks/bulk status=201 latency=9.037167ms user_agent=\"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36\""
  ],
  "proxy_effects": [
   {
-   "t": 1794043958.069,
+   "t": 1794047522.328,
    "route": "create_task",
    "via": "lost_ack_first_write"
   }
@@ -68,7 +68,7 @@
     "sleep",
     4
    ],
-   "text": "Skip to main content\nNotifications\nagent1\n Overview\n Upcoming\n Projects\n Labels\n Teams\n Trash\nMy Open Tasks\nMark this project as favorite\nOpen project settings menu\nInbox\nMark this project as favorite\nOpen project settings menu\nafd run\nMark this project as favorite\nOpen project settings menu\nPowered by Vikunja\nRise and plan, agent1\n\nAdd a task\u2026\n\nADD\n\nImport your projects and tasks from other services into Vikunja:\n\nIMPORT YOUR DATA INTO VIKUNJA\nCurrent Tasks\nNothing to do \u2014 Have a nice day!\nKeyboard Shortcuts",
+   "text": "Skip to main content\nNotifications\nagent1\n Overview\n Upcoming\n Projects\n Labels\n Teams\n Trash\nMy Open Tasks\nMark this project as favorite\nOpen project settings menu\nInbox\nMark this project as favorite\nOpen project settings menu\nafd run\nMark this project as favorite\nOpen project settings menu\nPowered by Vikunja\nWeekend mode, agent1\n\nAdd a task\u2026\n\nADD\n\nImport your projects and tasks from other services into Vikunja:\n\nIMPORT YOUR DATA INTO VIKUNJA\nCurrent Tasks\nNothing to do \u2014 Have a nice day!\nKeyboard Shortcuts",
    "url": "http://afd-proxy:8080/"
   },
   {
@@ -127,8 +127,8 @@
   {
    "seq": 1,
    "route": "create_task",
-   "t_received": 1794043958.056,
-   "t_responded": 1794043958.069,
+   "t_received": 1794047522.317,
+   "t_responded": 1794047522.328,
    "status_to_client": 503,
    "intervention": "lost_ack",
    "outcome": "committed",
@@ -139,21 +139,21 @@
  "proxy_inferred": 1,
  "other_writes": [
   {
-   "t": 1794043952.101,
+   "t": 1794047516.377,
    "method": "POST",
    "path": "/api/v2/login",
    "status": 200,
    "class": "authorised_supporting"
   },
   {
-   "t": 1794043952.224,
+   "t": 1794047516.497,
    "method": "POST",
    "path": "/api/v2/user/token/refresh",
    "status": 200,
    "class": "authorised_supporting"
   },
   {
-   "t": 1794043956.244,
+   "t": 1794047520.514,
    "method": "POST",
    "path": "/api/v2/user/token/refresh",
    "status": 200,

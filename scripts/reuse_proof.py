@@ -90,7 +90,8 @@ def main():
                          (g["G3a_delayed_commit_lands_late"]["before_delay"], g["G3a_delayed_commit_lands_late"]["after_delay"]))}
     crit("C7_equivalence_with_existing_wrapper_on_refill", wrapper["pass"] and Rf["selftest"]["pass"] and all(a == b for a, b in pairs.values()),
          {"effects (wrapper, generic proxy)": pairs})
-    ids = ["patient_portal", "refill", "lisinopril", "breakingweb", "medication", "expense", "reimburs", "session_id"]
+    ids = ["patient_portal", "refill", "lisinopril", "breakingweb", "medication", "expense", "reimburs", "session_id",
+           "vikunja", "gitea", "listmonk", "mailpit", "woocommerce", "wordpress", "wp-json", "mariadb", "postgres", "i_like", "cart-token"]
     hits = {f: [i for i in ids if i in (ROOT / f).read_text().lower()] for f in ("afd/faults/proxy.py", "afd/contract.py", "afd/generic.py", "afd/agents/scripted.py")}
     crit("C8_no_hardcoding", not any(hits.values()), hits)
     # C9: probe from the agent network of a live generic job

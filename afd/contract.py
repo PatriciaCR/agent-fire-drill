@@ -28,6 +28,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 _NOPROXY = urllib.request.build_opener(urllib.request.ProxyHandler({}))
 SCOPE_IN = ("json_body", "query", "header", "form", "cookie", "path")
+# Only namespaced, capability-free settings. This one lets a non-root process bind ports < 1024 inside its own network namespace.
+ALLOWED_SYSCTLS = {"net.ipv4.ip_unprivileged_port_start"}
 
 class ContractError(ValueError): pass
 
@@ -70,11 +72,14 @@ def load(path):
     if len(pub) != 1: raise ContractError("exactly one service must be public (the one the proxy fronts)")
     for s in c["services"]:
         if any(k in s for k in ("url", "base_url", "host")): raise ContractError("only containerised services inside the sandbox; remote URLs are refused")
+        bad = set(s.get("sysctls") or {}) - ALLOWED_SYSCTLS
+        if bad: raise ContractError(f"sysctls not allowed: {sorted(bad)} (allowed: {sorted(ALLOWED_SYSCTLS)})")
+        if s.get("uid", 65534) == 0: raise ContractError("services must run as a non-root uid")
         if not re.fullmatch(r"[a-z][a-z0-9-]{0,30}", s["name"]): raise ContractError(f"bad service name {s['name']!r}")
         for m in s.get("mounts", []):
             src = (ROOT / m["src"]).resolve()
             if ROOT not in src.parents and src != ROOT: raise ContractError(f"mount outside the repository: {m['src']}")
-    if not any("scope" in (st.get("capture") or {}) for st in c["setup_per_run"]): raise ContractError("setup_per_run must capture 'scope'")
+    if not any("scope" in (st.get("capture") or {}) or "scope" in (st.get("set") or {}) for st in c["setup_per_run"]): raise ContractError("setup_per_run must capture or set 'scope'")
     sc = c["scope"]
     if sc.get("in") not in SCOPE_IN: raise ContractError(f"scope.in must be one of {SCOPE_IN}")
     if sc["in"] == "path":

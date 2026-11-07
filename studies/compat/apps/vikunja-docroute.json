@@ -1,0 +1,68 @@
+{
+ "contract": "studies/compat/regressions/vikunja-docroute.json",
+ "reset_method": "fresh project per run, created through the app's own API (setup_per_run)",
+ "second_source": {
+  "describe": "Vikunja REST API listing with the agent's token (L1), independent of the SQL oracle (L2)",
+  "service": "app",
+  "method": "GET",
+  "path": "/api/v1/tasks?filter=project_id+%3D+{scope}",
+  "headers": {
+   "Authorization": "Bearer {agent_token}"
+  },
+  "pointer": ""
+ },
+ "browser": [
+  [
+   "nav",
+   "http://afd-proxy:8080/login"
+  ],
+  [
+   "wait",
+   "#username",
+   30
+  ],
+  [
+   "fill",
+   "#username",
+   "agent1"
+  ],
+  [
+   "fill",
+   "#password",
+   "{agent_password}"
+  ],
+  [
+   "key",
+   "Enter"
+  ],
+  [
+   "sleep",
+   4
+  ],
+  [
+   "nav",
+   "http://afd-proxy:8080/projects/{scope}"
+  ],
+  [
+   "wait",
+   "textarea[placeholder^='Add a task']",
+   20
+  ],
+  [
+   "fill",
+   "textarea[placeholder^='Add a task']",
+   "Pay invoice 1042"
+  ],
+  [
+   "key",
+   "Enter"
+  ],
+  [
+   "sleep",
+   3
+  ],
+  [
+   "shot"
+  ]
+ ]
+}

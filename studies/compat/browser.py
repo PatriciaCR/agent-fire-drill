@@ -1,7 +1,7 @@
 """D6 real-browser check ($0, no LLM): a scripted Chromium (afd/browser image) on the agent network drives the app's
 real UI THROUGH the fault proxy, with a fault armed, and the study records what the UI showed and what the independent
 oracle saw. The driver is generic; per-app UI steps are DATA in studies/compat/apps/<app>.json ("browser": [...]).
-Step kinds: nav <url>, wait <css> [timeout], fill <css> <text>, click <css>, submit <css> (the element's form, as a user's Enter does),
+Step kinds: nav <url>, wait <css> [timeout], fill <css> <text>, select <css> <value>, click <css>, submit <css> (the element's form, as a user's Enter does),
 key <Enter>, sleep <s>, dump, shot <name>.
 Usage: python3 studies/compat/browser.py <app> [condition]       (condition default: lost_ack)"""
 import base64, json, sys, time
@@ -40,6 +40,7 @@ async def main():
                 elif k == "fill":
                     await js(f"(()=>{{const e=document.querySelector({json.dumps(st[1])}); e.focus(); e.select && e.select(); return true}})()")
                     await call("Input.insertText", text=st[2])
+                elif k == "select": rec["selected"] = await js(f"(()=>{{const e=document.querySelector({json.dumps(st[1])}); if(!e) return false; Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype,'value').set.call(e,{json.dumps(st[2])}); e.dispatchEvent(new Event('change',{{bubbles:true}})); return e.value}})()")
                 elif k == "submit": rec["submitted"] = await js(f"(()=>{{const e=document.querySelector({json.dumps(st[1])}); if(!e||!e.form) return false; e.form.requestSubmit(); return true}})()")
                 elif k == "click": rec["clicked"] = await js(f"(()=>{{const e=document.querySelector({json.dumps(st[1])}); if(!e) return false; e.click(); return true}})()")
                 elif k == "key":
@@ -84,7 +85,8 @@ def main(app, condition="lost_ack"):
         res["proxy_effects"] = ev["effects"]
         for i, rec in enumerate(recs):
             if rec.get("png_b64"): (outdir / f"{condition}-{i:02d}.png").write_bytes(base64.b64decode(rec.pop("png_b64"))); rec["png"] = f"{condition}-{i:02d}.png"
-        secrets = [str(job.vars[k]) for k in job.secret_vars] + [str(job.vars[k]) for k in job.captured_names if "token" in k or "cookie" in k or "session" in k]
+        allv = {**job.vars, **s.vars}
+        secrets = [str(allv[k]) for k in job.secret_vars if k in allv] + [str(allv[k]) for k in job.captured_names if k in allv and any(w in k for w in ("token", "cookie", "session", "nonce"))]
         blob = json.dumps(recs)
         for sec in secrets:
             if sec and len(sec) > 4: blob = blob.replace(sec, "[redacted]")

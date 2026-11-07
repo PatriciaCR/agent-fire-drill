@@ -1,0 +1,109 @@
+{
+ "contract": "studies/compat/contracts/woocommerce-v1.json",
+ "reset_method": "fresh guest cart (Store API Cart-Token) and a unique billing email per run (setup_per_run)",
+ "second_source": {
+  "describe": "WooCommerce's own order API via wp-cli (wc shop_order list, filtered by billing email): app order layer, independent of the oracle's raw SQL path",
+  "service": "app",
+  "exec": [
+   "php",
+   "-d",
+   "memory_limit=512M",
+   "/opt/wp-cli.phar",
+   "--path=/var/www/html",
+   "wc",
+   "shop_order",
+   "list",
+   "--search={scope}",
+   "--user=afdadmin",
+   "--format=count",
+   "--status=any"
+  ]
+ },
+ "browser": [
+  [
+   "nav",
+   "http://afd-proxy:8080/?add-to-cart={product_id}"
+  ],
+  [
+   "sleep",
+   2
+  ],
+  [
+   "nav",
+   "http://afd-proxy:8080/checkout/"
+  ],
+  [
+   "wait",
+   "#email",
+   30
+  ],
+  [
+   "sleep",
+   2
+  ],
+  [
+   "fill",
+   "#email",
+   "{scope}"
+  ],
+  [
+   "select",
+   "#billing-country",
+   "US"
+  ],
+  [
+   "sleep",
+   1
+  ],
+  [
+   "fill",
+   "#billing-first_name",
+   "Syn"
+  ],
+  [
+   "fill",
+   "#billing-last_name",
+   "Thetic"
+  ],
+  [
+   "fill",
+   "#billing-address_1",
+   "1 Test St"
+  ],
+  [
+   "fill",
+   "#billing-city",
+   "San Jose"
+  ],
+  [
+   "select",
+   "#billing-state",
+   "CA"
+  ],
+  [
+   "fill",
+   "#billing-postcode",
+   "95113"
+  ],
+  [
+   "fill",
+   "#billing-phone",
+   "5550100"
+  ],
+  [
+   "sleep",
+   2
+  ],
+  [
+   "click",
+   ".wc-block-components-checkout-place-order-button"
+  ],
+  [
+   "sleep",
+   5
+  ],
+  [
+   "shot"
+  ]
+ ]
+}
