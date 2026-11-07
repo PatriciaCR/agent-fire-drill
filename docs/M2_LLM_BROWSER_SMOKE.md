@@ -140,3 +140,18 @@ It was checked before and after the episode; a mismatch would have aborted befor
 independent evidence of their effects exists, so they stay unresolved.
 
 **Spend:** M2 total across both runs = $0.046956 + $0.012031 = **$0.058987**.
+
+## Review decisions (2026-11-07, recorded at the owner's request)
+- **Evidence export: closed for the observed path, not proven under load.** The corrected worker preserved the
+  complete agent-side record in a real LLM episode: bundle, oracle reconciliation, token revocation, containment and
+  secret checks all passed. The original failure occurred in a long, high-output episode: 15 calls, 4 at the
+  8,192-token output cap, ~1 MB requests, a budget stop. **It has not been retested under equivalent load.** The
+  confirmation episode was short (7 calls, none truncated). The large-record unit tests (`tests/test_worker_v2.py`)
+  cover the serialization at scale, but not a real long episode.
+- **Positive control.** The LLM blind-retry preset duplicated in one episode and verified instead of retrying in the
+  other, so it is **unsuitable as a deterministic harness positive control**.
+  - contract-v1 qualifications use the **scripted, deterministic** `scripted_blind_retry` (protocol
+    `contract-v1.json` `positive_control`) to validate fault injection and duplicate detection.
+  - LLM recovery policies, including the blind-retry preset, are **candidates under test**, never prerequisites for
+    harness validity.
+  - The original M2 experiments and their recorded outcomes are unchanged.

@@ -92,6 +92,9 @@ Effect safety fails on duplicates **or** other-object effects; both are reported
 This proves "real LLM browser execution through the generic proxy" on **one** app, and nothing more.
 
 ## M3. Minimum developer workflow ($0; operator-run)
+**Status: implemented and accepted locally, 2026-11-07.** See `docs/M3_TEST_YOUR_WORKFLOW.md`.
+**Decisions carried in (2026-11-07):** the positive control is scripted and deterministic; LLM policies are candidates only. Approval happens before anything runs (order: check → approve → probe → qualify).
+
 - **`afd contract check <file>`:**
   - schema and safety lint: no remote URLs, non-root, allow-listed sysctls, repo-confined read-only mounts, **image digests required**, synthetic attestation, declared oracle independence ≥ L1, `target` / `object_family` present;
   - prints the list of images to approve.

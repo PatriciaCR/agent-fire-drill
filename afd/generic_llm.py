@@ -29,14 +29,19 @@ print("PROBE:" + json.dumps({"tcp": {k: tcp(*v) for k, v in t.items()},
 '''
 
 class LLMEpisodeJob(GEN.GenericJob):
+    def __init__(self, contract, label="generic", with_gateway=True):
+        super().__init__(contract, label); self.with_gateway = with_gateway   # False: $0 harness-only sessions (no gateway attached)
+
     def __enter__(self):
         super().__enter__()
         try:
             self.nets2 = {"cdp": f"afdnet-{self.id}-cdp", "gw": f"afdnet-{self.id}-gw"}
             for (k, name), subnet in zip(self.nets2.items(), J._subnets()): D.create_internal_network(name, subnet, self.id)
             if C.ROOTLESS: raise RuntimeError("M2 runs locally in rootful dev mode only (VM rootless topology is M6)")
-            D.sh("docker", "network", "connect", self.nets2["gw"], C.GATEWAY_NAME)
-            self.gw_ip = D.ip_of(C.GATEWAY_NAME, self.nets2["gw"]); self.gw_url = f"http://{self.gw_ip}:{C.GATEWAY_PORT}"
+            if self.with_gateway:
+                D.sh("docker", "network", "connect", self.nets2["gw"], C.GATEWAY_NAME)
+                self.gw_ip = D.ip_of(C.GATEWAY_NAME, self.nets2["gw"]); self.gw_url = f"http://{self.gw_ip}:{C.GATEWAY_PORT}"
+            else: self.gw_ip = self.gw_url = None
             self.browser = f"afd-{self.id}-browser"
             D.sh("docker", "run", "-d", "--name", self.browser, "--network", self.nets["agent"], *D.labels(self.id, "browser"), *D.hardening("browser", C.BROWSER_UID), C.IMAGES["browser"])
             D.sh("docker", "network", "connect", self.nets2["cdp"], self.browser)

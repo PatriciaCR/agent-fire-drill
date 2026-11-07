@@ -307,7 +307,21 @@ def classify_writes(writes, supporting):
     rx = [re.compile(p) for p in supporting or []]
     return [{**w, "class": "authorised_supporting" if any(r.search(f"{w['method']} {w['path']}") for r in rx) else "unclassified"} for w in writes]
 
-def run(contract_path, candidates, out_root, seed=None, conditions=None):
+def evidence_completeness(the_plan, runs, work):
+    """Every planned run must have a scored agent record with a claim and at least one step on disk. Missing or partial
+    agent evidence is an explicit failure (M3): it is listed, and the run can never count as a passing qualification."""
+    by = {r["run_id"]: r for r in runs}; gaps = []
+    for spec in the_plan["runs"]:
+        r = by.get(spec["run_id"]); f = work / "runs" / spec["run_id"] / "result.json"
+        res = json.loads(f.read_text()) if f.exists() else {}
+        why = [w for w, bad in (("no run record", r is None), ("no result.json", not f.exists()), ("no agent claim", "claim" not in res or not res.get("claim")),
+                                ("no steps", not res.get("steps")), ("not scored as an agent run", r is not None and r.get("category") != "agent"),
+                                ("worker error", bool(res.get("error")))) if bad]
+        if why: gaps.append({"run_id": spec["run_id"], "policy": spec["policy"], "condition": spec["condition"], "problems": why})
+    return {"planned_runs": len(the_plan["runs"]), "complete_runs": len(the_plan["runs"]) - len(gaps), "complete": not gaps, "gaps": gaps}
+
+def run(contract_path, candidates, out_root, seed=None, conditions=None, extra_files=None):
+    """extra_files: {name: JSON-able} written into the bundle before sealing (e.g. the operator approval and probe records)."""
     contract = K.load(contract_path)
     protocol = K.protocol_for(contract); delay = protocol["delayed_commit_delay_s"]
     per_object = "objects" in contract
@@ -351,6 +365,7 @@ def run(contract_path, candidates, out_root, seed=None, conditions=None):
                 runs.append(rec)
     teardown = job.teardown_report
     v = (SO.verdict if per_object else Q.verdict)(protocol, the_plan, runs, st, teardown)
+    evidence = evidence_completeness(the_plan, runs, work) if per_object else None
     (work / "contract.json").write_text(json.dumps(K.redacted(contract), indent=1))
     for name, obj in {"protocol.json": protocol, "plan.json": the_plan, "selftest.json": st, "teardown.json": teardown, "verdict.json": v,
                       "environment.json": {"fault_injector": "afd/faults/proxy.py", "fault_injector_sha256": B.sha256_file(PROXY_SRC),
@@ -358,7 +373,13 @@ def run(contract_path, candidates, out_root, seed=None, conditions=None):
                                            **({"scoring_objects_sha256": B.sha256_file(ROOT / "afd" / "scoring_objects.py")} if per_object else {}),
                                            "services": {s["name"]: s["image"] for s in contract["services"]}, "captured_variables": job.captured_names},
                       "summary.json": {"bundle": bid, "profile": "generic", "contract": contract["name"], "protocol": protocol["protocol"], "candidates": list(candidates),
-                                       "plan_seed": the_plan["seed"], "job": job.id, "seconds": round(time.time() - t0, 1), "verdict": v}}.items():
+                                       "plan_seed": the_plan["seed"], "job": job.id, "seconds": round(time.time() - t0, 1), "verdict": v,
+                                       **({"evidence_completeness": evidence,
+                                           "qualification_status": ("QUALIFICATION RESULT (contract-v1; scripted agents)" if v["harness_validity"]["valid"] and evidence["complete"] else
+                                                                    "NOT A QUALIFICATION: " + "; ".join(([] if v["harness_validity"]["valid"] else ["harness invalid"]) +
+                                                                                                         ([] if evidence["complete"] else [f"{len(evidence['gaps'])} run(s) with missing or incomplete agent evidence"])))}
+                                          if per_object else {})},
+                      **(extra_files or {})}.items():
         (work / name).write_text(json.dumps(obj, indent=1, default=str))
     (work / "runs.jsonl").write_text("".join(json.dumps(r, default=str) + "\n" for r in runs))
     digest = B.seal(work); final = Path(out_root) / bid; work.rename(final)

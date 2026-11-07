@@ -1,0 +1,59 @@
+#!/usr/bin/env python3
+"""afd: Test Your Workflow CLI (M3; local, $0, scripted agents). See afd/workflow.py and docs/M3_TEST_YOUR_WORKFLOW.md.
+
+  afd contract check FILE [--ui UI]
+  afd contract approve FILE --approver NAME [--ui UI]
+  afd contract probe FILE [--ui UI]
+  afd contract verify-bundle DIR
+  afd qualify --contract FILE [--ui UI] [--agent scripted] [--candidates a,b] [--seed N]
+Exit status: 0 = pass, 1 = failed or refused, 2 = usage."""
+import argparse, json, os, sys
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from afd import workflow as W  # noqa: E402
+
+def out(obj): print(json.dumps(obj, indent=1, default=str))
+
+def main(argv=None):
+    ap = argparse.ArgumentParser(prog="afd", description="Agent Fire Drill: Test Your Workflow (operator-approved, local, $0)")
+    sub = ap.add_subparsers(dest="cmd", required=True)
+    c = sub.add_parser("contract"); cs = c.add_subparsers(dest="sub", required=True)
+    for name in ("check", "probe"):
+        p = cs.add_parser(name); p.add_argument("file"); p.add_argument("--ui")
+    p = cs.add_parser("approve"); p.add_argument("file"); p.add_argument("--approver", required=True); p.add_argument("--ui")
+    p = cs.add_parser("verify-bundle"); p.add_argument("dir")
+    q = sub.add_parser("qualify"); q.add_argument("--contract", required=True); q.add_argument("--ui"); q.add_argument("--agent", default="scripted")
+    q.add_argument("--candidates", default="scripted_trust_response,scripted_verify_no_resubmit"); q.add_argument("--seed", type=int)
+    a = ap.parse_args(argv)
+    try:
+        if a.cmd == "contract" and a.sub == "check":
+            r = W.check(a.file, a.ui); out(r)
+            if r["pass"]: print("\nCHECK PASS. Images to approve (they must already be present locally; afd never pulls):\n  " + "\n  ".join(r["images"]), file=sys.stderr)
+            return 0 if r["pass"] else 1
+        if a.cmd == "contract" and a.sub == "approve":
+            r = W.approve(a.file, a.approver, a.ui); out(r); return 0
+        if a.cmd == "contract" and a.sub == "probe":
+            from afd import firewall as F
+            F.install()
+            r = W.probe(a.file, a.ui)
+            out({k: r[k] for k in ("status", "pass", "capabilities", "limitations", "contract_sha256")}
+                | {"ui_traffic": {k: v for k, v in r["ui_traffic"].items() if k != "driver"},
+                   "selftest": {k: v["pass"] for k, v in r["selftest"]["checks"].items()}})
+            return 0 if r["pass"] else 1
+        if a.cmd == "contract" and a.sub == "verify-bundle":
+            r = W.verify_bundle(a.dir); out(r); return 0 if r["ok"] else 1
+        if a.cmd == "qualify":
+            from afd import firewall as F
+            F.install()
+            b, digest, ver = W.qualify(a.contract, a.ui, [x for x in a.candidates.split(",") if x], a.agent, a.seed)
+            s = json.loads((b / "summary.json").read_text()); v = s["verdict"]
+            out({"bundle": str(b), "digest": digest, "verify": ver, "qualification_status": s["qualification_status"], "harness_validity": v["harness_validity"]["checks"],
+                 "evidence_completeness": {k: s["evidence_completeness"][k] for k in ("planned_runs", "complete_runs", "complete")},
+                 "candidates": {p: (x["status"], (x.get("effect_safety") or {}).get("statement") or x.get("reason"),
+                                    (x.get("outcome_integrity") or {}).get("status"), (x.get("completion") or {}).get("completed")) for p, x in v["candidates"].items()}})
+            return 0 if ver["ok"] and s["qualification_status"].startswith("QUALIFICATION RESULT") else 1
+    except W.Refused as e:
+        print(f"REFUSED: {e}", file=sys.stderr); return 1
+    return 2
+
+if __name__ == "__main__":
+    sys.exit(main())
