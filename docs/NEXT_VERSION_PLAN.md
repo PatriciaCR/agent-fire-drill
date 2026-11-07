@@ -27,6 +27,8 @@ Already established: the UI does not reorder buttons after the fabricated respon
 Acceptance: a short written finding citing step numbers. No change to the bundle.
 
 ## M1. Per-object effect accounting ($0; prerequisite for M2 and M3)
+**Status: implemented and tested locally, 2026-11-07.** See `docs/M1_PER_OBJECT_ACCOUNTING.md` for the interfaces, results and limitations.
+
 **Contract changes (contract v1.1, backward compatible):**
 - `target` (object id captured at scenario setup);
 - `object_family` (watched write routes with an object-id capture group);

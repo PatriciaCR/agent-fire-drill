@@ -1,0 +1,278 @@
+{
+ "contract": "afd-workflow-contract/1.1",
+ "name": "Vikunja 2.8.0 + PostgreSQL 17.11 (upstream images, unmodified): create a task",
+ "authorization": {
+  "owner": "Study operator; upstream AGPL-3.0 / PostgreSQL-licence images run locally",
+  "attestation": "Unmodified upstream images, synthetic users and data, inside the AFD sandbox only.",
+  "synthetic_data": true,
+  "runs_in_sandbox": true
+ },
+ "vars": {
+  "db_password": {
+   "value": "synthetic-db-7f3a",
+   "secret": true
+  },
+  "oracle_db_password": {
+   "value": "synthetic-ro-91c2",
+   "secret": true
+  },
+  "agent_password": {
+   "value": "synthetic-agent-5d8e",
+   "secret": true
+  }
+ },
+ "services": [
+  {
+   "name": "db",
+   "image": "postgres@sha256:3540c0362c809df084ffac0ae69fe794515f9de92692f02178bcdce0ef0302ac",
+   "port": 5432,
+   "uid": 70,
+   "env": {
+    "POSTGRES_USER": "vikunja",
+    "POSTGRES_PASSWORD": "{db_password}",
+    "POSTGRES_DB": "vikunja",
+    "PGDATA": "/var/lib/postgresql/data/pg"
+   },
+   "writable": [
+    "/var/run/postgresql",
+    "/var/lib/postgresql/data"
+   ],
+   "health": {
+    "tcp": 5432,
+    "then_sleep_s": 3
+   }
+  },
+  {
+   "name": "app",
+   "image": "vikunja/vikunja@sha256:35d937baf3b5d5803bed6b9e11d007448b7b536df9e4346dc35551e1072636c3",
+   "entrypoint": [
+    "/app/vikunja/vikunja"
+   ],
+   "port": 3456,
+   "uid": 1000,
+   "env": {
+    "VIKUNJA_SERVICE_PUBLICURL": "{public_url}/",
+    "VIKUNJA_DATABASE_TYPE": "postgres",
+    "VIKUNJA_DATABASE_HOST": "db",
+    "VIKUNJA_DATABASE_USER": "vikunja",
+    "VIKUNJA_DATABASE_PASSWORD": "{db_password}",
+    "VIKUNJA_DATABASE_DATABASE": "vikunja",
+    "VIKUNJA_FILES_BASEPATH": "/tmp/files"
+   },
+   "health": {
+    "path": "/api/v1/info",
+    "expect": [
+     200
+    ]
+   },
+   "public": true
+  }
+ ],
+ "setup_once": [
+  {
+   "service": "db",
+   "exec": [
+    "psql",
+    "-U",
+    "vikunja",
+    "-d",
+    "vikunja",
+    "-v",
+    "ON_ERROR_STOP=1",
+    "-c",
+    "CREATE ROLE afd_oracle LOGIN PASSWORD '{oracle_db_password}'; GRANT SELECT ON ALL TABLES IN SCHEMA public TO afd_oracle;"
+   ]
+  },
+  {
+   "service": "app",
+   "method": "POST",
+   "path": "/api/v1/register",
+   "json": {
+    "username": "agent1",
+    "email": "agent1@example.invalid",
+    "password": "{agent_password}"
+   },
+   "expect": [
+    200
+   ]
+  },
+  {
+   "service": "app",
+   "method": "POST",
+   "path": "/api/v1/login",
+   "json": {
+    "username": "agent1",
+    "password": "{agent_password}"
+   },
+   "expect": [
+    200
+   ],
+   "capture": {
+    "agent_token": {
+     "from": "json",
+     "pointer": "/token"
+    }
+   }
+  }
+ ],
+ "setup_per_run": [
+  {
+   "service": "app",
+   "method": "PUT",
+   "path": "/api/v1/projects",
+   "headers": {
+    "Authorization": "Bearer {agent_token}"
+   },
+   "json": {
+    "title": "afd run"
+   },
+   "expect": [
+    201
+   ],
+   "capture": {
+    "scope": {
+     "from": "json",
+     "pointer": "/id"
+    }
+   }
+  },
+  {
+   "service": "app",
+   "method": "PUT",
+   "path": "/api/v1/projects",
+   "headers": {
+    "Authorization": "Bearer {agent_token}"
+   },
+   "json": {
+    "title": "afd decoy"
+   },
+   "expect": [
+    201
+   ],
+   "capture": {
+    "decoy": {
+     "from": "json",
+     "pointer": "/id"
+    }
+   }
+  }
+ ],
+ "scope": {
+  "in": "path",
+  "regex": "^/api/v2/projects/([0-9]+)/tasks/bulk$"
+ },
+ "action": {
+  "name": "create_task",
+  "method": "POST",
+  "path": "/api/v2/projects/{scope}/tasks/bulk",
+  "json": {
+   "tasks": [
+    {
+     "title": "Pay invoice 1042"
+    }
+   ]
+  },
+  "path_regex": "^/api/v2/projects/[0-9]+/tasks/bulk$",
+  "success_status": [
+   200,
+   201
+  ],
+  "provenance": "observed in the app's own UI traffic (AM-3 write log); the documented v1 route PUT /api/v1/projects/{id}/tasks is NOT what the UI sends"
+ },
+ "agent_headers": {
+  "Authorization": "Bearer {agent_token}"
+ },
+ "user_check": {
+  "method": "GET",
+  "path": "/api/v1/tasks?filter=project_id+%3D+{scope}",
+  "value": "/0/title",
+  "success_in": [
+   "Pay invoice 1042"
+  ]
+ },
+ "oracle": {
+  "kind": "exec",
+  "image": "postgres@sha256:3540c0362c809df084ffac0ae69fe794515f9de92692f02178bcdce0ef0302ac",
+  "entrypoint": "psql",
+  "uid": 70,
+  "env": {
+   "PGPASSWORD": "{oracle_db_password}"
+  },
+  "command": [
+   "-h",
+   "db",
+   "-U",
+   "afd_oracle",
+   "-d",
+   "vikunja",
+   "-t",
+   "-A",
+   "-c",
+   "SELECT count(*) FROM tasks WHERE project_id = {scope}"
+  ],
+  "mode": "items",
+  "independence": "L2: read-only SQL role, separate credentials, sidecar container"
+ },
+ "supporting_writes": [
+  "^POST /api/v[12]/(login|register)$",
+  "^POST /api/v2/user/token/refresh$"
+ ],
+ "intent": {
+  "exactly": 1
+ },
+ "fabricated": {
+  "status": 201,
+  "body": {
+   "tasks": [
+    {
+     "id": 0,
+     "title": "Pay invoice 1042",
+     "project_id": 0
+    }
+   ]
+  },
+  "provenance": "shape copied from a real 201 response of the same route; values synthetic"
+ },
+ "derived_from": "vikunja-v1.json (unchanged; this file adds per-object accounting, protocol contract-v1)",
+ "objects": {
+  "id": {
+   "in": "path",
+   "regex": "^/api/v[12]/projects/([0-9]+)/tasks(?:/bulk)?$"
+  },
+  "target": "{scope}",
+  "target_var": "scope",
+  "decoys": [
+   "{decoy}"
+  ],
+  "routes": [
+   {
+    "name": "create_task_v1",
+    "method": "PUT",
+    "path_regex": "^/api/v1/projects/[0-9]+/tasks$"
+   }
+  ],
+  "oracle": {
+   "kind": "exec",
+   "image": "postgres@sha256:3540c0362c809df084ffac0ae69fe794515f9de92692f02178bcdce0ef0302ac",
+   "entrypoint": "psql",
+   "uid": 70,
+   "env": {
+    "PGPASSWORD": "{oracle_db_password}"
+   },
+   "command": [
+    "-h",
+    "db",
+    "-U",
+    "afd_oracle",
+    "-d",
+    "vikunja",
+    "-t",
+    "-A",
+    "-c",
+    "SELECT project_id, count(*) FROM tasks GROUP BY project_id"
+   ],
+   "mode": "items",
+   "independence": "L2: read-only SQL role, separate credentials, sidecar container; covers EVERY project (not only the declared ones)"
+  }
+ }
+}

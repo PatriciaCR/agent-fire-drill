@@ -20,7 +20,17 @@ v1 (afd-workflow-contract/1) adds what real, unmodified applications need (compa
                  {kind: exec, image, command, ...} printing one integer (e.g. a read-only SQL count from a sidecar);
                  optional settle {stable_s, max_s} for asynchronous effects
   supporting_writes  optional regexes of write requests the contract authorises (login, session refresh) (AM-3)
-Safety rules (both versions): containerised apps inside the AFD sandbox only (no remote URLs), synthetic data, an
+v1.1 (afd-workflow-contract/1.1, protocol contract-v1) = v1 plus a required "objects" section (per-object accounting, M1):
+  objects.id         where a watched write names the object it changes: same forms as scope (json_body | query | header |
+                     form | cookie field, or path regex with one capture group)
+  objects.target     the authorised object (templated, e.g. "{item}"); objects.target_var: the variable the action
+                     uses for the object (lets the self-test aim the same action at a decoy)
+  objects.decoys     objects the self-test writes to on purpose (templated; captured by setup_per_run)
+  objects.routes     optional extra watched write routes in the family [{name, method, path_regex}]
+  objects.oracle     independent per-object SNAPSHOT of the whole family: {kind: exec, ...} printing "object|count" (or
+                     tab-separated) lines, or {kind: http, ..., list, key, value?} (value absent: count items per key);
+                     mode items|decrease. Effects per object = the change between the scenario-start and final snapshots
+Safety rules (all versions): containerised apps inside the AFD sandbox only (no remote URLs), synthetic data, an
 authorisation attestation, repo-confined mounts."""
 import copy, json, re, urllib.error, urllib.request
 from pathlib import Path
@@ -65,7 +75,9 @@ def load(path):
     c = json.loads(Path(path).read_text())
     _check_authorization(c)
     if c.get("contract") == "afd-workflow-contract/0": c = _normalise_v0(c)
-    elif c.get("contract") != "afd-workflow-contract/1": raise ContractError("unsupported contract version")
+    elif c.get("contract") not in ("afd-workflow-contract/1", "afd-workflow-contract/1.1"): raise ContractError("unsupported contract version")
+    if c.get("contract") == "afd-workflow-contract/1.1": _check_objects(c)
+    elif "objects" in c: raise ContractError("an 'objects' section requires afd-workflow-contract/1.1")
     for k in ("name", "services", "setup_per_run", "scope", "action", "user_check", "oracle", "intent", "fabricated"):
         if k not in c: raise ContractError(f"missing field: {k}")
     pub = [s for s in c["services"] if s.get("public")]
@@ -90,6 +102,38 @@ def load(path):
     if c["oracle"]["kind"] == "http" and c["oracle"].get("mode") not in ("items", "decrease"): raise ContractError("oracle.mode must be items or decrease")
     if not isinstance(c["intent"].get("exactly"), int): raise ContractError("intent.exactly must be an integer")
     return c
+
+OBJECT_ID_RX = r"[A-Za-z0-9@._:+-]{1,128}"     # object ids the proxy records verbatim; anything else is recorded as "unparseable"
+
+def _check_objects(c):
+    o = c.get("objects")
+    if not isinstance(o, dict): raise ContractError("afd-workflow-contract/1.1 requires an 'objects' section")
+    for k in ("id", "target", "target_var", "decoys", "oracle"):
+        if k not in o: raise ContractError(f"objects.{k} is required")
+    i = o["id"]
+    if i.get("in") not in SCOPE_IN: raise ContractError(f"objects.id.in must be one of {SCOPE_IN}")
+    if i["in"] == "path":
+        if re.compile(i["regex"]).groups != 1: raise ContractError("objects.id.regex must have exactly one capture group")
+    elif not i.get("field"): raise ContractError("objects.id.field is required")
+    if not (isinstance(o["decoys"], list) and o["decoys"]): raise ContractError("objects.decoys must list at least one decoy object")
+    for r in o.get("routes") or []: re.compile(r["path_regex"])
+    q = o["oracle"]
+    if q.get("kind") not in ("http", "exec"): raise ContractError("objects.oracle.kind must be http or exec")
+    if q.get("mode", "items") not in ("items", "decrease"): raise ContractError("objects.oracle.mode must be items or decrease")
+    if q["kind"] == "http" and not (q.get("list") is not None and q.get("key")): raise ContractError("objects.oracle (http) needs list and key pointers")
+
+def snapshot_from(o, doc=None, stdout=None):
+    """Parse a per-object oracle reading into {object id: number}."""
+    out = {}
+    if o["kind"] == "exec":
+        for line in (stdout or "").splitlines():
+            m = re.fullmatch(r"\s*(\S+?)\s*[|\t]\s*(-?\d+)\s*", line)
+            if m: out[m.group(1)] = out.get(m.group(1), 0) + int(m.group(2))
+        return out
+    for it in pointer(doc, o["list"]):
+        k = str(pointer(it, o["key"]))
+        out[k] = out.get(k, 0) + (int(pointer(it, o["value"])) if o.get("value") else 1)
+    return out
 
 def redacted(c):
     """A copy safe for evidence: secret variables replaced."""
@@ -163,8 +207,11 @@ def capture(spec, doc, hdrs, raw):
         out[var] = str(v)
     return out
 
-def protocol_for(contract, base_protocol_path=ROOT / "protocols" / "contract-v0.json"):
-    """The generic protocol, with the contract's identity recorded (no change to its rules)."""
+def protocol_for(contract, base_protocol_path=None):
+    """The generic protocol, with the contract's identity recorded (no change to its rules). contract-v0 for v0/v1
+    contracts; contract-v1 (per-object accounting) for v1.1 contracts."""
+    if base_protocol_path is None:
+        base_protocol_path = ROOT / "protocols" / ("contract-v1.json" if "objects" in contract else "contract-v0.json")
     p = copy.deepcopy(json.loads(Path(base_protocol_path).read_text()))
     p["workflow"] = {"environment": contract["name"], "task": contract["action"]["name"], "authorised_intent": f"exactly {contract['intent']['exactly']} effect(s)"}
     return p

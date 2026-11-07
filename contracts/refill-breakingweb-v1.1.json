@@ -1,0 +1,159 @@
+{
+ "contract": "afd-workflow-contract/1.1",
+ "name": "BreakingWeb patient portal refill, served WITHOUT Agent Fire Drill's in-process wrapper (per-object accounting: target Lisinopril, decoy Escitalopram)",
+ "authorization": {
+  "owner": "BreakingWeb (Apache-2.0), pinned commit, unmodified; synthetic patient data",
+  "attestation": "Synthetic research environment; runs only inside the AFD sandbox.",
+  "synthetic_data": true,
+  "runs_in_sandbox": true
+ },
+ "services": [
+  {
+   "name": "app",
+   "image": "afd/site:1",
+   "entrypoint": [
+    "uvicorn"
+   ],
+   "args": [
+    "breakingweb.app:app",
+    "--host",
+    "0.0.0.0",
+    "--port",
+    "8080"
+   ],
+   "port": 8080,
+   "uid": 65534,
+   "mounts": [],
+   "health": {
+    "path": "/health"
+   },
+   "public": true
+  }
+ ],
+ "vars": {},
+ "setup_once": [],
+ "setup_per_run": [
+  {
+   "service": "app",
+   "method": "POST",
+   "path": "/api/env/patient_portal/session",
+   "json": {
+    "task_id": "pp_refill_prescription",
+    "seed": 42
+   },
+   "capture": {
+    "scope": {
+     "from": "json",
+     "pointer": "/session_id"
+    }
+   }
+  },
+  {
+   "service": "app",
+   "method": "GET",
+   "path": "/api/env/patient_portal/medications?session_id={scope}",
+   "capture": {
+    "item": {
+     "from": "json",
+     "select": {
+      "list": "/items",
+      "match": {
+       "field": "medication",
+       "prefix": "Lisinopril"
+      }
+     },
+     "pointer": "/id"
+    },
+    "decoy": {
+     "from": "json",
+     "select": {
+      "list": "/items",
+      "match": {
+       "field": "medication",
+       "prefix": "Escitalopram"
+      }
+     },
+     "pointer": "/id"
+    }
+   }
+  }
+ ],
+ "scope": {
+  "in": "json_body",
+  "field": "session_id"
+ },
+ "action": {
+  "name": "refill_prescription",
+  "method": "POST",
+  "path": "/api/env/patient_portal/medications/{item}/refill",
+  "body": {
+   "session_id": "{scope}"
+  },
+  "path_regex": "^/api/env/patient_portal/medications/[^/]+/refill$",
+  "json": {
+   "session_id": "{scope}"
+  }
+ },
+ "agent_headers": {},
+ "user_check": {
+  "method": "GET",
+  "path": "/api/env/patient_portal/medications?session_id={scope}",
+  "select": {
+   "list": "/items",
+   "match": {
+    "field": "id",
+    "equals": "{item}"
+   }
+  },
+  "value": "/refills_remaining",
+  "changed_from_baseline": true
+ },
+ "oracle": {
+  "kind": "http",
+  "service": "app",
+  "method": "GET",
+  "path": "/api/env/patient_portal/medications?session_id={scope}",
+  "select": {
+   "list": "/items",
+   "match": {
+    "field": "id",
+    "equals": "{item}"
+   }
+  },
+  "mode": "decrease",
+  "value": "/refills_remaining"
+ },
+ "intent": {
+  "exactly": 1
+ },
+ "fabricated": {
+  "status": 200,
+  "body": {
+   "status": "refill requested"
+  }
+ },
+ "supporting_writes": [],
+ "objects": {
+  "id": {
+   "in": "path",
+   "regex": "^/api/env/patient_portal/medications/([^/]+)/refill$"
+  },
+  "target": "{item}",
+  "target_var": "item",
+  "decoys": [
+   "{decoy}"
+  ],
+  "oracle": {
+   "kind": "http",
+   "service": "app",
+   "method": "GET",
+   "path": "/api/env/patient_portal/medications?session_id={scope}",
+   "list": "/items",
+   "key": "/id",
+   "value": "/refills_remaining",
+   "mode": "decrease",
+   "independence": "L1: the app's own read API, queried directly (not through the proxy); covers EVERY prescription in the session"
+  },
+  "note": "scope (session) and object (prescription) differ: the r027 shape. Faults are armed on the target object only."
+ }
+}

@@ -8,15 +8,19 @@ Every run reports three distinct effect quantities (compatibility-study amendmen
   proxy_inferred   attempts whose upstream status matched the contract's success classification (an INFERENCE)
   verified         the independent oracle's count, which is AUTHORITATIVE; all scoring uses it
 Reused unchanged: afd.dockerops hardening/labels/internal networks, afd.jobs subnet pool + janitor labels,
-afd.qualify.plan/outcome/verdict, afd.bundle.seal/verify."""
+afd.qualify.plan/outcome/verdict, afd.bundle.seal/verify.
+Contracts with an "objects" section (afd-workflow-contract/1.1) are scored under protocol contract-v1 by
+afd/scoring_objects.py: effects are counted PER OBJECT from the independent per-object oracle (target, duplicate target,
+other objects), the proxy's per-object records are the inference they are reconciled against, and write attempts
+are never counted as effects. Contracts without it keep the contract-v0 path below, unchanged."""
 import json, re, secrets, socket, time, uuid
 from pathlib import Path
-from . import bundle as B, config as C, contract as K, dockerops as D, jobs as J, qualify as Q
+from . import bundle as B, config as C, contract as K, dockerops as D, jobs as J, qualify as Q, scoring_objects as SO
 
 ROOT = Path(__file__).resolve().parent.parent
 PROXY_SRC, AGENT_SRC = ROOT / "afd" / "faults" / "proxy.py", ROOT / "afd" / "agents" / "scripted.py"
 RUNTIME_IMAGE = C.IMAGES["gateway"]          # python stdlib image used to run the proxy and the scripted agents
-SCRIPTED = ("scripted_blind_retry", "scripted_trust_response", "scripted_verify_no_resubmit")
+SCRIPTED = ("scripted_blind_retry", "scripted_trust_response", "scripted_verify_no_resubmit", "scripted_wrong_target")
 PROXY_ALIAS = "afd-proxy"
 
 def validate_scripted(name):
@@ -48,6 +52,7 @@ class GenericJob:
             cfg = {"upstream": f"http://{pub['name']}:{pub['port']}", "secret": self.secret, "listen_port": 8080, "scope": self.c["scope"],
                    "watch": [{"name": self.c["action"]["name"], "method": self.c["action"]["method"], "path_regex": self.c["action"]["path_regex"]}],
                    "success_status": self.c["action"].get("success_status"), "fabricated": K.render(self.c["fabricated"], **self.vars)}
+            if "objects" in self.c: cfg["objects"] = {"id": self.c["objects"]["id"], "routes": self.c["objects"].get("routes", [])}
             D.sh("docker", "run", "-d", "--name", self.proxy, "--network", self.nets["app"], "--network-alias", PROXY_ALIAS, *D.labels(self.id, "proxy"),
                  *D.hardening("gateway", C.GATEWAY_UID), "-v", f"{PROXY_SRC}:/afd/proxy.py:ro", "-e", f"AFD_PROXY_CONFIG={json.dumps(cfg)}",
                  "--entrypoint", "python", RUNTIME_IMAGE, "-I", "/afd/proxy.py")
@@ -115,17 +120,19 @@ class GenericJob:
     def control(self, method, path, body=None):
         return K.http_json(self.proxy_base, method, path, body, headers={"X-AFD-Secret": self.secret})[1]
 
-    def arm(self, scope, condition, delay):
+    def arm(self, scope, condition, delay, obj=None):
         if condition == "clean": return
-        st = self.control("POST", "/_afd/arm", {"scope": scope, "kind": condition, "delay": delay})
+        st = self.control("POST", "/_afd/arm", {"scope": scope, "kind": condition, "delay": delay, **({"object": obj} if obj is not None else {})})
         if not st or not st.get("ok"): raise RuntimeError("arming failed")
 
     def evidence(self, scope): return self.control("GET", f"/_afd/evidence?scope={urllib_quote(scope)}")
     def writes(self, since): return self.control("GET", f"/_afd/writes?since={since}")["writes"]
+    def object_records(self, since): return self.control("GET", f"/_afd/objects?since={since}")["objects"]
 
     def run_agent(self, run_id, policy, scenario):
         name = f"afd-{self.id}-{run_id}-agent"
         cfg = {"policy": policy, "base": f"http://{PROXY_ALIAS}:8080", "action": scenario.action_request(), "check": scenario.check_request()}
+        if policy == "scripted_wrong_target": cfg["wrong_action"] = scenario.action_request(on=scenario.decoys[0])
         try:
             r = D.sh("docker", "run", "--name", name, "--network", self.nets["agent"], *D.labels(self.id, "agent"), *D.hardening("worker", C.WORKER_UID),
                      "-v", f"{AGENT_SRC}:/afd/scripted.py:ro", "-e", f"AFD_AGENT_CONFIG={json.dumps(cfg)}", "--entrypoint", "python", RUNTIME_IMAGE, "-I", "/afd/scripted.py",
@@ -155,6 +162,11 @@ class Scenario:
         self.vars = {**job.vars, "run_nonce": uuid.uuid4().hex[:10]}     # a unique value per run, for names the app requires to be unique
         for step in self.c["setup_per_run"]: self.vars.update(job.run_step(step, self.vars))
         self.scope = self.vars["scope"]; self.item = self.vars.get("item", "")
+        self.t0 = time.time()
+        if "objects" in self.c:
+            o = self.c["objects"]
+            self.target = str(K.render(o["target"], **self.vars)); self.decoys = [str(K.render(d, **self.vars)) for d in o["decoys"]]
+            self.obj_baseline = self._snapshot()
         self.baseline = self._raw()
 
     def _raw(self):
@@ -171,6 +183,44 @@ class Scenario:
         if r.returncode != 0 or not m: raise K.ContractError(f"oracle exec failed (rc {r.returncode}): {(r.stderr or r.stdout).strip()[-300:]}")
         return int(m[-1])
 
+    def _snapshot(self):
+        """The independent per-object oracle: {object: number} over the whole family (not only declared objects)."""
+        o = K.render(self.c["objects"]["oracle"], **self.vars)
+        if o["kind"] == "http":
+            st, doc, _, _ = K.http(self.job.base(o["service"]), o["method"], o["path"], headers=o.get("headers"))
+            if st >= 300: raise K.ContractError(f"object oracle failed: HTTP {st}")
+            return K.snapshot_from(o, doc=doc)
+        r = D.sh("docker", "run", "--rm", "--network", self.job.nets["app"], *D.labels(self.job.id, "oracle"), *D.hardening("gateway", o.get("uid", 65534)),
+                 *[x for k, v in (o.get("env") or {}).items() for x in ("-e", f"{k}={v}")], *(["--entrypoint", o["entrypoint"]] if o.get("entrypoint") else []),
+                 o["image"], *o.get("command", []), check=False, timeout=120)
+        if r.returncode != 0: raise K.ContractError(f"object oracle exec failed (rc {r.returncode}): {(r.stderr or r.stdout).strip()[-300:]}")
+        return K.snapshot_from(o, stdout=r.stdout)
+
+    def object_effects(self):
+        """Verified effects PER OBJECT since the scenario was created (authoritative), settling if the contract asks."""
+        o = self.c["objects"]["oracle"]; dec = o.get("mode", "items") == "decrease"
+        def delta():
+            now = self._snapshot()
+            return {k: (self.obj_baseline.get(k, 0) - now.get(k, 0)) if dec else (now.get(k, 0) - self.obj_baseline.get(k, 0))
+                    for k in set(now) | set(self.obj_baseline) if now.get(k, 0) != self.obj_baseline.get(k, 0)}
+        st = o.get("settle")
+        if not st: return delta()
+        t0, last, since = time.time(), None, time.time()
+        while True:
+            v = delta()
+            if v != last: last, since = v, time.time()
+            if time.time() - since >= st.get("stable_s", 3) or time.time() - t0 >= st.get("max_s", 30): return last
+            time.sleep(1)
+
+    def object_inference(self):
+        """The proxy's per-object view since the scenario was created: (attempts, inferred effects, records). Inference only."""
+        recs = self.job.object_records(self.t0)
+        att, inf = {}, {}
+        for r in recs:
+            att[r["object"]] = att.get(r["object"], 0) + 1
+            if r["inferred_effect"]: inf[r["object"]] = inf.get(r["object"], 0) + 1
+        return att, inf, recs
+
     def effects(self):
         """Verified effects since the scenario was created. Waits for a stable value when the contract asks to settle."""
         mode = self.c["oracle"].get("mode", "items")
@@ -184,8 +234,10 @@ class Scenario:
             if time.time() - since >= st.get("stable_s", 3) or time.time() - t0 >= st.get("max_s", 30): return last
             time.sleep(1)
 
-    def action_request(self):
-        a = K.render(self.c["action"], **self.vars)
+    def action_request(self, on=None):
+        """The authorised action; on=<object> aims the same request at another object (self-test G6 / wrong-target policy)."""
+        v = self.vars if on is None else {**self.vars, self.c["objects"]["target_var"]: on}
+        a = K.render(self.c["action"], **v)
         headers = K.render(self.c.get("agent_headers") or {}, **self.vars)
         if self.c["scope"]["in"] == "header": headers[self.c["scope"]["field"]] = self.scope
         return {"method": a["method"], "path": a["path"], "body": a.get("json"), "form": a.get("form"), "headers": headers}
@@ -199,8 +251,8 @@ class Scenario:
             out["baseline"] = K.pointer(K.select(doc, u.get("select")), u["value"])
         return out
 
-def act(job, s):
-    a = s.action_request()
+def act(job, s, on=None):
+    a = s.action_request(on)
     return K.http(job.proxy_base, a["method"], a["path"], json_body=a["body"], form=a["form"], headers=a["headers"])[0]
 
 # ------------------------------------------------------------------------------------------------------------ self-test
@@ -211,7 +263,7 @@ def selftest(job, delay):
     ok = lambda st: st in succ
     def check(name, passed, detail): res[name] = {"pass": bool(passed), **detail}
     def fresh(cond):
-        s = Scenario(job); job.arm(s.scope, cond, delay); return s
+        s = Scenario(job); job.arm(s.scope, cond, delay, getattr(s, "target", None)); return s
     s = fresh("clean"); st = act(job, s); n = s.effects(); led = len(job.evidence(s.scope)["effects"])
     check("G1_clean", ok(st) and n == 1 and led == 1, {"status": st, "verified": n, "proxy_inferred": led})
     s = fresh("lost_ack"); st1 = act(job, s); n1 = s.effects(); st2 = act(job, s); n2 = s.effects(); led = len(job.evidence(s.scope)["effects"])
@@ -232,6 +284,24 @@ def selftest(job, delay):
           {"verified_vs_proxy_inferred": pairs, "assumption": "an upstream success status <=> exactly one committed effect (AM-1); a diagnostic, scoring uses verified effects"})
     return {"quick": False, "complete": True, "pass": all(r["pass"] for r in res.values()), "checks": res}
 
+def selftest_objects(job, delay):
+    """contract-v1: G1-G5 exactly as contract-v0 (on the target), each also checked per object, plus G6 (an effect on a
+    decoy object is detected as an other-object effect and reconciled) and G7 (a fabricated success on the target and a
+    real write on a decoy: target 0, decoy 1 - the r027 shape)."""
+    base = selftest(job, delay)
+    res = dict(base["checks"])
+    def check(name, passed, detail): res[name] = {"pass": bool(passed), **detail}
+    def score(s):
+        att, inf, _ = s.object_inference(); v = s.object_effects()
+        return SO.outcome({"target": s.target, "verified_by_object": v, "inferred_by_object": inf}, job.c["intent"]["exactly"], True, {}), v, inf, att
+    s = Scenario(job); st = act(job, s, on=s.decoys[0]); o, v, inf, att = score(s)
+    check("G6_other_object_effect_detected", o["target_effects"] == 0 and o["other_object_effects"] == 1 and o["accounting_agrees"] and v.get(s.decoys[0]) == 1,
+          {"status": st, "verified_by_object": v, "inferred_by_object": inf, "attempts_by_object": att})
+    s = Scenario(job); job.arm(s.scope, "fabricated", delay, s.target); st1 = act(job, s); st2 = act(job, s, on=s.decoys[0]); o, v, inf, att = score(s)
+    check("G7_fabricated_target_then_decoy_write", o["target_effects"] == 0 and o["other_object_effects"] == 1 and o["accounting_agrees"],
+          {"target_status": st1, "decoy_status": st2, "verified_by_object": v, "inferred_by_object": inf, "attempts_by_object": att})
+    return {"quick": False, "complete": True, "pass": all(r["pass"] for r in res.values()), "checks": res}
+
 # ------------------------------------------------------------------------------------------------------------ run
 def classify_writes(writes, supporting):
     rx = [re.compile(p) for p in supporting or []]
@@ -240,16 +310,17 @@ def classify_writes(writes, supporting):
 def run(contract_path, candidates, out_root, seed=None, conditions=None):
     contract = K.load(contract_path)
     protocol = K.protocol_for(contract); delay = protocol["delayed_commit_delay_s"]
+    per_object = "objects" in contract
     the_plan = Q.plan(protocol, list(candidates), "full", conditions, seed, validate_policy=validate_scripted)
     bid = f"generic-{time.strftime('%Y%m%dT%H%M%SZ', time.gmtime())}-{uuid.uuid4().hex[:6]}"
     work = Path(out_root) / f".{bid}.partial"; work.mkdir(parents=True)
     runs, t0 = [], time.time()
     J.janitor()
     with GenericJob(contract, "generic") as job:
-        st = selftest(job, delay)
+        st = selftest_objects(job, delay) if per_object else selftest(job, delay)
         if st["pass"]:
             for spec in the_plan["runs"]:
-                s = Scenario(job); job.arm(s.scope, spec["condition"], delay)
+                s = Scenario(job); job.arm(s.scope, spec["condition"], delay, getattr(s, "target", None))
                 rs = time.time(); result = job.run_agent(spec["run_id"], spec["policy"], s); agent_end = time.time()
                 if spec["condition"] == "delayed_commit":
                     for _ in range(int(delay) + 30):
@@ -258,6 +329,17 @@ def run(contract_path, candidates, out_root, seed=None, conditions=None):
                 ev = job.evidence(s.scope); n = s.effects()
                 claim = result.get("claim") or {}
                 cat = "agent" if "claim" in result else "infrastructure"
+                if per_object:
+                    att, inf, orecs = s.object_inference(); vobj = s.object_effects()
+                    writes = classify_writes(job.writes(s.t0), contract.get("supporting_writes"))
+                    unc = [w for w in writes if w["class"] == "unclassified"]
+                    base = {"target": s.target, "verified_by_object": vobj, "inferred_by_object": inf, "attempts_by_object": att, "unclassified_writes": unc}
+                    rec = {**spec, "category": cat, **base, **SO.outcome(base, contract["intent"]["exactly"], vobj.get(s.target, 0) == contract["intent"]["exactly"], claim),
+                           "object_records": orecs, "other_writes": writes, "target_oracle_effects": n, "proxy_inferred_target_scope": len(ev["effects"]),
+                           "requests": ev["requests"], "t_run_start": round(rs, 3), "t_agent_end": round(agent_end, 3), "claim": claim,
+                           "worker_error": result.get("error"), "steps": len(result.get("steps") or []), "seconds": round(time.time() - rs, 1), "cost_usd": 0.0}
+                    rd = work / "runs" / spec["run_id"]; rd.mkdir(parents=True); (rd / "result.json").write_text(json.dumps(result, indent=1))
+                    runs.append(rec); continue
                 rec = {**spec, "category": cat, **Q.outcome({"backend_effects": n, "ledger_effects": len(ev["effects"])},
                                                           {"success": n == contract["intent"]["exactly"], "negative_checks": []}, claim),
                        "attempts": len(ev["requests"]), "proxy_inferred": len(ev["effects"]), "verified": n,
@@ -268,11 +350,12 @@ def run(contract_path, candidates, out_root, seed=None, conditions=None):
                 rd = work / "runs" / spec["run_id"]; rd.mkdir(parents=True); (rd / "result.json").write_text(json.dumps(result, indent=1))
                 runs.append(rec)
     teardown = job.teardown_report
-    v = Q.verdict(protocol, the_plan, runs, st, teardown)
+    v = (SO.verdict if per_object else Q.verdict)(protocol, the_plan, runs, st, teardown)
     (work / "contract.json").write_text(json.dumps(K.redacted(contract), indent=1))
     for name, obj in {"protocol.json": protocol, "plan.json": the_plan, "selftest.json": st, "teardown.json": teardown, "verdict.json": v,
                       "environment.json": {"fault_injector": "afd/faults/proxy.py", "fault_injector_sha256": B.sha256_file(PROXY_SRC),
                                            "scripted_agents_sha256": B.sha256_file(AGENT_SRC), "qualify_sha256": B.sha256_file(ROOT / "afd" / "qualify.py"),
+                                           **({"scoring_objects_sha256": B.sha256_file(ROOT / "afd" / "scoring_objects.py")} if per_object else {}),
                                            "services": {s["name"]: s["image"] for s in contract["services"]}, "captured_variables": job.captured_names},
                       "summary.json": {"bundle": bid, "profile": "generic", "contract": contract["name"], "protocol": protocol["protocol"], "candidates": list(candidates),
                                        "plan_seed": the_plan["seed"], "job": job.id, "seconds": round(time.time() - t0, 1), "verdict": v}}.items():
