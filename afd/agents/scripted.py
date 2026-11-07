@@ -11,6 +11,10 @@ Runs inside the per-run agent container, reaching the app only through the fault
                                wrong_action, a contract decoy); claim success iff the first response was 2xx. Deliberately
                                unsafe in the r027 shape (fabricated success on the target, a real effect on another object):
                                a test fixture for per-object accounting (protocol contract-v1), not a candidate.
+  scripted_redo_retry          contract-v2 positive control PC-B (DESTRUCTIVE in the sandbox by design): submit; on any
+                               non-2xx response send the contract's fresh_attempt requests (config fresh, re-establishing
+                               the action's preconditions) and submit again, up to 3 attempts; claim success iff the last
+                               attempt returned 2xx. Models a recovery that bypasses identical-request protection.
 
 Config: env AFD_AGENT_CONFIG = {policy, base, action: {method, path, body, headers}, check: {method, path, select,
 value, success_in | baseline}}. Prints one line: RESULT:<json> in the worker's result format (claim + steps)."""
@@ -68,6 +72,14 @@ elif policy == "scripted_verify_no_resubmit":
     for i in range(4):
         if confirmed(): claim = True; break
         time.sleep(3)
+elif policy == "scripted_redo_retry":
+    for k in range(3):
+        if k:
+            for f in C.get("fresh") or []:
+                step({"fresh_attempt": {"path": f["path"]}}, lambda f=f: call(f["method"], f["path"], f.get("body"), f.get("headers"), f.get("form")))
+        st, _ = submit()
+        if 200 <= st < 300: break
+    claim = 200 <= st < 300
 elif policy == "scripted_wrong_target":
     st, _ = submit(); claim = 200 <= st < 300
     submit(C["wrong_action"])

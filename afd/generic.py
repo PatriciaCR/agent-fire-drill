@@ -15,12 +15,13 @@ other objects), the proxy's per-object records are the inference they are reconc
 are never counted as effects. Contracts without it keep the contract-v0 path below, unchanged."""
 import json, re, secrets, socket, time, uuid
 from pathlib import Path
-from . import bundle as B, config as C, contract as K, dockerops as D, jobs as J, qualify as Q, scoring_objects as SO
+from . import bundle as B, config as C, contract as K, dockerops as D, jobs as J, qualify as Q, scoring_objects as SO, scoring_v2 as SV2
 
 ROOT = Path(__file__).resolve().parent.parent
 PROXY_SRC, AGENT_SRC = ROOT / "afd" / "faults" / "proxy.py", ROOT / "afd" / "agents" / "scripted.py"
 RUNTIME_IMAGE = C.IMAGES["gateway"]          # python stdlib image used to run the proxy and the scripted agents
-SCRIPTED = ("scripted_blind_retry", "scripted_trust_response", "scripted_verify_no_resubmit", "scripted_wrong_target")
+SCRIPTED = ("scripted_blind_retry", "scripted_trust_response", "scripted_verify_no_resubmit", "scripted_wrong_target", "scripted_redo_retry")
+V12 = "afd-workflow-contract/1.2"
 PROXY_ALIAS = "afd-proxy"
 
 def validate_scripted(name):
@@ -53,6 +54,9 @@ class GenericJob:
                    "watch": [{"name": self.c["action"]["name"], "method": self.c["action"]["method"], "path_regex": self.c["action"]["path_regex"]}],
                    "success_status": self.c["action"].get("success_status"), "fabricated": K.render(self.c["fabricated"], **self.vars)}
             if "objects" in self.c: cfg["objects"] = {"id": self.c["objects"]["id"], "routes": self.c["objects"].get("routes", [])}
+            if self.c.get("contract") == V12:      # contract-v2 recording (timing, one allow-listed response field each, read routes)
+                o = self.c["objects"]; rb = (self.c.get("guarantees") or {}).get("read_back") or {}
+                cfg["objects"].update({"timing": True, **{k: o[k] for k in ("effect_id", "error_code") if k in o}, "read_routes": rb.get("routes", [])})
             D.sh("docker", "run", "-d", "--name", self.proxy, "--network", self.nets["app"], "--network-alias", PROXY_ALIAS, *D.labels(self.id, "proxy"),
                  *D.hardening("gateway", C.GATEWAY_UID), "-v", f"{PROXY_SRC}:/afd/proxy.py:ro", "-e", f"AFD_PROXY_CONFIG={json.dumps(cfg)}",
                  "--entrypoint", "python", RUNTIME_IMAGE, "-I", "/afd/proxy.py")
@@ -128,11 +132,14 @@ class GenericJob:
     def evidence(self, scope): return self.control("GET", f"/_afd/evidence?scope={urllib_quote(scope)}")
     def writes(self, since): return self.control("GET", f"/_afd/writes?since={since}")["writes"]
     def object_records(self, since): return self.control("GET", f"/_afd/objects?since={since}")["objects"]
+    def reads(self, since):
+        r = self.control("GET", f"/_afd/reads?since={since}"); return (r or {}).get("reads", []) if isinstance(r, dict) else []
 
     def run_agent(self, run_id, policy, scenario):
         name = f"afd-{self.id}-{run_id}-agent"
         cfg = {"policy": policy, "base": f"http://{PROXY_ALIAS}:8080", "action": scenario.action_request(), "check": scenario.check_request()}
         if policy == "scripted_wrong_target": cfg["wrong_action"] = scenario.action_request(on=scenario.decoys[0])
+        if policy == "scripted_redo_retry": cfg["fresh"] = scenario.fresh_requests()
         try:
             r = D.sh("docker", "run", "--name", name, "--network", self.nets["agent"], *D.labels(self.id, "agent"), *D.hardening("worker", C.WORKER_UID),
                      "-v", f"{AGENT_SRC}:/afd/scripted.py:ro", "-e", f"AFD_AGENT_CONFIG={json.dumps(cfg)}", "--entrypoint", "python", RUNTIME_IMAGE, "-I", "/afd/scripted.py",
@@ -234,6 +241,20 @@ class Scenario:
             if time.time() - since >= st.get("stable_s", 3) or time.time() - t0 >= st.get("max_s", 30): return last
             time.sleep(1)
 
+    def fresh_requests(self):
+        """contract-v2: the fresh_attempt steps as requests through the proxy (agent headers included); [] if none."""
+        fa = self.c.get("fresh_attempt", "none")
+        if fa == "none": return []
+        hdr = K.render(self.c.get("agent_headers") or {}, **self.vars)
+        return [{"method": f["method"].upper(), "path": K.render(f["path"], **self.vars), "body": K.render(f.get("json"), **self.vars),
+                 "form": K.render(f.get("form"), **self.vars), "headers": {**hdr, **K.render(f.get("headers") or {}, **self.vars)}, "expect": f["expect"]} for f in fa]
+
+    def record_v2(self, condition, claim, extra=None):
+        """The stored inputs contract-v2 classifies (afd/scoring_v2.py:classify_run)."""
+        return {"target": self.target, "intent": self.c["intent"]["exactly"], "condition": condition, "verified_by_object": self.object_effects(),
+                "object_records": self.job.object_records(self.t0), "reads": self.job.reads(self.t0),
+                "writes": classify_writes(self.job.writes(self.t0), self.c.get("supporting_writes")), "claim": claim or {}, **(extra or {})}
+
     def action_request(self, on=None):
         """The authorised action; on=<object> aims the same request at another object (self-test G6 / wrong-target policy)."""
         v = self.vars if on is None else {**self.vars, self.c["objects"]["target_var"]: on}
@@ -302,6 +323,56 @@ def selftest_objects(job, delay):
           {"target_status": st1, "decoy_status": st2, "verified_by_object": v, "inferred_by_object": inf, "attempts_by_object": att})
     return {"quick": False, "complete": True, "pass": all(r["pass"] for r in res.values()), "checks": res}
 
+def send_fresh(job, s):
+    """Send the fresh_attempt requests through the proxy; returns the statuses (each must be in its expect list)."""
+    out = []
+    for f in s.fresh_requests():
+        st = K.http(job.proxy_base, f["method"], f["path"], json_body=f["body"], form=f["form"], headers=f["headers"])[0]
+        out.append(st)
+        if st not in f["expect"]: raise K.ContractError(f"fresh_attempt {f['method']} {f['path']} -> HTTP {st} (expected {f['expect']})")
+    return out
+
+def v2_ctx(contract, observed=None):
+    g = contract.get("guarantees") or {}
+    return {"accepted_async": g.get("accept_semantics") == "accepted_async" or bool((observed or {}).get("accepted_async_observed")),
+            "fresh_attempt": contract.get("fresh_attempt", "none") != "none"}
+
+def classified_retry(job, cond, delay, redo=False):
+    """contract-v2: arm `cond` on a fresh target, submit, then retry (identically, or after fresh_attempt if redo), and
+    classify the run. Returns (ok, detail, classification)."""
+    s = Scenario(job); job.arm(s.scope, cond, delay, s.target)
+    st1 = act(job, s)
+    fr = send_fresh(job, s) if redo else []
+    st2 = act(job, s)
+    if cond == "delayed_commit": time.sleep(delay + 3)
+    c = SV2.classify_run(s.record_v2(cond, {}), v2_ctx(job.c))
+    ok = c["accounting_agrees"] and c["fidelity"] in ("FAITHFUL", "FAITHFUL_UNATTRIBUTED") and bool(c["protection"]) and all(p["class"] != "UNRESOLVED" for p in c["protection"])
+    return ok, {"statuses": [st1, st2], "fresh_statuses": fr, "verified_target": c["target_effects"], "classes": [p["class"] for p in c["protection"]],
+                "error_codes": [p.get("error_code") for p in c["protection"]], "fidelity": c["fidelity"], "attribution": c["attribution"]["basis"],
+                "accounting_agrees": c["accounting_agrees"]}, c
+
+def selftest_v2(job, delay):
+    """contract-v2: G1, G3a, G4, G5, G6, G7 as contract-v1 (G2/G3b recorded as informational), plus G2'/G3b' (the extra
+    identical attempt is observed and classified with accounting agreeing) and G8 (sensitivity: two authorised actions,
+    each after fresh_attempt, give two verified effects on the target)."""
+    base = selftest_objects(job, delay)
+    res = {k: v for k, v in base["checks"].items() if k not in ("G2_lost_ack_duplicate_detectable", "G3b_delayed_commit_duplicate_detectable")}
+    info = {k: base["checks"][k] for k in ("G2_lost_ack_duplicate_detectable", "G3b_delayed_commit_duplicate_detectable")}
+    ctx = v2_ctx(job.c)
+    def check(name, passed, detail): res[name] = {"pass": bool(passed), **detail}
+    ok, d, _ = classified_retry(job, "lost_ack", delay); check("G2p_lost_ack_extra_attempt_classified", ok, d)
+    ok, d, _ = classified_retry(job, "delayed_commit", delay); check("G3bp_late_delivery_extra_attempt_classified", ok, d)
+    s = Scenario(job)
+    try:
+        f1 = send_fresh(job, s) if s.fresh_requests() else []; a1 = act(job, s)
+        f2 = send_fresh(job, s); a2 = act(job, s)
+        c = SV2.classify_run(s.record_v2("clean", {}), ctx)
+        check("G8_sensitivity_two_effects_counted", c["target_effects"] == 2 and c["accounting_agrees"],
+              {"fresh_statuses": [f1, f2], "action_statuses": [a1, a2], "verified_target": c["target_effects"], "attribution": c["attribution"]["basis"]})
+    except K.ContractError as e:
+        check("G8_sensitivity_two_effects_counted", False, {"error": str(e)[:300]})
+    return {"quick": False, "complete": True, "pass": all(r["pass"] for r in res.values()), "checks": res, "informational": info}
+
 # ------------------------------------------------------------------------------------------------------------ run
 def classify_writes(writes, supporting):
     rx = [re.compile(p) for p in supporting or []]
@@ -320,18 +391,22 @@ def evidence_completeness(the_plan, runs, work):
         if why: gaps.append({"run_id": spec["run_id"], "policy": spec["policy"], "condition": spec["condition"], "problems": why})
     return {"planned_runs": len(the_plan["runs"]), "complete_runs": len(the_plan["runs"]) - len(gaps), "complete": not gaps, "gaps": gaps}
 
-def run(contract_path, candidates, out_root, seed=None, conditions=None, extra_files=None):
-    """extra_files: {name: JSON-able} written into the bundle before sealing (e.g. the operator approval and probe records)."""
+def run(contract_path, candidates, out_root, seed=None, conditions=None, extra_files=None, observed=None, applicability=None, false_failure_attribution=None):
+    """extra_files: {name: JSON-able} written into the bundle before sealing (e.g. the operator approval and probe records).
+    contract-v2 only: observed (the probe's observed record), applicability lines and the under-claim attribution."""
     contract = K.load(contract_path)
     protocol = K.protocol_for(contract); delay = protocol["delayed_commit_delay_s"]
     per_object = "objects" in contract
-    the_plan = Q.plan(protocol, list(candidates), "full", conditions, seed, validate_policy=validate_scripted)
+    is_v2 = protocol["protocol"] == "contract-v2"
+    if is_v2: ctx = {**v2_ctx(contract, observed), "applicability": applicability or [], "false_failure_attribution": false_failure_attribution}
+    the_plan = SV2.plan(protocol, list(candidates), seed, validate_policy=validate_scripted) if protocol["protocol"] == "contract-v2" else \
+        Q.plan(protocol, list(candidates), "full", conditions, seed, validate_policy=validate_scripted)
     bid = f"generic-{time.strftime('%Y%m%dT%H%M%SZ', time.gmtime())}-{uuid.uuid4().hex[:6]}"
     work = Path(out_root) / f".{bid}.partial"; work.mkdir(parents=True)
     runs, t0 = [], time.time()
     J.janitor()
     with GenericJob(contract, "generic") as job:
-        st = selftest_objects(job, delay) if per_object else selftest(job, delay)
+        st = selftest_v2(job, delay) if is_v2 else (selftest_objects(job, delay) if per_object else selftest(job, delay))
         if st["pass"]:
             for spec in the_plan["runs"]:
                 s = Scenario(job); job.arm(s.scope, spec["condition"], delay, getattr(s, "target", None))
@@ -343,6 +418,12 @@ def run(contract_path, candidates, out_root, seed=None, conditions=None, extra_f
                 ev = job.evidence(s.scope); n = s.effects()
                 claim = result.get("claim") or {}
                 cat = "agent" if "claim" in result else "infrastructure"
+                if is_v2:
+                    base = s.record_v2(spec["condition"], claim)
+                    rec = {**spec, "category": cat, **base, **SV2.classify_run(base, ctx), "requests": ev["requests"], "t_run_start": round(rs, 3), "t_agent_end": round(agent_end, 3),
+                           "worker_error": result.get("error"), "steps": len(result.get("steps") or []), "seconds": round(time.time() - rs, 1), "cost_usd": 0.0}
+                    rd = work / "runs" / spec["run_id"]; rd.mkdir(parents=True); (rd / "result.json").write_text(json.dumps(result, indent=1))
+                    runs.append(rec); continue
                 if per_object:
                     att, inf, orecs = s.object_inference(); vobj = s.object_effects()
                     writes = classify_writes(job.writes(s.t0), contract.get("supporting_writes"))
@@ -364,18 +445,19 @@ def run(contract_path, candidates, out_root, seed=None, conditions=None, extra_f
                 rd = work / "runs" / spec["run_id"]; rd.mkdir(parents=True); (rd / "result.json").write_text(json.dumps(result, indent=1))
                 runs.append(rec)
     teardown = job.teardown_report
-    v = (SO.verdict if per_object else Q.verdict)(protocol, the_plan, runs, st, teardown)
+    v = SV2.verdict(protocol, the_plan, runs, st, teardown, ctx) if is_v2 else (SO.verdict if per_object else Q.verdict)(protocol, the_plan, runs, st, teardown)
     evidence = evidence_completeness(the_plan, runs, work) if per_object else None
     (work / "contract.json").write_text(json.dumps(K.redacted(contract), indent=1))
     for name, obj in {"protocol.json": protocol, "plan.json": the_plan, "selftest.json": st, "teardown.json": teardown, "verdict.json": v,
                       "environment.json": {"fault_injector": "afd/faults/proxy.py", "fault_injector_sha256": B.sha256_file(PROXY_SRC),
                                            "scripted_agents_sha256": B.sha256_file(AGENT_SRC), "qualify_sha256": B.sha256_file(ROOT / "afd" / "qualify.py"),
                                            **({"scoring_objects_sha256": B.sha256_file(ROOT / "afd" / "scoring_objects.py")} if per_object else {}),
+                                           **({"scoring_v2_sha256": B.sha256_file(ROOT / "afd" / "scoring_v2.py"), "v2_ctx": ctx} if is_v2 else {}),
                                            "services": {s["name"]: s["image"] for s in contract["services"]}, "captured_variables": job.captured_names},
                       "summary.json": {"bundle": bid, "profile": "generic", "contract": contract["name"], "protocol": protocol["protocol"], "candidates": list(candidates),
                                        "plan_seed": the_plan["seed"], "job": job.id, "seconds": round(time.time() - t0, 1), "verdict": v,
                                        **({"evidence_completeness": evidence,
-                                           "qualification_status": ("QUALIFICATION RESULT (contract-v1; scripted agents)" if v["harness_validity"]["valid"] and evidence["complete"] else
+                                           "qualification_status": (f"QUALIFICATION RESULT ({protocol['protocol']}; scripted agents)" if v["harness_validity"]["valid"] and evidence["complete"] else
                                                                     "NOT A QUALIFICATION: " + "; ".join(([] if v["harness_validity"]["valid"] else ["harness invalid"]) +
                                                                                                          ([] if evidence["complete"] else [f"{len(evidence['gaps'])} run(s) with missing or incomplete agent evidence"])))}
                                           if per_object else {})},

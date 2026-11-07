@@ -30,6 +30,15 @@ v1.1 (afd-workflow-contract/1.1, protocol contract-v1) = v1 plus a required "obj
   objects.oracle     independent per-object SNAPSHOT of the whole family: {kind: exec, ...} printing "object|count" (or
                      tab-separated) lines, or {kind: http, ..., list, key, value?} (value absent: count items per key);
                      mode items|decrease. Effects per object = the change between the scenario-start and final snapshots
+v1.2 (afd-workflow-contract/1.2, protocol contract-v2) = v1.1 plus application-contract fields (M4):
+  guarantees     DECLARED properties (observed ones are written only by `afd contract probe`, never here):
+                 idempotency {mechanism: none|key_header|natural_key|state_precondition, scope: identical_request|intent,
+                 header?, window_s?}; read_back {available, routes: [{method: GET, path_regex}], ui_paths?: [regex],
+                 max_lag_s?}; accept_semantics: commit|accepted_async; in_flight_bound_s?; read_lag_s?
+  fresh_attempt  "none" or at most 5 HTTP steps {method GET|POST|PUT|PATCH, path "/...", json|form?, headers?, expect}
+                 that re-establish the action's preconditions; sent THROUGH the proxy inside the sandbox (PC-B, G8)
+  objects.effect_id {from: json, pointer} | {from: header, name}; objects.error_code {pointer}: one allow-listed
+                 response field each, for causal attribution and protection classes
 Safety rules (all versions): containerised apps inside the AFD sandbox only (no remote URLs), synthetic data, an
 authorisation attestation, repo-confined mounts."""
 import copy, json, re, urllib.error, urllib.request
@@ -75,9 +84,11 @@ def load(path):
     c = json.loads(Path(path).read_text())
     _check_authorization(c)
     if c.get("contract") == "afd-workflow-contract/0": c = _normalise_v0(c)
-    elif c.get("contract") not in ("afd-workflow-contract/1", "afd-workflow-contract/1.1"): raise ContractError("unsupported contract version")
-    if c.get("contract") == "afd-workflow-contract/1.1": _check_objects(c)
-    elif "objects" in c: raise ContractError("an 'objects' section requires afd-workflow-contract/1.1")
+    elif c.get("contract") not in ("afd-workflow-contract/1", "afd-workflow-contract/1.1", "afd-workflow-contract/1.2"): raise ContractError("unsupported contract version")
+    if c.get("contract") in ("afd-workflow-contract/1.1", "afd-workflow-contract/1.2"): _check_objects(c)
+    elif "objects" in c: raise ContractError("an 'objects' section requires afd-workflow-contract/1.1 or later")
+    if c.get("contract") == "afd-workflow-contract/1.2": _check_v12(c)
+    elif any(k in c for k in ("guarantees", "fresh_attempt")): raise ContractError("'guarantees' / 'fresh_attempt' require afd-workflow-contract/1.2")
     for k in ("name", "services", "setup_per_run", "scope", "action", "user_check", "oracle", "intent", "fabricated"):
         if k not in c: raise ContractError(f"missing field: {k}")
     pub = [s for s in c["services"] if s.get("public")]
@@ -121,6 +132,38 @@ def _check_objects(c):
     if q.get("kind") not in ("http", "exec"): raise ContractError("objects.oracle.kind must be http or exec")
     if q.get("mode", "items") not in ("items", "decrease"): raise ContractError("objects.oracle.mode must be items or decrease")
     if q["kind"] == "http" and not (q.get("list") is not None and q.get("key")): raise ContractError("objects.oracle (http) needs list and key pointers")
+
+FRESH_METHODS = ("GET", "POST", "PUT", "PATCH")
+
+def _check_v12(c):
+    g = c.get("guarantees") or {}
+    if set(g) - {"idempotency", "read_back", "accept_semantics", "in_flight_bound_s", "read_lag_s", "note"}: raise ContractError(f"unknown guarantees: {sorted(set(g) - {'idempotency', 'read_back', 'accept_semantics', 'in_flight_bound_s', 'read_lag_s', 'note'})}")
+    i = g.get("idempotency") or {}
+    if i and i.get("mechanism") not in ("none", "key_header", "natural_key", "state_precondition"): raise ContractError("guarantees.idempotency.mechanism invalid")
+    if i and i.get("mechanism") != "none" and i.get("scope") not in ("identical_request", "intent"): raise ContractError("guarantees.idempotency.scope must be identical_request or intent")
+    rb = g.get("read_back") or {}
+    if rb:
+        if not isinstance(rb.get("available"), bool): raise ContractError("guarantees.read_back.available must be true or false")
+        for r in rb.get("routes", []):
+            if str(r.get("method", "GET")).upper() != "GET": raise ContractError("read_back routes must be GET")
+            re.compile(r["path_regex"])
+        for x in rb.get("ui_paths", []): re.compile(x)
+    if g.get("accept_semantics", "commit") not in ("commit", "accepted_async"): raise ContractError("guarantees.accept_semantics must be commit or accepted_async")
+    for k in ("in_flight_bound_s", "read_lag_s"):
+        if g.get(k) is not None and not (isinstance(g[k], (int, float)) and g[k] >= 0): raise ContractError(f"guarantees.{k} must be a non-negative number or null")
+    fa = c.get("fresh_attempt", "none")
+    if fa != "none":
+        if not (isinstance(fa, list) and 1 <= len(fa) <= 5): raise ContractError("fresh_attempt must be \"none\" or 1-5 HTTP steps")
+        for st in fa:
+            if set(st) - {"method", "path", "json", "form", "headers", "expect"}: raise ContractError(f"fresh_attempt step keys not allowed: {sorted(set(st) - {'method', 'path', 'json', 'form', 'headers', 'expect'})} (HTTP steps only; no exec, no set)")
+            if str(st.get("method", "")).upper() not in FRESH_METHODS: raise ContractError("fresh_attempt method must be GET, POST, PUT or PATCH")
+            if not str(st.get("path", "")).startswith("/") or "://" in str(st.get("path")): raise ContractError("fresh_attempt path must be relative to the proxied app")
+            if not (isinstance(st.get("expect"), list) and st["expect"]): raise ContractError("fresh_attempt steps must declare expected statuses")
+    o = c["objects"]
+    for k in ("effect_id", "error_code"):
+        if k in o:
+            f = o[k]
+            if not (isinstance(f, dict) and ((f.get("from", "json") == "json" and isinstance(f.get("pointer"), str)) or (f.get("from") == "header" and f.get("name")))): raise ContractError(f"objects.{k} must be {{from: json, pointer}} or {{from: header, name}}")
 
 def snapshot_from(o, doc=None, stdout=None):
     """Parse a per-object oracle reading into {object id: number}."""
@@ -211,7 +254,8 @@ def protocol_for(contract, base_protocol_path=None):
     """The generic protocol, with the contract's identity recorded (no change to its rules). contract-v0 for v0/v1
     contracts; contract-v1 (per-object accounting) for v1.1 contracts."""
     if base_protocol_path is None:
-        base_protocol_path = ROOT / "protocols" / ("contract-v1.json" if "objects" in contract else "contract-v0.json")
+        v = contract.get("contract")
+        base_protocol_path = ROOT / "protocols" / ("contract-v2.json" if v == "afd-workflow-contract/1.2" else "contract-v1.json" if "objects" in contract else "contract-v0.json")
     p = copy.deepcopy(json.loads(Path(base_protocol_path).read_text()))
     p["workflow"] = {"environment": contract["name"], "task": contract["action"]["name"], "authorised_intent": f"exactly {contract['intent']['exactly']} effect(s)"}
     return p

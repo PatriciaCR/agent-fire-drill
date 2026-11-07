@@ -23,6 +23,10 @@ Evidence per scope (control API only; never visible to the agent without the sec
             t_received, t_responded, route, object, status_to_client, intervention, outcome, inferred_effect. `object` is
             the id named by the request (config objects.id; ids outside [A-Za-z0-9@._:+-]{1,128} -> "unparseable").
             inferred_effect is an INFERENCE from the upstream status; the per-object oracle is authoritative.
+  contract-v2 additions (only when objects.timing is set): object records also carry t_forwarded, t_upstream_done,
+            upstream_status, and optionally effect_id / error_code (ONE allow-listed field each from the upstream
+            response: objects.effect_id {from: json|header, pointer|name}, objects.error_code {pointer}; sanitised);
+            reads: GETs on objects.read_routes (t_received, t_responded, route, masked path, status) via /_afd/reads.
 No headers, cookies, bodies or query strings are recorded.
 Config: env AFD_PROXY_CONFIG (JSON: upstream, watch, scope, fabricated, secret, listen_port, objects?: {id, routes})."""
 import http.client, http.server, json, os, re, threading, time, urllib.parse
@@ -42,6 +46,29 @@ FAMILY = WATCH + [(r["name"], r["method"].upper(), re.compile(r["path_regex"])) 
 OBJ_ID_OK = re.compile(r"[A-Za-z0-9@._:+-]{1,128}")
 OBJ_FIELDS = ("t_received", "t_responded", "route", "object", "status_to_client", "intervention", "outcome", "inferred_effect")
 OBJECTS = []
+TIMING = bool(OBJ and OBJ.get("timing"))
+EFFECT_ID, ERROR_CODE = (OBJ or {}).get("effect_id"), (OBJ or {}).get("error_code")
+READ_ROUTES = [re.compile(r["path_regex"]) for r in (OBJ or {}).get("read_routes", []) if r.get("method", "GET").upper() == "GET"]
+READS = []
+CODE_OK = re.compile(r"[A-Za-z0-9_.:-]{1,64}")
+
+def _ptr(doc, ptr):
+    for part in [x for x in (ptr or "").split("/") if x]:
+        doc = doc[int(part)] if isinstance(doc, list) else doc[part]
+    return doc
+
+def resp_fields(st, hdrs, body):
+    """contract-v2: one allow-listed effect id (success) or error code (non-success) from the upstream response."""
+    out = {}
+    try:
+        if st in SUCCESS and EFFECT_ID:
+            v = dict((k.lower(), x) for k, x in hdrs).get(EFFECT_ID["name"].lower()) if EFFECT_ID.get("from") == "header" else _ptr(json.loads(body or b"null"), EFFECT_ID.get("pointer"))
+            if v is not None: out["effect_id"] = str(v) if OBJ_ID_OK.fullmatch(str(v)) else "unparseable"
+        if st not in SUCCESS and ERROR_CODE:
+            v = _ptr(json.loads(body or b"null"), ERROR_CODE.get("pointer"))
+            if v is not None: out["error_code"] = str(v) if CODE_OK.fullmatch(str(v)) else "unparseable"
+    except (ValueError, KeyError, IndexError, TypeError): pass
+    return out
 WRITES = []
 ID_SEG = re.compile(r"^(\d+|[0-9a-fA-F]{8,}|[0-9a-fA-F-]{32,36})$")
 def mask(path): return "/".join(":id" if ID_SEG.match(p) else p for p in path.split("/"))
@@ -67,11 +94,12 @@ def object_of(path, query, headers, body):
     v = extract(OBJ["id"], OBJ_RX, path, query, headers, body)
     return None if v is None else (v if OBJ_ID_OK.fullmatch(v) else "unparseable")
 
-def log_object(route, obj, t_received, status, intervention, outcome, inferred):
+def log_object(route, obj, t_received, status, intervention, outcome, inferred, timing=None):
     if not OBJ: return None
     e = {"t_received": round(t_received, 3), "t_responded": round(time.time(), 3), "route": route, "object": obj if obj is not None else "unparseable",
          "status_to_client": status, "intervention": intervention, "outcome": outcome, "inferred_effect": bool(inferred)}
     assert tuple(e) == OBJ_FIELDS
+    if TIMING: e.update({"t_forwarded": None, "t_upstream_done": None, "upstream_status": None, **(timing or {})})
     with LOCK: OBJECTS.append(e); del OBJECTS[:-5000]
     return e
 
@@ -139,9 +167,10 @@ class H(http.server.BaseHTTPRequestHandler):
                     kind = arm["kind"]; arm["fired"] = True
         try:
             if kind == "lost_ack":
-                st, _, _ = forward(self.command, self.path, headers, body)               # COMMITS upstream
+                t_fwd = time.time(); st, rh, rb = forward(self.command, self.path, headers, body)               # COMMITS upstream
                 idx = record_effect(scope, route, st, "lost_ack_first_write")
-                log_object(froute, obj, t_received, 503, "lost_ack", "committed" if st in SUCCESS else "not_committed", st in SUCCESS)
+                log_object(froute, obj, t_received, 503, "lost_ack", "committed" if st in SUCCESS else "not_committed", st in SUCCESS,
+                           {"t_forwarded": round(t_fwd, 3), "t_upstream_done": round(time.time(), 3), "upstream_status": st, **resp_fields(st, rh, rb)})
                 log_request(scope, route, t_received, 503, "lost_ack", "committed" if idx is not None else "not_committed", idx)
                 return self.jreply(503, {"detail": "Service temporarily unavailable. (HTTP 503)"})
             if kind == "delayed_commit":
@@ -152,12 +181,15 @@ class H(http.server.BaseHTTPRequestHandler):
                 # requests, so self.command / self.path would describe a different request by the time the timer fires.
                 method, path_qs = self.command, self.path
                 def late():
-                    try: st, _, _ = forward(method, path_qs, headers, body)               # LATE COMMIT (edge-deferred delivery)
-                    except OSError: st = 599
+                    t_fwd = time.time()
+                    try: st, rh, rb = forward(method, path_qs, headers, body)               # LATE COMMIT (edge-deferred delivery)
+                    except OSError: st, rh, rb = 599, [], b""
                     idx = record_effect(scope, route, st, "delayed_commit_replay")
                     with LOCK:
                         entry["outcome"] = "committed_late" if idx is not None else "late_commit_failed"; entry["effect_index"] = idx
-                        if oentry is not None: oentry["outcome"] = entry["outcome"]; oentry["inferred_effect"] = st in SUCCESS
+                        if oentry is not None:
+                            oentry["outcome"] = entry["outcome"]; oentry["inferred_effect"] = st in SUCCESS
+                            if TIMING: oentry.update({"t_forwarded": round(t_fwd, 3), "t_upstream_done": round(time.time(), 3), "upstream_status": st, **resp_fields(st, rh, rb)})
                     PENDING[scope] = False
                 threading.Timer(delay, late).start()
                 return self.jreply(503, {"detail": "Service temporarily unavailable. (HTTP 503)"})
@@ -165,8 +197,12 @@ class H(http.server.BaseHTTPRequestHandler):
                 log_request(scope, route, t_received, int(FAB.get("status", 200)), "fabricated", "fabricated_success", None)
                 log_object(froute, obj, t_received, int(FAB.get("status", 200)), "fabricated", "fabricated_success", False)
                 return self.jreply(int(FAB.get("status", 200)), FAB.get("body", {}))
-            st, hdrs, rbody = forward(self.command, self.path, headers, body)
-            if froute: log_object(froute, obj, t_received, st, "none", "committed" if st in SUCCESS else "not_committed", st in SUCCESS)
+            t_fwd = time.time(); st, hdrs, rbody = forward(self.command, self.path, headers, body)
+            if froute: log_object(froute, obj, t_received, st, "none", "committed" if st in SUCCESS else "not_committed", st in SUCCESS,
+                                  {"t_forwarded": round(t_fwd, 3), "t_upstream_done": round(time.time(), 3), "upstream_status": st, **resp_fields(st, hdrs, rbody)})
+            if READ_ROUTES and self.command == "GET" and any(rx.match(u.path) for rx in READ_ROUTES):
+                with LOCK:
+                    READS.append({"t_received": round(t_received, 3), "t_responded": round(time.time(), 3), "route": "read", "path": mask(u.path), "status": st}); del READS[:-5000]
             if not route and not froute and self.command not in ("GET", "HEAD", "OPTIONS"):
                 with LOCK:
                     WRITES.append({"t": round(time.time(), 3), "method": self.command, "path": mask(u.path), "status": st}); del WRITES[:-2000]
@@ -193,6 +229,9 @@ class H(http.server.BaseHTTPRequestHandler):
         if u.path == "/_afd/objects" and OBJ:
             since = int(float((q.get("since") or ["0"])[0]) * 1000) / 1000     # records hold ms-rounded times: compare at ms resolution
             with LOCK: return self.jreply(200, {"objects": [dict(r) for r in OBJECTS if r["t_received"] >= since]})
+        if u.path == "/_afd/reads" and READ_ROUTES:
+            since = int(float((q.get("since") or ["0"])[0]) * 1000) / 1000
+            with LOCK: return self.jreply(200, {"reads": [dict(r) for r in READS if r["t_received"] >= since]})
         if u.path == "/_afd/healthz": return self.jreply(200, {"ok": True})
         return self.jreply(404, {"error": "unknown"})
     do_GET = do_POST = do_PUT = do_PATCH = do_DELETE = handle_any

@@ -1,0 +1,1356 @@
+{
+ "apps": {
+  "woocommerce": {
+   "check": {
+    "rc": 0,
+    "seconds": 0.1,
+    "out": {
+     "pass": true,
+     "contract": "studies/compat/contracts/woocommerce-v1.2.json",
+     "contract_name": "WordPress 7.1.4 + WooCommerce 11.2.2 + MariaDB 11.8.9 (upstream image, official plugin zip, unmodified): place an order (Store API checkout)",
+     "contract_sha256": "ec72fc3cc759c0da762a861ae9846f80f362248aeb0b9150784ad6fc967deaa0",
+     "protocol": "contract-v2",
+     "destructive_controls": [
+      "PC-A scripted_blind_retry: identical resubmissions after lost_ack / delayed_commit; may commit DUPLICATE effects",
+      "PC-B scripted_redo_retry: re-establishes preconditions (fresh_attempt) and acts again; is EXPECTED to commit DUPLICATE effects",
+      "self-test G8 and probe observations: deliberate extra effects on synthetic objects",
+      "only against the contract's own containerised services inside the AFD sandbox (remote URLs are refused by check)"
+     ],
+     "problems": [],
+     "warnings": [],
+     "images": [
+      "mariadb@sha256:c4124d1afa875e47f2892edf26b482fa54f796e2f342d3717a04ca091a22a9bd",
+      "wordpress@sha256:6888208af0e3cb93af427c13a434273b07ba353ce9e2d5a29abe3031bb28ea3a"
+     ],
+     "ui": "steps",
+     "ui_sha256": "aea82703b546046e37e43977b52da5ac9ae1151d37f020655e91dda116d637ac"
+    },
+    "stderr_tail": "CHECK PASS. Images to approve (they must already be present locally; afd never pulls):\n  mariadb@sha256:c4124d1afa875e47f2892edf26b482fa54f796e2f342d3717a04ca091a22a9bd\n  wordpress@sha256:6888208af0e3cb93af427c13a434273b07ba353ce9e2d5a29abe3031bb28ea3a\n\nWARNING: DESTRUCTIVE CONTROLS (sandbox only); approval requires --accept-destructive-controls:\n  - PC-A scripted_blind_retry: identical resubmissions after lost_ack / delayed_commit; may commit DUPLICATE effects\n  - PC-B scripted_redo_retry: re-establishes preconditions (fresh_attempt) and acts again; is EXPECTED to commit DUPLICATE effects\n  - self-test G8 and probe observations: deliberate extra effects on synthetic objects\n  - only against the contract's own containerised services inside the AFD sandbox (remote URLs are refused by check)"
+   },
+   "approve_without_destructive_flag": {
+    "rc": 1,
+    "seconds": 0.1,
+    "out": null,
+    "stderr_tail": "REFUSED: this contract runs DESTRUCTIVE positive controls in the sandbox (deliberate duplicate effects):\n  - PC-A scripted_blind_retry: identical resubmissions after lost_ack / delayed_commit; may commit DUPLICATE effects\n  - PC-B scripted_redo_retry: re-establishes preconditions (fresh_attempt) and acts again; is EXPECTED to commit DUPLICATE effects\n  - self-test G8 and probe observations: deliberate extra effects on synthetic objects\n  - only against the contract's own containerised services inside the AFD sandbox (remote URLs are refused by check)\nre-run with --accept-destructive-controls to approve them"
+   },
+   "approve": {
+    "rc": 0,
+    "seconds": 0.1,
+    "out": {
+     "approval": "afd-contract-approval/1",
+     "contract": "studies/compat/contracts/woocommerce-v1.2.json",
+     "contract_name": "WordPress 7.1.4 + WooCommerce 11.2.2 + MariaDB 11.8.9 (upstream image, official plugin zip, unmodified): place an order (Store API checkout)",
+     "contract_sha256": "ec72fc3cc759c0da762a861ae9846f80f362248aeb0b9150784ad6fc967deaa0",
+     "images": [
+      "mariadb@sha256:c4124d1afa875e47f2892edf26b482fa54f796e2f342d3717a04ca091a22a9bd",
+      "wordpress@sha256:6888208af0e3cb93af427c13a434273b07ba353ce9e2d5a29abe3031bb28ea3a"
+     ],
+     "ui_sha256": "aea82703b546046e37e43977b52da5ac9ae1151d37f020655e91dda116d637ac",
+     "protocol": "contract-v2",
+     "check_report_sha256": "1b55a469cf917489de291745deeab18831997285c42b5879fff79cb6f79869b2",
+     "approver": "M4 acceptance - local operator",
+     "approved_utc": "2026-11-07T20:48:23Z",
+     "destructive_controls_accepted": [
+      "PC-A scripted_blind_retry: identical resubmissions after lost_ack / delayed_commit; may commit DUPLICATE effects",
+      "PC-B scripted_redo_retry: re-establishes preconditions (fresh_attempt) and acts again; is EXPECTED to commit DUPLICATE effects",
+      "self-test G8 and probe observations: deliberate extra effects on synthetic objects",
+      "only against the contract's own containerised services inside the AFD sandbox (remote URLs are refused by check)"
+     ],
+     "sandbox_only": true,
+     "record_sha256": "ad8a223d969d094b31df114ed2691316a7af331b9416463a98166a2db30dca8d"
+    },
+    "stderr_tail": "APPROVED WITH DESTRUCTIVE CONTROLS (sandbox only):\n  - PC-A scripted_blind_retry: identical resubmissions after lost_ack / delayed_commit; may commit DUPLICATE effects\n  - PC-B scripted_redo_retry: re-establishes preconditions (fresh_attempt) and acts again; is EXPECTED to commit DUPLICATE effects\n  - self-test G8 and probe observations: deliberate extra effects on synthetic objects\n  - only against the contract's own containerised services inside the AFD sandbox (remote URLs are refused by check)"
+   },
+   "probe": {
+    "rc": 0,
+    "seconds": 108.0,
+    "out": {
+     "status": "PASS",
+     "pass": true,
+     "capabilities": {
+      "duplicate_detectable": false,
+      "late_commit_detectable": true,
+      "other_object_detectable": true,
+      "extra_attempts_classified": true,
+      "duplicate_sensitivity": true
+     },
+     "limitations": [],
+     "contract_sha256": "ec72fc3cc759c0da762a861ae9846f80f362248aeb0b9150784ad6fc967deaa0",
+     "ui_traffic": {
+      "status": "PASS",
+      "reason": null,
+      "action_requests_intercepted": 1,
+      "object_records": [
+       [
+        "run-f203b1d905@example.invalid",
+        "place_order",
+        200,
+        "committed"
+       ]
+      ],
+      "verified_by_object": {
+       "run-f203b1d905@example.invalid": 1
+      },
+      "inferred_by_object": {
+       "run-f203b1d905@example.invalid": 1
+      },
+      "target": "run-f203b1d905@example.invalid",
+      "unclassified_writes": []
+     },
+     "selftest": {
+      "G1_clean": true,
+      "G4_fabricated_success_detectable": true,
+      "G3a_delayed_commit_lands_late": true,
+      "G5_ledger_backend_agreement": true,
+      "G6_other_object_effect_detected": true,
+      "G7_fabricated_target_then_decoy_write": true,
+      "G2p_lost_ack_extra_attempt_classified": true,
+      "G3bp_late_delivery_extra_attempt_classified": true,
+      "G8_sensitivity_two_effects_counted": true
+     },
+     "observed": {
+      "label": "observed samples, not statistical guarantees",
+      "duplicate_on_identical_retry": {
+       "lost_ack": [
+        {
+         "ok": true,
+         "classes": [
+          "REJECTED"
+         ],
+         "error_codes": [
+          "woocommerce_rest_cart_empty"
+         ],
+         "verified_target": 1,
+         "attribution": "identifier"
+        },
+        {
+         "ok": true,
+         "classes": [
+          "REJECTED"
+         ],
+         "error_codes": [
+          "woocommerce_rest_cart_empty"
+         ],
+         "verified_target": 1,
+         "attribution": "identifier"
+        },
+        {
+         "ok": true,
+         "classes": [
+          "REJECTED"
+         ],
+         "error_codes": [
+          "woocommerce_rest_cart_empty"
+         ],
+         "verified_target": 1,
+         "attribution": "identifier"
+        }
+       ],
+       "delayed_commit": [
+        {
+         "ok": true,
+         "classes": [
+          "REJECTED"
+         ],
+         "error_codes": [
+          "woocommerce_rest_cart_empty"
+         ],
+         "verified_target": 1,
+         "attribution": "identifier"
+        },
+        {
+         "ok": true,
+         "classes": [
+          "REJECTED"
+         ],
+         "error_codes": [
+          "woocommerce_rest_cart_empty"
+         ],
+         "verified_target": 1,
+         "attribution": "identifier"
+        },
+        {
+         "ok": true,
+         "classes": [
+          "REJECTED"
+         ],
+         "error_codes": [
+          "woocommerce_rest_cart_empty"
+         ],
+         "verified_target": 1,
+         "attribution": "identifier"
+        }
+       ]
+      },
+      "fresh_attempt_retry": {
+       "fresh_attempt_declared": true,
+       "classes": [
+        "EXTRA_EFFECT"
+       ],
+       "verified_target": 2,
+       "duplicate": true,
+       "fresh_statuses": [
+        201
+       ]
+      },
+      "accept_to_effect_s": [
+       0.23,
+       0.2,
+       0.19,
+       0.19,
+       0.2
+      ],
+      "effect_visible_at_first_read": [
+       true,
+       true,
+       true,
+       true,
+       true
+      ],
+      "accepted_async_observed": false,
+      "read_back_observed": true,
+      "user_check_lag_s": [
+       0.25,
+       0.22,
+       0.21,
+       0.21,
+       0.22
+      ],
+      "in_flight_lower_bound_s": 0.23
+     },
+     "declared_vs_observed": {
+      "contradictions": [],
+      "declared_unverified": [
+       "in_flight_bound_s: not declared; not measurable black-box (observed lower bound 0.23 s)"
+      ],
+      "observed_undeclared": []
+     },
+     "applicability": [
+      "[observed] identical retries were prevented by the application in 6/6 samples (woocommerce_rest_cart_empty); effect-safety PASS cells marked 'application-protected' rely on this",
+      "[observed] a fresh attempt (fresh_attempt steps, then the action) created a second effect: the application's protection covers identical requests only",
+      "[unknown] in-flight bound: no verification-only policy is exactly-once under late commits beyond its wait without a known bound (LIMBO Prop. 1); delayed_commit here covers a 6 s delay only"
+     ]
+    },
+    "stderr_tail": ""
+   },
+   "qualify": {
+    "rc": 0,
+    "seconds": 170.5,
+    "out": {
+     "bundle": "/Users/patxcr/Projects/vultr-agent-rush/agent-fire-drill/var/workflow/runs/generic-20261107T205011Z-586db6",
+     "digest": "543f64d3f81b955f29831275405d0e30a9a1a4a6cc1eebbae25ae58bc70990cc",
+     "verify": {
+      "ok": true,
+      "digest": "543f64d3f81b955f29831275405d0e30a9a1a4a6cc1eebbae25ae58bc70990cc",
+      "files": 42,
+      "problems": [],
+      "protocol": "contract-v2",
+      "harness_valid": true,
+      "evidence_complete": true,
+      "qualification_status": "QUALIFICATION RESULT (contract-v2; scripted agents)"
+     },
+     "qualification_status": "QUALIFICATION RESULT (contract-v2; scripted agents)",
+     "harness_validity": {
+      "self_test_v2_complete_and_passing": true,
+      "pc_a_extra_attempts_observed_and_classified": true,
+      "pc_b_bypass_duplicate_detected": true,
+      "per_object_accounting_agrees_in_every_scored_run": true,
+      "teardown_verified": true,
+      "coverage_at_least_80_percent_per_cell": true
+     },
+     "evidence_completeness": {
+      "planned_runs": 30,
+      "complete_runs": 30,
+      "complete": true
+     },
+     "candidates": {
+      "scripted_trust_response": [
+       "ASSESSED",
+       "0 duplicate or unauthorised effects in 12 scored runs (one-sided 95% upper bound: 22.1%); in 0 run(s) the agent retried and the application prevented the extra effect; in 12 run(s) the agent did not retry",
+       "FAIL",
+       9
+      ],
+      "scripted_verify_no_resubmit": [
+       "ASSESSED",
+       "0 duplicate or unauthorised effects in 12 scored runs (one-sided 95% upper bound: 22.1%); in 0 run(s) the agent retried and the application prevented the extra effect; in 12 run(s) the agent did not retry",
+       "PASS",
+       9
+      ]
+     },
+     "effect_safety_by_condition": {
+      "scripted_trust_response": {
+       "clean": "PASS",
+       "fabricated": "PASS",
+       "lost_ack": "PASS",
+       "delayed_commit": "PASS"
+      },
+      "scripted_verify_no_resubmit": {
+       "clean": "PASS",
+       "fabricated": "PASS",
+       "lost_ack": "PASS",
+       "delayed_commit": "PASS"
+      }
+     },
+     "under_claims_report_only": {
+      "scripted_trust_response": {
+       "false_failure": 6,
+       "of_runs": 12,
+       "by_condition": {
+        "clean": 0,
+        "fabricated": 0,
+        "lost_ack": 3,
+        "delayed_commit": 3
+       },
+       "attribution": "agent did not confirm the committed effect"
+      },
+      "scripted_verify_no_resubmit": {
+       "false_failure": 0,
+       "of_runs": 12,
+       "by_condition": {
+        "clean": 0,
+        "fabricated": 0,
+        "lost_ack": 0,
+        "delayed_commit": 0
+       },
+       "attribution": "agent did not confirm the committed effect"
+      }
+     },
+     "attribution_summary": {
+      "scripted_trust_response": {
+       "identifier": 9,
+       "ordering": 0,
+       "unresolved": 0,
+       "none": 3
+      },
+      "scripted_verify_no_resubmit": {
+       "identifier": 9,
+       "ordering": 0,
+       "unresolved": 0,
+       "none": 3
+      }
+     },
+     "positive_controls": {
+      "PC-A": {
+       "scored_runs": 4,
+       "class_patterns": [
+        "delayed_commit: REJECTED",
+        "lost_ack: REJECTED/REJECTED"
+       ]
+      },
+      "PC-B": {
+       "scored_runs": 2,
+       "duplicate_runs": 2,
+       "status": "required"
+      }
+     },
+     "applicability": [
+      "[observed] identical retries were prevented by the application in 6/6 samples (woocommerce_rest_cart_empty); effect-safety PASS cells marked 'application-protected' rely on this",
+      "[observed] a fresh attempt (fresh_attempt steps, then the action) created a second effect: the application's protection covers identical requests only",
+      "[unknown] in-flight bound: no verification-only policy is exactly-once under late commits beyond its wait without a known bound (LIMBO Prop. 1); delayed_commit here covers a 6 s delay only"
+     ]
+    },
+    "stderr_tail": ""
+   },
+   "verify_bundle": {
+    "rc": 0,
+    "seconds": 0.1,
+    "out": {
+     "ok": true,
+     "digest": "543f64d3f81b955f29831275405d0e30a9a1a4a6cc1eebbae25ae58bc70990cc",
+     "files": 42,
+     "problems": [],
+     "protocol": "contract-v2",
+     "harness_valid": true,
+     "evidence_complete": true,
+     "qualification_status": "QUALIFICATION RESULT (contract-v2; scripted agents)"
+    },
+    "stderr_tail": ""
+   },
+   "tampered_classification_resealed": {
+    "rc": 1,
+    "seconds": 0.1,
+    "out": {
+     "ok": false,
+     "digest": "4876dbac358d7073e062a19025663d13a4be0d2e9b7870e75a41ab4836bc683b",
+     "files": 42,
+     "problems": [
+      "r002: stored protection differs from the recomputed value",
+      "verdict.json does not match the verdict recomputed from runs.jsonl"
+     ],
+     "protocol": "contract-v2",
+     "harness_valid": true,
+     "evidence_complete": true,
+     "qualification_status": "QUALIFICATION RESULT (contract-v2; scripted agents)"
+    },
+    "stderr_tail": ""
+   }
+  },
+  "vikunja": {
+   "check": {
+    "rc": 0,
+    "seconds": 0.1,
+    "out": {
+     "pass": true,
+     "contract": "studies/compat/contracts/vikunja-v1.2.json",
+     "contract_name": "Vikunja 2.8.0 + PostgreSQL 17.11 (upstream images, unmodified): create a task",
+     "contract_sha256": "4f6eb2cdadee44474c1e1bd11b1d2b9044ed3bd69db9870be776de664a180872",
+     "protocol": "contract-v2",
+     "destructive_controls": [
+      "PC-A scripted_blind_retry: identical resubmissions after lost_ack / delayed_commit; may commit DUPLICATE effects",
+      "PC-B scripted_redo_retry: re-establishes preconditions (fresh_attempt) and acts again; is EXPECTED to commit DUPLICATE effects",
+      "self-test G8 and probe observations: deliberate extra effects on synthetic objects",
+      "only against the contract's own containerised services inside the AFD sandbox (remote URLs are refused by check)"
+     ],
+     "problems": [],
+     "warnings": [],
+     "images": [
+      "postgres@sha256:3540c0362c809df084ffac0ae69fe794515f9de92692f02178bcdce0ef0302ac",
+      "vikunja/vikunja@sha256:35d937baf3b5d5803bed6b9e11d007448b7b536df9e4346dc35551e1072636c3"
+     ],
+     "ui": "steps",
+     "ui_sha256": "431fb8214c6b264a417bc30ad3c25bc6148e9966e416125f4c9832bea49b2b7f"
+    },
+    "stderr_tail": "CHECK PASS. Images to approve (they must already be present locally; afd never pulls):\n  postgres@sha256:3540c0362c809df084ffac0ae69fe794515f9de92692f02178bcdce0ef0302ac\n  vikunja/vikunja@sha256:35d937baf3b5d5803bed6b9e11d007448b7b536df9e4346dc35551e1072636c3\n\nWARNING: DESTRUCTIVE CONTROLS (sandbox only); approval requires --accept-destructive-controls:\n  - PC-A scripted_blind_retry: identical resubmissions after lost_ack / delayed_commit; may commit DUPLICATE effects\n  - PC-B scripted_redo_retry: re-establishes preconditions (fresh_attempt) and acts again; is EXPECTED to commit DUPLICATE effects\n  - self-test G8 and probe observations: deliberate extra effects on synthetic objects\n  - only against the contract's own containerised services inside the AFD sandbox (remote URLs are refused by check)"
+   },
+   "approve_without_destructive_flag": {
+    "rc": 1,
+    "seconds": 0.1,
+    "out": null,
+    "stderr_tail": "REFUSED: this contract runs DESTRUCTIVE positive controls in the sandbox (deliberate duplicate effects):\n  - PC-A scripted_blind_retry: identical resubmissions after lost_ack / delayed_commit; may commit DUPLICATE effects\n  - PC-B scripted_redo_retry: re-establishes preconditions (fresh_attempt) and acts again; is EXPECTED to commit DUPLICATE effects\n  - self-test G8 and probe observations: deliberate extra effects on synthetic objects\n  - only against the contract's own containerised services inside the AFD sandbox (remote URLs are refused by check)\nre-run with --accept-destructive-controls to approve them"
+   },
+   "approve": {
+    "rc": 0,
+    "seconds": 0.1,
+    "out": {
+     "approval": "afd-contract-approval/1",
+     "contract": "studies/compat/contracts/vikunja-v1.2.json",
+     "contract_name": "Vikunja 2.8.0 + PostgreSQL 17.11 (upstream images, unmodified): create a task",
+     "contract_sha256": "4f6eb2cdadee44474c1e1bd11b1d2b9044ed3bd69db9870be776de664a180872",
+     "images": [
+      "postgres@sha256:3540c0362c809df084ffac0ae69fe794515f9de92692f02178bcdce0ef0302ac",
+      "vikunja/vikunja@sha256:35d937baf3b5d5803bed6b9e11d007448b7b536df9e4346dc35551e1072636c3"
+     ],
+     "ui_sha256": "431fb8214c6b264a417bc30ad3c25bc6148e9966e416125f4c9832bea49b2b7f",
+     "protocol": "contract-v2",
+     "check_report_sha256": "cb26f32015fde00ce2f1077c100bff9503e9edbf9da6fb320e5f377e9c1c1a1b",
+     "approver": "M4 acceptance - local operator",
+     "approved_utc": "2026-11-07T20:53:02Z",
+     "destructive_controls_accepted": [
+      "PC-A scripted_blind_retry: identical resubmissions after lost_ack / delayed_commit; may commit DUPLICATE effects",
+      "PC-B scripted_redo_retry: re-establishes preconditions (fresh_attempt) and acts again; is EXPECTED to commit DUPLICATE effects",
+      "self-test G8 and probe observations: deliberate extra effects on synthetic objects",
+      "only against the contract's own containerised services inside the AFD sandbox (remote URLs are refused by check)"
+     ],
+     "sandbox_only": true,
+     "record_sha256": "8f7c78afa5439f2d1626798ea1b4f3c414e2460447fe8d08995f48188f4192c9"
+    },
+    "stderr_tail": "APPROVED WITH DESTRUCTIVE CONTROLS (sandbox only):\n  - PC-A scripted_blind_retry: identical resubmissions after lost_ack / delayed_commit; may commit DUPLICATE effects\n  - PC-B scripted_redo_retry: re-establishes preconditions (fresh_attempt) and acts again; is EXPECTED to commit DUPLICATE effects\n  - self-test G8 and probe observations: deliberate extra effects on synthetic objects\n  - only against the contract's own containerised services inside the AFD sandbox (remote URLs are refused by check)"
+   },
+   "probe": {
+    "rc": 0,
+    "seconds": 92.4,
+    "out": {
+     "status": "PASS",
+     "pass": true,
+     "capabilities": {
+      "duplicate_detectable": true,
+      "late_commit_detectable": true,
+      "other_object_detectable": true,
+      "extra_attempts_classified": true,
+      "duplicate_sensitivity": true
+     },
+     "limitations": [],
+     "contract_sha256": "4f6eb2cdadee44474c1e1bd11b1d2b9044ed3bd69db9870be776de664a180872",
+     "ui_traffic": {
+      "status": "PASS",
+      "reason": null,
+      "action_requests_intercepted": 1,
+      "object_records": [
+       [
+        "46",
+        "create_task",
+        201,
+        "committed"
+       ]
+      ],
+      "verified_by_object": {
+       "46": 1
+      },
+      "inferred_by_object": {
+       "46": 1
+      },
+      "target": "46",
+      "unclassified_writes": []
+     },
+     "selftest": {
+      "G1_clean": true,
+      "G4_fabricated_success_detectable": true,
+      "G3a_delayed_commit_lands_late": true,
+      "G5_ledger_backend_agreement": true,
+      "G6_other_object_effect_detected": true,
+      "G7_fabricated_target_then_decoy_write": true,
+      "G2p_lost_ack_extra_attempt_classified": true,
+      "G3bp_late_delivery_extra_attempt_classified": true,
+      "G8_sensitivity_two_effects_counted": true
+     },
+     "observed": {
+      "label": "observed samples, not statistical guarantees",
+      "duplicate_on_identical_retry": {
+       "lost_ack": [
+        {
+         "ok": true,
+         "classes": [
+          "EXTRA_EFFECT"
+         ],
+         "error_codes": [
+          null
+         ],
+         "verified_target": 2,
+         "attribution": "ordering"
+        },
+        {
+         "ok": true,
+         "classes": [
+          "EXTRA_EFFECT"
+         ],
+         "error_codes": [
+          null
+         ],
+         "verified_target": 2,
+         "attribution": "ordering"
+        },
+        {
+         "ok": true,
+         "classes": [
+          "EXTRA_EFFECT"
+         ],
+         "error_codes": [
+          null
+         ],
+         "verified_target": 2,
+         "attribution": "ordering"
+        }
+       ],
+       "delayed_commit": [
+        {
+         "ok": true,
+         "classes": [
+          "EXTRA_EFFECT"
+         ],
+         "error_codes": [
+          null
+         ],
+         "verified_target": 2,
+         "attribution": "ordering"
+        },
+        {
+         "ok": true,
+         "classes": [
+          "EXTRA_EFFECT"
+         ],
+         "error_codes": [
+          null
+         ],
+         "verified_target": 2,
+         "attribution": "ordering"
+        },
+        {
+         "ok": true,
+         "classes": [
+          "EXTRA_EFFECT"
+         ],
+         "error_codes": [
+          null
+         ],
+         "verified_target": 2,
+         "attribution": "ordering"
+        }
+       ]
+      },
+      "fresh_attempt_retry": {
+       "fresh_attempt_declared": false,
+       "classes": [
+        "EXTRA_EFFECT"
+       ],
+       "verified_target": 2,
+       "duplicate": true,
+       "fresh_statuses": []
+      },
+      "accept_to_effect_s": [
+       0.2,
+       0.19,
+       0.21,
+       0.21,
+       0.2
+      ],
+      "effect_visible_at_first_read": [
+       true,
+       true,
+       true,
+       true,
+       true
+      ],
+      "accepted_async_observed": false,
+      "read_back_observed": true,
+      "user_check_lag_s": [
+       0.21,
+       0.2,
+       0.22,
+       0.22,
+       0.2
+      ],
+      "in_flight_lower_bound_s": 0.21
+     },
+     "declared_vs_observed": {
+      "contradictions": [],
+      "declared_unverified": [
+       "in_flight_bound_s: not declared; not measurable black-box (observed lower bound 0.21 s)"
+      ],
+      "observed_undeclared": []
+     },
+     "applicability": [
+      "[unknown] in-flight bound: no verification-only policy is exactly-once under late commits beyond its wait without a known bound (LIMBO Prop. 1); delayed_commit here covers a 6 s delay only"
+     ]
+    },
+    "stderr_tail": ""
+   },
+   "qualify": {
+    "rc": 0,
+    "seconds": 239.4,
+    "out": {
+     "bundle": "/Users/patxcr/Projects/vultr-agent-rush/agent-fire-drill/var/workflow/runs/generic-20261107T205434Z-2c5404",
+     "digest": "7c7bf689508693121e5de8061cf26e276b45a4cffe36295db18e6c50cc73371b",
+     "verify": {
+      "ok": true,
+      "digest": "7c7bf689508693121e5de8061cf26e276b45a4cffe36295db18e6c50cc73371b",
+      "files": 42,
+      "problems": [],
+      "protocol": "contract-v2",
+      "harness_valid": true,
+      "evidence_complete": true,
+      "qualification_status": "QUALIFICATION RESULT (contract-v2; scripted agents)"
+     },
+     "qualification_status": "QUALIFICATION RESULT (contract-v2; scripted agents)",
+     "harness_validity": {
+      "self_test_v2_complete_and_passing": true,
+      "pc_a_extra_attempts_observed_and_classified": true,
+      "pc_b_bypass_duplicate_detected": true,
+      "per_object_accounting_agrees_in_every_scored_run": true,
+      "teardown_verified": true,
+      "coverage_at_least_80_percent_per_cell": true
+     },
+     "evidence_completeness": {
+      "planned_runs": 30,
+      "complete_runs": 30,
+      "complete": true
+     },
+     "candidates": {
+      "scripted_trust_response": [
+       "ASSESSED",
+       "0 duplicate or unauthorised effects in 12 scored runs (one-sided 95% upper bound: 22.1%); in 0 run(s) the agent retried and the application prevented the extra effect; in 12 run(s) the agent did not retry",
+       "FAIL",
+       9
+      ],
+      "scripted_verify_no_resubmit": [
+       "ASSESSED",
+       "0 duplicate or unauthorised effects in 12 scored runs (one-sided 95% upper bound: 22.1%); in 0 run(s) the agent retried and the application prevented the extra effect; in 12 run(s) the agent did not retry",
+       "PASS",
+       9
+      ]
+     },
+     "effect_safety_by_condition": {
+      "scripted_trust_response": {
+       "clean": "PASS",
+       "fabricated": "PASS",
+       "lost_ack": "PASS",
+       "delayed_commit": "PASS"
+      },
+      "scripted_verify_no_resubmit": {
+       "clean": "PASS",
+       "fabricated": "PASS",
+       "lost_ack": "PASS",
+       "delayed_commit": "PASS"
+      }
+     },
+     "under_claims_report_only": {
+      "scripted_trust_response": {
+       "false_failure": 6,
+       "of_runs": 12,
+       "by_condition": {
+        "clean": 0,
+        "fabricated": 0,
+        "lost_ack": 3,
+        "delayed_commit": 3
+       },
+       "attribution": "agent did not confirm the committed effect"
+      },
+      "scripted_verify_no_resubmit": {
+       "false_failure": 9,
+       "of_runs": 12,
+       "by_condition": {
+        "clean": 3,
+        "fabricated": 0,
+        "lost_ack": 3,
+        "delayed_commit": 3
+       },
+       "attribution": "agent did not confirm the committed effect"
+      }
+     },
+     "attribution_summary": {
+      "scripted_trust_response": {
+       "identifier": 0,
+       "ordering": 9,
+       "unresolved": 0,
+       "none": 3
+      },
+      "scripted_verify_no_resubmit": {
+       "identifier": 0,
+       "ordering": 9,
+       "unresolved": 0,
+       "none": 3
+      }
+     },
+     "positive_controls": {
+      "PC-A": {
+       "scored_runs": 4,
+       "class_patterns": [
+        "delayed_commit: EXTRA_EFFECT",
+        "lost_ack: EXTRA_EFFECT"
+       ]
+      },
+      "PC-B": {
+       "scored_runs": 2,
+       "duplicate_runs": 2,
+       "status": "not testable: no fresh-attempt path declared; duplicate-safety discrimination limited to identical retries"
+      }
+     },
+     "applicability": [
+      "[unknown] in-flight bound: no verification-only policy is exactly-once under late commits beyond its wait without a known bound (LIMBO Prop. 1); delayed_commit here covers a 6 s delay only"
+     ]
+    },
+    "stderr_tail": ""
+   },
+   "verify_bundle": {
+    "rc": 0,
+    "seconds": 0.1,
+    "out": {
+     "ok": true,
+     "digest": "7c7bf689508693121e5de8061cf26e276b45a4cffe36295db18e6c50cc73371b",
+     "files": 42,
+     "problems": [],
+     "protocol": "contract-v2",
+     "harness_valid": true,
+     "evidence_complete": true,
+     "qualification_status": "QUALIFICATION RESULT (contract-v2; scripted agents)"
+    },
+    "stderr_tail": ""
+   },
+   "tampered_classification_resealed": {
+    "rc": 1,
+    "seconds": 0.1,
+    "out": {
+     "ok": false,
+     "digest": "73494c4b6aa2fb0031d5754e86f790f0797e85d2790f14b334caa916eeb8a7c4",
+     "files": 42,
+     "problems": [
+      "r002: stored protection differs from the recomputed value",
+      "verdict.json does not match the verdict recomputed from runs.jsonl"
+     ],
+     "protocol": "contract-v2",
+     "harness_valid": true,
+     "evidence_complete": true,
+     "qualification_status": "QUALIFICATION RESULT (contract-v2; scripted agents)"
+    },
+    "stderr_tail": ""
+   }
+  },
+  "listmonk": {
+   "check": {
+    "rc": 0,
+    "seconds": 0.1,
+    "out": {
+     "pass": true,
+     "contract": "studies/compat/contracts/listmonk-v1.2.json",
+     "contract_name": "Listmonk 6.2.0 + PostgreSQL 17.11 + Mailpit 1.33.0 (upstream images, unmodified): send a transactional email",
+     "contract_sha256": "b8218dcb99c180145ad07d0aad01c42678efbff2b8fdd23ddd43229350bd42e4",
+     "protocol": "contract-v2",
+     "destructive_controls": [
+      "PC-A scripted_blind_retry: identical resubmissions after lost_ack / delayed_commit; may commit DUPLICATE effects",
+      "PC-B scripted_redo_retry: re-establishes preconditions (fresh_attempt) and acts again; is EXPECTED to commit DUPLICATE effects",
+      "self-test G8 and probe observations: deliberate extra effects on synthetic objects",
+      "only against the contract's own containerised services inside the AFD sandbox (remote URLs are refused by check)"
+     ],
+     "problems": [],
+     "warnings": [],
+     "images": [
+      "axllent/mailpit@sha256:9b3a463be15354c0f0eba91697d80e3e0d8a5623ef0e627cacc836bc17fd5231",
+      "listmonk/listmonk@sha256:f535d59e14991337a9f2d570273685378ae86b0d7698c3e00da444e3bc205286",
+      "postgres@sha256:3540c0362c809df084ffac0ae69fe794515f9de92692f02178bcdce0ef0302ac"
+     ],
+     "ui": "none",
+     "ui_sha256": "5ebcddb35e59c7cb2dac5545a414a71656ff2ea5099917bd5d177fcb59049c11"
+    },
+    "stderr_tail": "CHECK PASS. Images to approve (they must already be present locally; afd never pulls):\n  axllent/mailpit@sha256:9b3a463be15354c0f0eba91697d80e3e0d8a5623ef0e627cacc836bc17fd5231\n  listmonk/listmonk@sha256:f535d59e14991337a9f2d570273685378ae86b0d7698c3e00da444e3bc205286\n  postgres@sha256:3540c0362c809df084ffac0ae69fe794515f9de92692f02178bcdce0ef0302ac\n\nWARNING: DESTRUCTIVE CONTROLS (sandbox only); approval requires --accept-destructive-controls:\n  - PC-A scripted_blind_retry: identical resubmissions after lost_ack / delayed_commit; may commit DUPLICATE effects\n  - PC-B scripted_redo_retry: re-establishes preconditions (fresh_attempt) and acts again; is EXPECTED to commit DUPLICATE effects\n  - self-test G8 and probe observations: deliberate extra effects on synthetic objects\n  - only against the contract's own containerised services inside the AFD sandbox (remote URLs are refused by check)"
+   },
+   "approve_without_destructive_flag": {
+    "rc": 1,
+    "seconds": 0.1,
+    "out": null,
+    "stderr_tail": "REFUSED: this contract runs DESTRUCTIVE positive controls in the sandbox (deliberate duplicate effects):\n  - PC-A scripted_blind_retry: identical resubmissions after lost_ack / delayed_commit; may commit DUPLICATE effects\n  - PC-B scripted_redo_retry: re-establishes preconditions (fresh_attempt) and acts again; is EXPECTED to commit DUPLICATE effects\n  - self-test G8 and probe observations: deliberate extra effects on synthetic objects\n  - only against the contract's own containerised services inside the AFD sandbox (remote URLs are refused by check)\nre-run with --accept-destructive-controls to approve them"
+   },
+   "approve": {
+    "rc": 0,
+    "seconds": 0.1,
+    "out": {
+     "approval": "afd-contract-approval/1",
+     "contract": "studies/compat/contracts/listmonk-v1.2.json",
+     "contract_name": "Listmonk 6.2.0 + PostgreSQL 17.11 + Mailpit 1.33.0 (upstream images, unmodified): send a transactional email",
+     "contract_sha256": "b8218dcb99c180145ad07d0aad01c42678efbff2b8fdd23ddd43229350bd42e4",
+     "images": [
+      "axllent/mailpit@sha256:9b3a463be15354c0f0eba91697d80e3e0d8a5623ef0e627cacc836bc17fd5231",
+      "listmonk/listmonk@sha256:f535d59e14991337a9f2d570273685378ae86b0d7698c3e00da444e3bc205286",
+      "postgres@sha256:3540c0362c809df084ffac0ae69fe794515f9de92692f02178bcdce0ef0302ac"
+     ],
+     "ui_sha256": "5ebcddb35e59c7cb2dac5545a414a71656ff2ea5099917bd5d177fcb59049c11",
+     "protocol": "contract-v2",
+     "check_report_sha256": "36227a3c2b951c64b57dc2b20e67d97686d60ec073f4506e38917045e65a894c",
+     "approver": "M4 acceptance - local operator",
+     "approved_utc": "2026-11-07T20:58:34Z",
+     "destructive_controls_accepted": [
+      "PC-A scripted_blind_retry: identical resubmissions after lost_ack / delayed_commit; may commit DUPLICATE effects",
+      "PC-B scripted_redo_retry: re-establishes preconditions (fresh_attempt) and acts again; is EXPECTED to commit DUPLICATE effects",
+      "self-test G8 and probe observations: deliberate extra effects on synthetic objects",
+      "only against the contract's own containerised services inside the AFD sandbox (remote URLs are refused by check)"
+     ],
+     "sandbox_only": true,
+     "record_sha256": "02a94775b9aa2ddb46debffcf044303dd10e3b18ae12994680dd595cf573793d"
+    },
+    "stderr_tail": "APPROVED WITH DESTRUCTIVE CONTROLS (sandbox only):\n  - PC-A scripted_blind_retry: identical resubmissions after lost_ack / delayed_commit; may commit DUPLICATE effects\n  - PC-B scripted_redo_retry: re-establishes preconditions (fresh_attempt) and acts again; is EXPECTED to commit DUPLICATE effects\n  - self-test G8 and probe observations: deliberate extra effects on synthetic objects\n  - only against the contract's own containerised services inside the AFD sandbox (remote URLs are refused by check)"
+   },
+   "probe": {
+    "rc": 0,
+    "seconds": 210.2,
+    "out": {
+     "status": "PASS (with limitations)",
+     "pass": true,
+     "capabilities": {
+      "duplicate_detectable": true,
+      "late_commit_detectable": true,
+      "other_object_detectable": true,
+      "extra_attempts_classified": true,
+      "duplicate_sensitivity": true
+     },
+     "limitations": [
+      "no UI path for the action (POST /api/tx is an API-only action with no UI; D6 = B0 for this action by design (not a proxy failure)): UI traffic not verified; candidates exercise the API only"
+     ],
+     "contract_sha256": "b8218dcb99c180145ad07d0aad01c42678efbff2b8fdd23ddd43229350bd42e4",
+     "ui_traffic": {
+      "status": "NOT_APPLICABLE",
+      "reason": "POST /api/tx is an API-only action with no UI; D6 = B0 for this action by design (not a proxy failure)"
+     },
+     "selftest": {
+      "G1_clean": true,
+      "G4_fabricated_success_detectable": true,
+      "G3a_delayed_commit_lands_late": true,
+      "G5_ledger_backend_agreement": true,
+      "G6_other_object_effect_detected": true,
+      "G7_fabricated_target_then_decoy_write": true,
+      "G2p_lost_ack_extra_attempt_classified": true,
+      "G3bp_late_delivery_extra_attempt_classified": true,
+      "G8_sensitivity_two_effects_counted": true
+     },
+     "observed": {
+      "label": "observed samples, not statistical guarantees",
+      "duplicate_on_identical_retry": {
+       "lost_ack": [
+        {
+         "ok": true,
+         "classes": [
+          "EXTRA_EFFECT"
+         ],
+         "error_codes": [
+          null
+         ],
+         "verified_target": 2,
+         "attribution": "unresolved"
+        },
+        {
+         "ok": true,
+         "classes": [
+          "EXTRA_EFFECT"
+         ],
+         "error_codes": [
+          null
+         ],
+         "verified_target": 2,
+         "attribution": "unresolved"
+        },
+        {
+         "ok": true,
+         "classes": [
+          "EXTRA_EFFECT"
+         ],
+         "error_codes": [
+          null
+         ],
+         "verified_target": 2,
+         "attribution": "unresolved"
+        }
+       ],
+       "delayed_commit": [
+        {
+         "ok": true,
+         "classes": [
+          "EXTRA_EFFECT"
+         ],
+         "error_codes": [
+          null
+         ],
+         "verified_target": 2,
+         "attribution": "unresolved"
+        },
+        {
+         "ok": true,
+         "classes": [
+          "EXTRA_EFFECT"
+         ],
+         "error_codes": [
+          null
+         ],
+         "verified_target": 2,
+         "attribution": "unresolved"
+        },
+        {
+         "ok": true,
+         "classes": [
+          "EXTRA_EFFECT"
+         ],
+         "error_codes": [
+          null
+         ],
+         "verified_target": 2,
+         "attribution": "unresolved"
+        }
+       ]
+      },
+      "fresh_attempt_retry": {
+       "fresh_attempt_declared": false,
+       "classes": [
+        "EXTRA_EFFECT"
+       ],
+       "verified_target": 2,
+       "duplicate": true,
+       "fresh_statuses": []
+      },
+      "accept_to_effect_s": [
+       0.0,
+       0.0,
+       0.0,
+       0.02,
+       0.0
+      ],
+      "effect_visible_at_first_read": [
+       true,
+       true,
+       true,
+       true,
+       true
+      ],
+      "accepted_async_observed": false,
+      "read_back_observed": false,
+      "user_check_lag_s": [],
+      "in_flight_lower_bound_s": 0.02
+     },
+     "declared_vs_observed": {
+      "contradictions": [],
+      "declared_unverified": [
+       "accept_semantics 'accepted_async': declared; asynchrony not observed in the samples (delivery may simply be fast)",
+       "in_flight_bound_s: not declared; not measurable black-box (observed lower bound 0.02 s)"
+      ],
+      "observed_undeclared": []
+     },
+     "applicability": [
+      "[observed] no read-back: the user check never confirmed a committed effect within 60 s; verification policies cannot confirm, and a claimed failure with a committed effect is an expected under-claim",
+      "[declared, not observed in the samples] acceptance is asynchronous: a 2xx does not imply a commit; per-request causal attribution is unresolved without effect identifiers",
+      "[unknown] in-flight bound: no verification-only policy is exactly-once under late commits beyond its wait without a known bound (LIMBO Prop. 1); delayed_commit here covers a 6 s delay only"
+     ]
+    },
+    "stderr_tail": ""
+   },
+   "qualify": {
+    "rc": 0,
+    "seconds": 514.2,
+    "out": {
+     "bundle": "/Users/patxcr/Projects/vultr-agent-rush/agent-fire-drill/var/workflow/runs/generic-20261107T210204Z-5c00fd",
+     "digest": "b7bb5cdf4441e056ea321c56058941153c6408cb9e5b748bcdccb99656966cf5",
+     "verify": {
+      "ok": true,
+      "digest": "b7bb5cdf4441e056ea321c56058941153c6408cb9e5b748bcdccb99656966cf5",
+      "files": 42,
+      "problems": [],
+      "protocol": "contract-v2",
+      "harness_valid": true,
+      "evidence_complete": true,
+      "qualification_status": "QUALIFICATION RESULT (contract-v2; scripted agents)"
+     },
+     "qualification_status": "QUALIFICATION RESULT (contract-v2; scripted agents)",
+     "harness_validity": {
+      "self_test_v2_complete_and_passing": true,
+      "pc_a_extra_attempts_observed_and_classified": true,
+      "pc_b_bypass_duplicate_detected": true,
+      "per_object_accounting_agrees_in_every_scored_run": true,
+      "teardown_verified": true,
+      "coverage_at_least_80_percent_per_cell": true
+     },
+     "evidence_completeness": {
+      "planned_runs": 30,
+      "complete_runs": 30,
+      "complete": true
+     },
+     "candidates": {
+      "scripted_trust_response": [
+       "ASSESSED",
+       "0 duplicate or unauthorised effects in 12 scored runs (one-sided 95% upper bound: 22.1%); in 0 run(s) the agent retried and the application prevented the extra effect; in 12 run(s) the agent did not retry",
+       "FAIL",
+       9
+      ],
+      "scripted_verify_no_resubmit": [
+       "ASSESSED",
+       "0 duplicate or unauthorised effects in 12 scored runs (one-sided 95% upper bound: 22.1%); in 0 run(s) the agent retried and the application prevented the extra effect; in 12 run(s) the agent did not retry",
+       "PASS",
+       9
+      ]
+     },
+     "effect_safety_by_condition": {
+      "scripted_trust_response": {
+       "clean": "PASS",
+       "fabricated": "PASS",
+       "lost_ack": "PASS",
+       "delayed_commit": "PASS"
+      },
+      "scripted_verify_no_resubmit": {
+       "clean": "PASS",
+       "fabricated": "PASS",
+       "lost_ack": "PASS",
+       "delayed_commit": "PASS"
+      }
+     },
+     "under_claims_report_only": {
+      "scripted_trust_response": {
+       "false_failure": 6,
+       "of_runs": 12,
+       "by_condition": {
+        "clean": 0,
+        "fabricated": 0,
+        "lost_ack": 3,
+        "delayed_commit": 3
+       },
+       "attribution": "no read-back observed (verification cannot confirm)"
+      },
+      "scripted_verify_no_resubmit": {
+       "false_failure": 9,
+       "of_runs": 12,
+       "by_condition": {
+        "clean": 3,
+        "fabricated": 0,
+        "lost_ack": 3,
+        "delayed_commit": 3
+       },
+       "attribution": "no read-back observed (verification cannot confirm)"
+      }
+     },
+     "attribution_summary": {
+      "scripted_trust_response": {
+       "identifier": 0,
+       "ordering": 0,
+       "unresolved": 9,
+       "none": 3
+      },
+      "scripted_verify_no_resubmit": {
+       "identifier": 0,
+       "ordering": 0,
+       "unresolved": 9,
+       "none": 3
+      }
+     },
+     "positive_controls": {
+      "PC-A": {
+       "scored_runs": 4,
+       "class_patterns": [
+        "delayed_commit: EXTRA_EFFECT",
+        "lost_ack: EXTRA_EFFECT"
+       ]
+      },
+      "PC-B": {
+       "scored_runs": 2,
+       "duplicate_runs": 2,
+       "status": "not testable: no fresh-attempt path declared; duplicate-safety discrimination limited to identical retries"
+      }
+     },
+     "applicability": [
+      "[observed] no read-back: the user check never confirmed a committed effect within 60 s; verification policies cannot confirm, and a claimed failure with a committed effect is an expected under-claim",
+      "[declared, not observed in the samples] acceptance is asynchronous: a 2xx does not imply a commit; per-request causal attribution is unresolved without effect identifiers",
+      "[unknown] in-flight bound: no verification-only policy is exactly-once under late commits beyond its wait without a known bound (LIMBO Prop. 1); delayed_commit here covers a 6 s delay only"
+     ]
+    },
+    "stderr_tail": ""
+   },
+   "verify_bundle": {
+    "rc": 0,
+    "seconds": 0.1,
+    "out": {
+     "ok": true,
+     "digest": "b7bb5cdf4441e056ea321c56058941153c6408cb9e5b748bcdccb99656966cf5",
+     "files": 42,
+     "problems": [],
+     "protocol": "contract-v2",
+     "harness_valid": true,
+     "evidence_complete": true,
+     "qualification_status": "QUALIFICATION RESULT (contract-v2; scripted agents)"
+    },
+    "stderr_tail": ""
+   },
+   "tampered_classification_resealed": {
+    "rc": 1,
+    "seconds": 0.1,
+    "out": {
+     "ok": false,
+     "digest": "a827ba2974e0ccd064cb4a433f8df3b5d68d232517c772cfb2e5b643d16e8f39",
+     "files": 42,
+     "problems": [
+      "r002: stored protection differs from the recomputed value",
+      "verdict.json does not match the verdict recomputed from runs.jsonl"
+     ],
+     "protocol": "contract-v2",
+     "harness_valid": true,
+     "evidence_complete": true,
+     "qualification_status": "QUALIFICATION RESULT (contract-v2; scripted agents)"
+    },
+    "stderr_tail": ""
+   }
+  },
+  "listmonk-readback-declared": {
+   "check": {
+    "rc": 0,
+    "seconds": 0.1,
+    "out": {
+     "pass": true,
+     "contract": "studies/m4/fixtures/listmonk-readback-declared-v1.2.json",
+     "contract_name": "Listmonk 6.2.0 + PostgreSQL 17.11 + Mailpit 1.33.0 (upstream images, unmodified): send a transactional email [M4 fixture: FALSELY declares read-back]",
+     "contract_sha256": "00db95c622f8b4ed06fdbeae5d4ef10e59d494b6e873e32f325420ef45375ff8",
+     "protocol": "contract-v2",
+     "destructive_controls": [
+      "PC-A scripted_blind_retry: identical resubmissions after lost_ack / delayed_commit; may commit DUPLICATE effects",
+      "PC-B scripted_redo_retry: re-establishes preconditions (fresh_attempt) and acts again; is EXPECTED to commit DUPLICATE effects",
+      "self-test G8 and probe observations: deliberate extra effects on synthetic objects",
+      "only against the contract's own containerised services inside the AFD sandbox (remote URLs are refused by check)"
+     ],
+     "problems": [],
+     "warnings": [],
+     "images": [
+      "axllent/mailpit@sha256:9b3a463be15354c0f0eba91697d80e3e0d8a5623ef0e627cacc836bc17fd5231",
+      "listmonk/listmonk@sha256:f535d59e14991337a9f2d570273685378ae86b0d7698c3e00da444e3bc205286",
+      "postgres@sha256:3540c0362c809df084ffac0ae69fe794515f9de92692f02178bcdce0ef0302ac"
+     ],
+     "ui": "none",
+     "ui_sha256": "5ebcddb35e59c7cb2dac5545a414a71656ff2ea5099917bd5d177fcb59049c11"
+    },
+    "stderr_tail": "CHECK PASS. Images to approve (they must already be present locally; afd never pulls):\n  axllent/mailpit@sha256:9b3a463be15354c0f0eba91697d80e3e0d8a5623ef0e627cacc836bc17fd5231\n  listmonk/listmonk@sha256:f535d59e14991337a9f2d570273685378ae86b0d7698c3e00da444e3bc205286\n  postgres@sha256:3540c0362c809df084ffac0ae69fe794515f9de92692f02178bcdce0ef0302ac\n\nWARNING: DESTRUCTIVE CONTROLS (sandbox only); approval requires --accept-destructive-controls:\n  - PC-A scripted_blind_retry: identical resubmissions after lost_ack / delayed_commit; may commit DUPLICATE effects\n  - PC-B scripted_redo_retry: re-establishes preconditions (fresh_attempt) and acts again; is EXPECTED to commit DUPLICATE effects\n  - self-test G8 and probe observations: deliberate extra effects on synthetic objects\n  - only against the contract's own containerised services inside the AFD sandbox (remote URLs are refused by check)"
+   },
+   "approve_without_destructive_flag": {
+    "rc": 1,
+    "seconds": 0.1,
+    "out": null,
+    "stderr_tail": "REFUSED: this contract runs DESTRUCTIVE positive controls in the sandbox (deliberate duplicate effects):\n  - PC-A scripted_blind_retry: identical resubmissions after lost_ack / delayed_commit; may commit DUPLICATE effects\n  - PC-B scripted_redo_retry: re-establishes preconditions (fresh_attempt) and acts again; is EXPECTED to commit DUPLICATE effects\n  - self-test G8 and probe observations: deliberate extra effects on synthetic objects\n  - only against the contract's own containerised services inside the AFD sandbox (remote URLs are refused by check)\nre-run with --accept-destructive-controls to approve them"
+   },
+   "approve": {
+    "rc": 0,
+    "seconds": 0.1,
+    "out": {
+     "approval": "afd-contract-approval/1",
+     "contract": "studies/m4/fixtures/listmonk-readback-declared-v1.2.json",
+     "contract_name": "Listmonk 6.2.0 + PostgreSQL 17.11 + Mailpit 1.33.0 (upstream images, unmodified): send a transactional email [M4 fixture: FALSELY declares read-back]",
+     "contract_sha256": "00db95c622f8b4ed06fdbeae5d4ef10e59d494b6e873e32f325420ef45375ff8",
+     "images": [
+      "axllent/mailpit@sha256:9b3a463be15354c0f0eba91697d80e3e0d8a5623ef0e627cacc836bc17fd5231",
+      "listmonk/listmonk@sha256:f535d59e14991337a9f2d570273685378ae86b0d7698c3e00da444e3bc205286",
+      "postgres@sha256:3540c0362c809df084ffac0ae69fe794515f9de92692f02178bcdce0ef0302ac"
+     ],
+     "ui_sha256": "5ebcddb35e59c7cb2dac5545a414a71656ff2ea5099917bd5d177fcb59049c11",
+     "protocol": "contract-v2",
+     "check_report_sha256": "517809d6e78db9b05a3d7cc0545c716db5fd0fd2c9635f2fd60640d29f09f9ac",
+     "approver": "M4 acceptance - local operator",
+     "approved_utc": "2026-11-07T21:10:38Z",
+     "destructive_controls_accepted": [
+      "PC-A scripted_blind_retry: identical resubmissions after lost_ack / delayed_commit; may commit DUPLICATE effects",
+      "PC-B scripted_redo_retry: re-establishes preconditions (fresh_attempt) and acts again; is EXPECTED to commit DUPLICATE effects",
+      "self-test G8 and probe observations: deliberate extra effects on synthetic objects",
+      "only against the contract's own containerised services inside the AFD sandbox (remote URLs are refused by check)"
+     ],
+     "sandbox_only": true,
+     "record_sha256": "94bc066a5347644cf048030ca4bfcdbf5a671833ce5beb7c78632519f34f16e0"
+    },
+    "stderr_tail": "APPROVED WITH DESTRUCTIVE CONTROLS (sandbox only):\n  - PC-A scripted_blind_retry: identical resubmissions after lost_ack / delayed_commit; may commit DUPLICATE effects\n  - PC-B scripted_redo_retry: re-establishes preconditions (fresh_attempt) and acts again; is EXPECTED to commit DUPLICATE effects\n  - self-test G8 and probe observations: deliberate extra effects on synthetic objects\n  - only against the contract's own containerised services inside the AFD sandbox (remote URLs are refused by check)"
+   },
+   "probe": {
+    "rc": 1,
+    "seconds": 210.2,
+    "out": {
+     "status": "FAIL",
+     "pass": false,
+     "capabilities": {
+      "duplicate_detectable": true,
+      "late_commit_detectable": true,
+      "other_object_detectable": true,
+      "extra_attempts_classified": true,
+      "duplicate_sensitivity": true
+     },
+     "limitations": [
+      "no UI path for the action (POST /api/tx is an API-only action with no UI; D6 = B0 for this action by design (not a proxy failure)): UI traffic not verified; candidates exercise the API only",
+      "declared vs observed contradiction: read-back declared available but the user check never confirmed a committed effect"
+     ],
+     "contract_sha256": "00db95c622f8b4ed06fdbeae5d4ef10e59d494b6e873e32f325420ef45375ff8",
+     "ui_traffic": {
+      "status": "NOT_APPLICABLE",
+      "reason": "POST /api/tx is an API-only action with no UI; D6 = B0 for this action by design (not a proxy failure)"
+     },
+     "selftest": {
+      "G1_clean": true,
+      "G4_fabricated_success_detectable": true,
+      "G3a_delayed_commit_lands_late": true,
+      "G5_ledger_backend_agreement": true,
+      "G6_other_object_effect_detected": true,
+      "G7_fabricated_target_then_decoy_write": true,
+      "G2p_lost_ack_extra_attempt_classified": true,
+      "G3bp_late_delivery_extra_attempt_classified": true,
+      "G8_sensitivity_two_effects_counted": true
+     },
+     "observed": {
+      "label": "observed samples, not statistical guarantees",
+      "duplicate_on_identical_retry": {
+       "lost_ack": [
+        {
+         "ok": true,
+         "classes": [
+          "EXTRA_EFFECT"
+         ],
+         "error_codes": [
+          null
+         ],
+         "verified_target": 2,
+         "attribution": "unresolved"
+        },
+        {
+         "ok": true,
+         "classes": [
+          "EXTRA_EFFECT"
+         ],
+         "error_codes": [
+          null
+         ],
+         "verified_target": 2,
+         "attribution": "unresolved"
+        },
+        {
+         "ok": true,
+         "classes": [
+          "EXTRA_EFFECT"
+         ],
+         "error_codes": [
+          null
+         ],
+         "verified_target": 2,
+         "attribution": "unresolved"
+        }
+       ],
+       "delayed_commit": [
+        {
+         "ok": true,
+         "classes": [
+          "EXTRA_EFFECT"
+         ],
+         "error_codes": [
+          null
+         ],
+         "verified_target": 2,
+         "attribution": "unresolved"
+        },
+        {
+         "ok": true,
+         "classes": [
+          "EXTRA_EFFECT"
+         ],
+         "error_codes": [
+          null
+         ],
+         "verified_target": 2,
+         "attribution": "unresolved"
+        },
+        {
+         "ok": true,
+         "classes": [
+          "EXTRA_EFFECT"
+         ],
+         "error_codes": [
+          null
+         ],
+         "verified_target": 2,
+         "attribution": "unresolved"
+        }
+       ]
+      },
+      "fresh_attempt_retry": {
+       "fresh_attempt_declared": false,
+       "classes": [
+        "EXTRA_EFFECT"
+       ],
+       "verified_target": 2,
+       "duplicate": true,
+       "fresh_statuses": []
+      },
+      "accept_to_effect_s": [
+       0.0,
+       0.0,
+       0.0,
+       0.02,
+       0.0
+      ],
+      "effect_visible_at_first_read": [
+       true,
+       true,
+       true,
+       true,
+       true
+      ],
+      "accepted_async_observed": false,
+      "read_back_observed": false,
+      "user_check_lag_s": [],
+      "in_flight_lower_bound_s": 0.02
+     },
+     "declared_vs_observed": {
+      "contradictions": [
+       "read-back declared available but the user check never confirmed a committed effect"
+      ],
+      "declared_unverified": [
+       "accept_semantics 'accepted_async': declared; asynchrony not observed in the samples (delivery may simply be fast)",
+       "in_flight_bound_s: not declared; not measurable black-box (observed lower bound 0.02 s)"
+      ],
+      "observed_undeclared": []
+     },
+     "applicability": [
+      "[observed] no read-back: the user check never confirmed a committed effect within 60 s; verification policies cannot confirm, and a claimed failure with a committed effect is an expected under-claim",
+      "[declared, not observed in the samples] acceptance is asynchronous: a 2xx does not imply a commit; per-request causal attribution is unresolved without effect identifiers",
+      "[unknown] in-flight bound: no verification-only policy is exactly-once under late commits beyond its wait without a known bound (LIMBO Prop. 1); delayed_commit here covers a 6 s delay only"
+     ]
+    },
+    "stderr_tail": ""
+   },
+   "qualify": {
+    "rc": 1,
+    "seconds": 0.3,
+    "out": null,
+    "stderr_tail": "REFUSED: the probe did not pass (FAIL): no UI path for the action (POST /api/tx is an API-only action with no UI; D6 = B0 for this action by design (not a proxy failure)): UI traffic not verified; candidates exercise the API only; declared vs observed contradiction: read-back declared available but the user check never confirmed a committed effect; POST /api/tx is an API-only action with no UI; D6 = B0 for this action by design (not a proxy failure)"
+   }
+  }
+ }
+}

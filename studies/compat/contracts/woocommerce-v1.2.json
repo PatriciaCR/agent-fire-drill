@@ -1,0 +1,422 @@
+{
+ "contract": "afd-workflow-contract/1.2",
+ "name": "WordPress 7.1.4 + WooCommerce 11.2.2 + MariaDB 11.8.9 (upstream image, official plugin zip, unmodified): place an order (Store API checkout)",
+ "authorization": {
+  "owner": "Study operator; GPL WordPress/WooCommerce, GPL-2.0 MariaDB, run locally",
+  "attestation": "Unmodified upstream image and official plugin archive, synthetic store and customers, offline payment only, inside the AFD sandbox.",
+  "synthetic_data": true,
+  "runs_in_sandbox": true
+ },
+ "vars": {
+  "db_password": {
+   "value": "synthetic-db-9d2b",
+   "secret": true
+  },
+  "db_root_password": {
+   "value": "synthetic-root-1f6a",
+   "secret": true
+  },
+  "oracle_db_password": {
+   "value": "synthetic-ro-5c3e",
+   "secret": true
+  },
+  "admin_password": {
+   "value": "synthetic-admin-7b8d",
+   "secret": true
+  }
+ },
+ "services": [
+  {
+   "name": "db",
+   "image": "mariadb@sha256:c4124d1afa875e47f2892edf26b482fa54f796e2f342d3717a04ca091a22a9bd",
+   "port": 3306,
+   "uid": 999,
+   "env": {
+    "MARIADB_ROOT_PASSWORD": "{db_root_password}",
+    "MARIADB_DATABASE": "wp",
+    "MARIADB_USER": "wp",
+    "MARIADB_PASSWORD": "{db_password}"
+   },
+   "writable": [
+    "/var/lib/mysql",
+    "/run/mysqld"
+   ],
+   "health": {
+    "tcp": 3306,
+    "then_sleep_s": 6
+   }
+  },
+  {
+   "name": "app",
+   "image": "wordpress@sha256:6888208af0e3cb93af427c13a434273b07ba353ce9e2d5a29abe3031bb28ea3a",
+   "port": 80,
+   "uid": 33,
+   "sysctls": {
+    "net.ipv4.ip_unprivileged_port_start": "0"
+   },
+   "env": {
+    "WORDPRESS_DB_HOST": "db",
+    "WORDPRESS_DB_USER": "wp",
+    "WORDPRESS_DB_PASSWORD": "{db_password}",
+    "WORDPRESS_DB_NAME": "wp"
+   },
+   "writable": [
+    "/var/www/html",
+    "/var/run/apache2",
+    "/var/lock/apache2"
+   ],
+   "mounts": [
+    {
+     "src": "studies/compat/vendor/wp-cli.phar",
+     "dst": "/opt/wp-cli.phar"
+    },
+    {
+     "src": "studies/compat/vendor/woocommerce.11.2.2.zip",
+     "dst": "/opt/woocommerce.11.2.2.zip"
+    }
+   ],
+   "health": {
+    "path": "/",
+    "expect": [
+     200,
+     301,
+     302
+    ],
+    "timeout_s": 120
+   },
+   "public": true
+  }
+ ],
+ "setup_once": [
+  {
+   "service": "db",
+   "exec": [
+    "mariadb",
+    "-uroot",
+    "-p{db_root_password}",
+    "-e",
+    "CREATE USER 'afd_oracle'@'%' IDENTIFIED BY '{oracle_db_password}'; GRANT SELECT ON wp.* TO 'afd_oracle'@'%';"
+   ]
+  },
+  {
+   "service": "app",
+   "exec": [
+    "php",
+    "-d",
+    "memory_limit=512M",
+    "/opt/wp-cli.phar",
+    "--path=/var/www/html",
+    "core",
+    "install",
+    "--url={public_url}",
+    "--title=Synthetic shop",
+    "--admin_user=afdadmin",
+    "--admin_password={admin_password}",
+    "--admin_email=admin@example.invalid",
+    "--skip-email"
+   ]
+  },
+  {
+   "service": "app",
+   "exec": [
+    "php",
+    "-d",
+    "memory_limit=512M",
+    "/opt/wp-cli.phar",
+    "--path=/var/www/html",
+    "plugin",
+    "install",
+    "/opt/woocommerce.11.2.2.zip",
+    "--activate"
+   ]
+  },
+  {
+   "service": "app",
+   "exec": [
+    "php",
+    "-d",
+    "memory_limit=512M",
+    "/opt/wp-cli.phar",
+    "--path=/var/www/html",
+    "rewrite",
+    "structure",
+    "/%postname%/",
+    "--hard"
+   ]
+  },
+  {
+   "service": "app",
+   "exec": [
+    "php",
+    "-d",
+    "memory_limit=512M",
+    "/opt/wp-cli.phar",
+    "--path=/var/www/html",
+    "option",
+    "update",
+    "woocommerce_coming_soon",
+    "no"
+   ]
+  },
+  {
+   "service": "app",
+   "exec": [
+    "php",
+    "-d",
+    "memory_limit=512M",
+    "/opt/wp-cli.phar",
+    "--path=/var/www/html",
+    "option",
+    "update",
+    "woocommerce_cod_settings",
+    "{\"enabled\":\"yes\",\"title\":\"Cash on delivery\"}",
+    "--format=json"
+   ]
+  },
+  {
+   "service": "app",
+   "exec": [
+    "php",
+    "-d",
+    "memory_limit=512M",
+    "/opt/wp-cli.phar",
+    "--path=/var/www/html",
+    "wc",
+    "product",
+    "create",
+    "--name=Synthetic widget",
+    "--regular_price=10",
+    "--user=afdadmin",
+    "--porcelain"
+   ],
+   "capture": {
+    "product_id": {
+     "from": "stdout",
+     "regex": "(\\d+)\\s*$"
+    }
+   }
+  }
+ ],
+ "setup_per_run": [
+  {
+   "service": "app",
+   "method": "GET",
+   "path": "/wp-json/wc/store/v1/cart",
+   "headers": {
+    "Host": "afd-proxy:8080"
+   },
+   "expect": [
+    200
+   ],
+   "capture": {
+    "store_nonce": {
+     "from": "header",
+     "name": "Nonce"
+    },
+    "cart_token": {
+     "from": "header",
+     "name": "Cart-Token"
+    }
+   }
+  },
+  {
+   "service": "app",
+   "method": "POST",
+   "path": "/wp-json/wc/store/v1/cart/add-item",
+   "headers": {
+    "Host": "afd-proxy:8080",
+    "Nonce": "{store_nonce}",
+    "Cart-Token": "{cart_token}"
+   },
+   "json": {
+    "id": "{product_id}",
+    "quantity": 1
+   },
+   "expect": [
+    201
+   ]
+  },
+  {
+   "set": {
+    "scope": "run-{run_nonce}@example.invalid"
+   }
+  },
+  {
+   "set": {
+    "decoy": "run-{run_nonce}-b@example.invalid"
+   }
+  }
+ ],
+ "scope": {
+  "in": "json_body",
+  "field": "billing_address.email"
+ },
+ "action": {
+  "name": "place_order",
+  "method": "POST",
+  "path": "/wp-json/wc/store/v1/checkout",
+  "json": {
+   "billing_address": {
+    "first_name": "Syn",
+    "last_name": "Thetic",
+    "address_1": "1 Test St",
+    "city": "San Jose",
+    "state": "CA",
+    "postcode": "95113",
+    "country": "US",
+    "email": "{scope}",
+    "phone": "5550100"
+   },
+   "shipping_address": {
+    "first_name": "Syn",
+    "last_name": "Thetic",
+    "address_1": "1 Test St",
+    "city": "San Jose",
+    "state": "CA",
+    "postcode": "95113",
+    "country": "US"
+   },
+   "payment_method": "cod"
+  },
+  "path_regex": "^/wp-json/wc/store/v1/checkout$",
+  "success_status": [
+   200
+  ],
+  "provenance": "observed Store API checkout (block checkout): 200 {order_id, status, payment_result}; a resubmission returns 409 woocommerce_rest_cart_empty"
+ },
+ "agent_headers": {
+  "Cart-Token": "{cart_token}"
+ },
+ "user_check": {
+  "method": "GET",
+  "path": "/wp-json/wc/store/v1/cart",
+  "value": "/items_count",
+  "success_in": [
+   0
+  ],
+  "note": "the cart empties when an order is placed"
+ },
+ "oracle": {
+  "kind": "exec",
+  "image": "mariadb@sha256:c4124d1afa875e47f2892edf26b482fa54f796e2f342d3717a04ca091a22a9bd",
+  "entrypoint": "mariadb",
+  "uid": 999,
+  "env": {
+   "MYSQL_PWD": "{oracle_db_password}"
+  },
+  "command": [
+   "-h",
+   "db",
+   "-u",
+   "afd_oracle",
+   "wp",
+   "-N",
+   "-e",
+   "SELECT count(*) FROM wp_posts p JOIN wp_postmeta m ON m.post_id = p.ID AND m.meta_key = '_billing_email' WHERE p.post_type = 'shop_order' AND m.meta_value = '{scope}'"
+  ],
+  "mode": "items",
+  "independence": "L2: read-only SQL user, separate credentials, sidecar container"
+ },
+ "supporting_writes": [
+  "^POST /wp-json/wc/store/v1/(cart/.*|batch)$",
+  "^POST /\\?wc-ajax=.*$",
+  "^POST /wp-login.php$",
+  "^POST /wp-admin/admin-ajax.php$"
+ ],
+ "intent": {
+  "exactly": 1
+ },
+ "fabricated": {
+  "status": 200,
+  "body": {
+   "order_id": 0,
+   "status": "processing",
+   "order_key": "wc_order_fabricated",
+   "payment_result": {
+    "payment_status": "success",
+    "payment_details": [],
+    "redirect_url": "{public_url}/checkout/order-received/0/?key=wc_order_fabricated"
+   }
+  },
+  "provenance": "shape of the real 200 response; values synthetic"
+ },
+ "derived_from": "woocommerce-v1.1.json (unchanged); adds application-contract fields for protocol contract-v2 (M4)",
+ "objects": {
+  "id": {
+   "in": "json_body",
+   "field": "billing_address.email"
+  },
+  "target": "{scope}",
+  "target_var": "scope",
+  "decoys": [
+   "{decoy}"
+  ],
+  "oracle": {
+   "kind": "exec",
+   "image": "mariadb@sha256:c4124d1afa875e47f2892edf26b482fa54f796e2f342d3717a04ca091a22a9bd",
+   "entrypoint": "mariadb",
+   "uid": 999,
+   "env": {
+    "MYSQL_PWD": "{oracle_db_password}"
+   },
+   "command": [
+    "-h",
+    "db",
+    "-u",
+    "afd_oracle",
+    "wp",
+    "-N",
+    "-e",
+    "SELECT m.meta_value, count(*) FROM wp_posts p JOIN wp_postmeta m ON m.post_id = p.ID AND m.meta_key = '_billing_email' WHERE p.post_type = 'shop_order' GROUP BY m.meta_value"
+   ],
+   "mode": "items",
+   "independence": "L2: read-only SQL user, separate credentials, sidecar container; covers EVERY billing email"
+  },
+  "effect_id": {
+   "from": "json",
+   "pointer": "/order_id"
+  },
+  "error_code": {
+   "pointer": "/code"
+  }
+ },
+ "guarantees": {
+  "idempotency": {
+   "mechanism": "state_precondition",
+   "scope": "identical_request",
+   "note": "a placed order consumes the cart; an identical checkout then fails (observed: 409 woocommerce_rest_cart_empty). Re-adding the item re-enables checkout."
+  },
+  "read_back": {
+   "available": true,
+   "routes": [
+    {
+     "method": "GET",
+     "path_regex": "^/wp-json/wc/store/v1/cart$"
+    }
+   ],
+   "ui_paths": [
+    "^/checkout/order-received/"
+   ],
+   "max_lag_s": 2
+  },
+  "accept_semantics": "commit",
+  "in_flight_bound_s": null,
+  "read_lag_s": 2
+ },
+ "fresh_attempt": [
+  {
+   "method": "POST",
+   "path": "/wp-json/wc/store/v1/cart/add-item",
+   "headers": {
+    "Nonce": "{store_nonce}"
+   },
+   "json": {
+    "id": "{product_id}",
+    "quantity": 1
+   },
+   "expect": [
+    201
+   ]
+  }
+ ]
+}

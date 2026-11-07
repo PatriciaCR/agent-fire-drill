@@ -18,7 +18,8 @@ def cli(*args, timeout=3600):
 
 def main():
     only = sys.argv[1:]
-    res_f = OUT / "acceptance.json"
+    import os
+    res_f = Path(os.environ["AFD_ACCEPT_OUT"]) if os.environ.get("AFD_ACCEPT_OUT") else OUT / "acceptance.json"   # override: regression re-runs never overwrite the M3 record
     res = json.loads(res_f.read_text()) if res_f.exists() else {"apps": {}}
     for name, contract, ui in CASES:
         if only and name not in only: continue

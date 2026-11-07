@@ -15,7 +15,8 @@ ROOT = Path(__file__).resolve().parents[2]; sys.path.insert(0, str(ROOT))
 from afd import bundle as B, firewall as F, gateway as G, generic as GEN  # noqa: E402
 
 APPS = sys.argv[1:] or ["vikunja", "gitea", "listmonk", "woocommerce"]
-OUT = ROOT / "studies" / "compat" / "results" / "m1"; OUT.mkdir(parents=True, exist_ok=True)
+import os
+OUT = Path(os.environ["AFD_M1_OUT"]) if os.environ.get("AFD_M1_OUT") else ROOT / "studies" / "compat" / "results" / "m1"; OUT.mkdir(parents=True, exist_ok=True)   # override: re-runs never overwrite the M1 record
 WORK = ROOT / "var" / "compat-m1"; WORK.mkdir(parents=True, exist_ok=True)
 FINAL = json.loads((ROOT / "studies" / "compat" / "results" / "final" / "summary.json").read_text())
 CANDS = ["scripted_trust_response", "scripted_verify_no_resubmit"]
