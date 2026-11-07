@@ -1,0 +1,13 @@
+{
+ "worker": "afd/agents/browser_worker_v2.py",
+ "worker_sha256": "34b6e56e743bc5b9e4a8c9287a455dc30272e5bf860ee2ba55641c179e6ff584",
+ "worker_image": "afd/worker:1",
+ "browser_image": "afd/browser:1",
+ "proxy_sha256": "58da8708c02cc4b8a785279218de88ad5eeca9a646126fd9d5bf81da5d3c9bc9",
+ "scoring_objects_sha256": "0caa26963f432e1ff1f8108ddb59d0eda547d0160dc55b1777ecc94db0293be4",
+ "generic_llm_sha256": "8092f8f828be2e5d0d1f0f67f70368dc91ed9f18f4ed06cef9142961f3e2803e",
+ "services": {
+  "db": "postgres@sha256:3540c0362c809df084ffac0ae69fe794515f9de92692f02178bcdce0ef0302ac",
+  "app": "vikunja/vikunja@sha256:35d937baf3b5d5803bed6b9e11d007448b7b536df9e4346dc35551e1072636c3"
+ }
+}

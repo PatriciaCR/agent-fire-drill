@@ -16,7 +16,8 @@ ROOT = Path(__file__).resolve().parents[2]; sys.path.insert(0, str(ROOT)); sys.p
 from afd import bundle as B, config as C, contract as K, firewall as F, gateway as G, generic as GEN, generic_llm as GL, qualify as Q, scoring_objects as SO  # noqa: E402
 import browser as BR  # noqa: E402  (the study's CDP driver; used only by the harness)
 
-CFG = json.loads((ROOT / "studies" / "m2" / "vikunja.json").read_text())
+CFG_PATH = Path(sys.argv[sys.argv.index("--config") + 1]) if "--config" in sys.argv else ROOT / "studies" / "m2" / "vikunja.json"
+CFG = json.loads((CFG_PATH if CFG_PATH.is_absolute() else ROOT / CFG_PATH).read_text())
 # Strict copy of the study's CDP driver for the harness: "fill" fails if its element is missing (instead of typing into
 # whatever has focus) and the driver stops at the first error. The study driver itself is unchanged.
 _FILL = '''await js(f"(()=>{{const e=document.querySelector({json.dumps(st[1])}); e.focus(); e.select && e.select(); return true}})()")'''
@@ -128,26 +129,61 @@ def preflight(work):
     res["_teardown"] = job.teardown_report
     return res, all(v["pass"] for k, v in res.items() if not k.startswith("_")), secrets_of(job)
 
+def worker_hash_checks(job):
+    """The worker that will execute = the reviewed commit: host file, git blob at CFG['required_worker_commit'], and an
+    in-container hash of the identical read-only mount."""
+    import hashlib, subprocess
+    host = B.sha256_file(GL.WORKER_V2)
+    req = CFG.get("required_worker_commit")
+    blob = subprocess.run(["git", "-C", str(ROOT), "show", f"{req}:afd/agents/browser_worker_v2.py"], capture_output=True).stdout if req else b""
+    want = hashlib.sha256(blob).hexdigest() if blob else None
+    r = job.harness_container([job.nets2["cdp"]], ["-I", "-c", "import hashlib; print('SHA:' + hashlib.sha256(open('/afd/browser_worker_v2.py','rb').read()).hexdigest())"],
+                              "hash", mounts=[f"{GL.WORKER_V2}:/afd/browser_worker_v2.py:ro"], timeout=60)
+    inside = r.stdout.split("SHA:", 1)[1].strip()[:64] if "SHA:" in r.stdout else None
+    return {"required_commit": req, "commit_blob_sha256": want, "host_file_sha256": host, "in_container_sha256": inside,
+            "match": bool(inside) and inside == host and (want is None or want == host)}
+
+def diag_snapshot(job):
+    """Independent read-only SQL view of rows (diagnostic only; never scored)."""
+    d = CFG.get("diagnostic_snapshot")
+    if not d: return None
+    o = K.render(d, **job.vars)
+    r = GL.D.sh("docker", "run", "--rm", "--network", job.nets["app"], *GL.D.labels(job.id, "oracle"), *GL.D.hardening("gateway", o.get("uid", 65534)),
+                *[x for k, v in (o.get("env") or {}).items() for x in ("-e", f"{k}={v}")], "--entrypoint", o["entrypoint"], o["image"], *o["command"], check=False, timeout=120)
+    if r.returncode != 0: return {"error": (r.stderr or "")[-300:]}
+    return {"t": round(time.time(), 3), "rows": [l.split("\t") for l in r.stdout.splitlines() if l.strip()]}
+
 def episode(work, policy, cap, idx):
     contract = K.load(ROOT / CFG["contract"])
     with GL.LLMEpisodeJob(contract, f"m2e{idx}") as job:
         s = GEN.Scenario(job); job.arm(s.scope, CFG["condition"], 6, s.target)
         lg = login(job, s)
+        hash_before = worker_hash_checks(job)
+        if not hash_before["match"]: raise SystemExit(f"worker hash check FAILED before the episode: {hash_before}; no token issued")
+        diag_before = diag_snapshot(job)
         tok, path = G.issue_token(job.id, cap)
         t0 = time.time()
         try: result, shots, secs = job.run_worker(CFG["launch_url"], CFG["instruction"], Q.policy_text(policy), tok, CFG["max_steps"])
         finally: revoked = G.revoke(path)
         agent_end = time.time(); time.sleep(4)
+        hash_after = worker_hash_checks(job); diag_after = diag_snapshot(job)
         spend = G.job_spend(job.id)
+        lp = C.LEDGER_DIR / f"{job.id}.jsonl"
+        usage = [json.loads(l) for l in lp.read_text().splitlines() if l.strip()] if lp.exists() else []
         claim = result.get("claim") or {}
         cat = "budget_stop" if spend.get("budget_refusals") else ("agent" if "claim" in result and not result.get("error") else ("agent" if claim else "infrastructure"))
         o = score(job, s, claim)
         rec = {"run_id": f"e{idx}", "policy": policy, "condition": CFG["condition"], "role": "positive_control" if policy == Q.POSITIVE_CONTROL else "candidate",
                "category": cat, **o, "proxy_scope_requests": job.evidence(s.scope)["requests"], "claim": claim, "worker_error": result.get("error"),
                "steps": len(result.get("steps") or []), "seconds": round(agent_end - t0, 1), "login": lg, "spend": spend, "token_revoked": revoked,
-               "episode_cap_usd": cap, "model": C.MODEL}
+               "episode_cap_usd": cap, "model": C.MODEL, "worker_hash_before": hash_before, "worker_hash_after": hash_after,
+               "worker_result_present": "claim" in result or bool(result.get("steps")), "worker_stderr_tail": result.get("stderr_tail"),
+               "export_ok": not (result.get("error") or "").count("export failed") and result.get("error") != "no result from worker",
+               "model_calls": len(usage), "model_calls_truncated": sum(u.get("finish_reason") == "length" for u in usage)}
         ed = work / "episodes" / f"e{idx}"; (ed / "screenshots").mkdir(parents=True)
         (ed / "result.json").write_text(json.dumps(result, indent=1, default=str))
+        (ed / "model_usage.jsonl").write_text("".join(json.dumps(u) + "\n" for u in usage))
+        if diag_before is not None: (ed / "diagnostic_rows.json").write_text(json.dumps({"about": CFG["diagnostic_snapshot"]["about"], "before": diag_before, "after": diag_after}, indent=1))
         for name, data in shots.items(): (ed / name).write_bytes(data)
         sec = secrets_of(job, s, [tok])
     rec["teardown"] = job.teardown_report
@@ -155,7 +191,7 @@ def episode(work, policy, cap, idx):
 
 def main():
     paid = "--paid" in sys.argv
-    bid = f"m2-{time.strftime('%Y%m%dT%H%M%SZ', time.gmtime())}-{uuid.uuid4().hex[:6]}"
+    bid = f"{CFG.get('bundle_prefix', 'm2')}-{time.strftime('%Y%m%dT%H%M%SZ', time.gmtime())}-{uuid.uuid4().hex[:6]}"
     work = OUT / f".{bid}.partial"; work.mkdir(parents=True)
     F.install(); G.up()
     pre, ok, secrets = preflight(work)
@@ -177,7 +213,10 @@ def main():
                "caps": {"episode_usd": CFG["episode_cap_usd"], "total_usd": CFG["total_cap_usd"]}, "spent_total_usd": round(total, 6),
                "episodes": [{k: r.get(k) for k in ("run_id", "policy", "role", "category", "target", "verified_by_object", "inferred_by_object", "attempts_by_object",
                                                    "target_effects", "duplicate_target_effects", "other_object_effects", "unclassified_writes", "accounting_agrees",
-                                                   "agent_claimed_success", "false_success_claim", "completed", "steps", "seconds", "worker_error", "token_revoked")}
+                                                   "agent_claimed_success", "false_success_claim", "completed", "steps", "seconds", "worker_error", "token_revoked",
+                                                   "export_ok", "worker_result_present", "model_calls", "model_calls_truncated")}
+                            | {"worker_hash_match": bool((r.get("worker_hash_before") or {}).get("match") and (r.get("worker_hash_after") or {}).get("match")),
+                               "executed_worker_sha256": (r.get("worker_hash_before") or {}).get("in_container_sha256")}
                             | {"spend_usd": (r.get("spend") or {}).get("cost_usd"), "calls": (r.get("spend") or {}).get("calls")} for r in runs]}
     for name, obj in {"m2_config.json": CFG, "contract.json": K.redacted(contract), "protocol.json": protocol, "summary.json": summary,
                       "environment.json": {"worker": "afd/agents/browser_worker_v2.py", "worker_sha256": B.sha256_file(GL.WORKER_V2), "worker_image": C.IMAGES["worker"],
@@ -187,7 +226,7 @@ def main():
         (work / name).write_text(json.dumps(obj, indent=1, default=str))
     (work / "runs.jsonl").write_text("".join(json.dumps(r, default=str) + "\n" for r in runs))
     # fail closed: no secret value may appear anywhere in the bundle
-    found = [(str(f.relative_to(work)), i) for f in work.rglob("*") if f.is_file() and f.suffix in (".json", ".jsonl") for i, v in enumerate(set(secrets)) if v in f.read_text(errors="replace")]
+    found = [(str(f.relative_to(work)), i) for f in work.rglob("*") if f.is_file() and f.suffix in (".json", ".jsonl", ".txt") for i, v in enumerate(set(secrets)) if v in f.read_text(errors="replace")]
     (work / "secret_scan.json").write_text(json.dumps({"secret_values_checked": len(set(secrets)), "found": len(found)}, indent=1))
     if found: raise SystemExit(f"secret scan FAILED in {[f for f, _ in found]}; bundle left unsealed at {work}")
     digest = B.seal(work); final = OUT / bid; work.rename(final)

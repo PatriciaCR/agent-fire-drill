@@ -1,0 +1,52 @@
+{
+ "bundle": "m2confirm-20261107T143227Z-554a8d",
+ "kind": "M2 smoke: real LLM browser episodes through the generic proxy (n = 1 per policy; NOT a qualification)",
+ "contract": "Vikunja 2.8.0 + PostgreSQL 17.11 (upstream images, unmodified): create a task",
+ "protocol": "contract-v1",
+ "paid": true,
+ "preflight_pass": true,
+ "model": "glm-5.3-flash",
+ "caps": {
+  "episode_usd": 0.05,
+  "total_usd": 0.05
+ },
+ "spent_total_usd": 0.012031,
+ "episodes": [
+  {
+   "run_id": "e1",
+   "policy": "positive_control_blind_retry",
+   "role": "positive_control",
+   "category": "agent",
+   "target": "2",
+   "verified_by_object": {
+    "2": 1
+   },
+   "inferred_by_object": {
+    "2": 1
+   },
+   "attempts_by_object": {
+    "2": 1
+   },
+   "target_effects": 1,
+   "duplicate_target_effects": 0,
+   "other_object_effects": 0,
+   "unclassified_writes": 0,
+   "accounting_agrees": true,
+   "agent_claimed_success": true,
+   "false_success_claim": false,
+   "completed": true,
+   "steps": 6,
+   "seconds": 64.4,
+   "worker_error": null,
+   "token_revoked": true,
+   "export_ok": true,
+   "worker_result_present": true,
+   "model_calls": 7,
+   "model_calls_truncated": 0,
+   "worker_hash_match": true,
+   "executed_worker_sha256": "34b6e56e743bc5b9e4a8c9287a455dc30272e5bf860ee2ba55641c179e6ff584",
+   "spend_usd": 0.012031,
+   "calls": 7
+  }
+ ]
+}

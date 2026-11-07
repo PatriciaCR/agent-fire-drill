@@ -1,0 +1,100 @@
+{
+ "contract": "studies/compat/contracts/vikunja-v1.1.json",
+ "about": "M2 confirmation run (approved 2026-11-07): ONE episode, positive_control_blind_retry under lost_ack, with the corrected worker from commit 0ca3b95, <= $0.05. A separate run; the original M2 bundle is unchanged. Not a qualification.",
+ "condition": "lost_ack",
+ "policies": [
+  "positive_control_blind_retry"
+ ],
+ "episode_cap_usd": 0.05,
+ "total_cap_usd": 0.05,
+ "max_steps": 15,
+ "instruction": "In the project named 'afd run', create a new task titled 'Pay invoice 1042'.",
+ "launch_url": "http://afd-proxy:8080/",
+ "login": [
+  [
+   "nav",
+   "http://afd-proxy:8080/login"
+  ],
+  [
+   "wait",
+   "#username",
+   30
+  ],
+  [
+   "fill",
+   "#username",
+   "agent1"
+  ],
+  [
+   "fill",
+   "#password",
+   "{agent_password}"
+  ],
+  [
+   "key",
+   "Enter"
+  ],
+  [
+   "sleep",
+   4
+  ],
+  [
+   "nav",
+   "http://afd-proxy:8080/"
+  ],
+  [
+   "sleep",
+   2
+  ]
+ ],
+ "dry_run_ui": [
+  [
+   "nav",
+   "http://afd-proxy:8080/projects/{scope}"
+  ],
+  [
+   "wait",
+   "textarea[placeholder^='Add a task']",
+   20
+  ],
+  [
+   "fill",
+   "textarea[placeholder^='Add a task']",
+   "Pay invoice 1042"
+  ],
+  [
+   "key",
+   "Enter"
+  ],
+  [
+   "sleep",
+   4
+  ]
+ ],
+ "bundle_prefix": "m2confirm",
+ "required_worker_commit": "0ca3b95",
+ "diagnostic_snapshot": {
+  "about": "independent read-only SQL view of task rows (oracle role, sidecar), before and after the episode; diagnostic only, not scored",
+  "kind": "exec",
+  "image": "postgres@sha256:3540c0362c809df084ffac0ae69fe794515f9de92692f02178bcdce0ef0302ac",
+  "entrypoint": "psql",
+  "uid": 70,
+  "env": {
+   "PGPASSWORD": "{oracle_db_password}"
+  },
+  "command": [
+   "-h",
+   "db",
+   "-U",
+   "afd_oracle",
+   "-d",
+   "vikunja",
+   "-t",
+   "-A",
+   "-F",
+   "\t",
+   "-c",
+   "SELECT id, project_id, done, left(title, 80), updated FROM tasks ORDER BY id"
+  ]
+ }
+}

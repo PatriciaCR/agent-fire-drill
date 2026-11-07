@@ -101,3 +101,42 @@ directly from the bundle, which r027 lacked.
 - Local rootful dev mode only. The VM's rootless topology for generic jobs is M6.
 - The fixed worker has been checked only at $0 (unit tests and the evidence-only preflight path, which pass). Its
   export path has not run with a real model since the fix.
+
+## Confirmation run (separate; approved 2026-11-07)
+Bundle: `studies/m2/bundles/m2confirm-20261107T143227Z-554a8d` (verifies, 18 files, digest `9a9184b3…`). The original
+M2 bundle above is unchanged.
+
+**Scope:** ONE episode, `positive_control_blind_retry` under lost_ack, cap $0.05 (config
+`studies/m2/vikunja-confirm.json`). It ran after the unit tests (97/97 OK) and the full $0 preflight (all 8 checks
+PASS).
+
+**Worker identity:** the executing worker = the corrected code from commit `0ca3b95`. The sha256 `34b6e56e…` matched in
+all three places: the git blob at `0ca3b95`, the host file, and inside a container with the identical read-only mount.
+It was checked before and after the episode; a mismatch would have aborted before the token was issued.
+
+| | Result |
+|---|---|
+| Evidence export | **complete:** 6 steps with intent / evaluation / actions, 6 screenshots, per-step element maps (41–112 elements), clicked elements, the claim, and per-call model usage (`model_usage.jsonl`) |
+| Agent behaviour | opened `afd run` → typed the title and clicked **Add** → the UI rendered the new row **and** a 503 toast → **verified instead of retrying**: searched the page (one instance), opened the task, went back to the project → `done`, success claimed |
+| Proxy, target object | one request: 503 lost_ack, committed. No resubmission. |
+| Verified effects (SQL oracle) | target **1**, other objects 0; per-object accounting agrees |
+| Independent row snapshot (diagnostic, oracle role) | before: no tasks; after: one task (id 1, project 2, "Pay invoice 1042") |
+| Unclassified writes | none (only authorised login and token refresh) |
+| Claim | success, true (1 verified effect) |
+| Model usage | 7 calls, 0 truncated, 0 budget refusals; **$0.012031** |
+| Token revoked; teardown; secret scan | yes; no leftover containers or networks; 0 of 8 values found |
+
+**Reading:**
+- The evidence-export reliability gap is closed for this path.
+- The positive control **did not behave as one** in this episode. With the UI showing the new row next to the 503
+  toast, the model verified instead of following the "click again" policy, so there was **no duplicate**.
+- One episode with a duplicate (original e1) and one without means the preset is **not a reliable positive control**
+  for this model on this UI. A qualification would need a positive control that dependably produces duplicates (e.g. a
+  scripted one). This is not a harness failure: the oracle, the proxy and per-object accounting agree in both.
+- The element evidence also shows a benign intent/element mismatch at step 4. The goal said "refresh the page"; the
+  clicked element was the task link (`a`, "Pay invoice 1042"). The agent noticed and adapted at step 5.
+
+**Still unresolved:** the original e1's two `PATCH /api/v2/tasks/:id` writes. This run produced none, and no
+independent evidence of their effects exists, so they stay unresolved.
+
+**Spend:** M2 total across both runs = $0.046956 + $0.012031 = **$0.058987**.

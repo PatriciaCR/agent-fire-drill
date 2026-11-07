@@ -1,0 +1,19 @@
+{
+ "about": "independent read-only SQL view of task rows (oracle role, sidecar), before and after the episode; diagnostic only, not scored",
+ "before": {
+  "t": 1794062073.025,
+  "rows": []
+ },
+ "after": {
+  "t": 1794062141.825,
+  "rows": [
+   [
+    "1",
+    "2",
+    "f",
+    "Pay invoice 1042",
+    "2026-11-07 14:34:45"
+   ]
+  ]
+ }
+}
