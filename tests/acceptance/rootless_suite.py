@@ -181,7 +181,7 @@ def main():
     del key
     mand = {k: v for k, v in CHECKS.items() if v["mandatory"]}
     ok = ENV == "vm" and all(v["status"] == "PASS" for v in mand.values())
-    commit = subprocess.run(["git", "-C", str(ROOT), "rev-parse", "HEAD"], capture_output=True, text=True).stdout.strip() or None
+    commit = subprocess.run(["git", "-c", f"safe.directory={ROOT}", "-C", str(ROOT), "rev-parse", "HEAD"], capture_output=True, text=True).stdout.strip() or None
     out = {"at_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "t": time.time(), "environment": ENV, "commit": commit, "pass": ok,
            "summary": {s: sum(v["status"] == s for v in mand.values()) for s in ("PASS", "FAIL", "SKIPPED")}, "checks": CHECKS}
     ACC.mkdir(parents=True, exist_ok=True)

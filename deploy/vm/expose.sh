@@ -6,7 +6,7 @@ set -euo pipefail
 [ "$(id -u)" = 0 ] || { echo "run as root (sudo)" >&2; exit 1; }
 ROOT=/opt/afd; . /etc/afd/afd.env
 if [ "${1:-}" = --withdraw ]; then systemctl disable --now caddy 2>/dev/null || true; echo "withdrawn: caddy stopped"; exit 0; fi
-python3 -I - "$AFD_ACCEPTANCE/latest.json" "$(git -C "$ROOT" rev-parse HEAD)" <<'PY'
+python3 -I - "$AFD_ACCEPTANCE/latest.json" "$(git -c safe.directory="$ROOT" -C "$ROOT" rev-parse HEAD)" <<'PY'
 import json, sys, time
 p, head = sys.argv[1], sys.argv[2]
 try: r = json.load(open(p))

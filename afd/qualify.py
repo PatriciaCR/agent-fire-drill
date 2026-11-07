@@ -139,7 +139,7 @@ def _environment():
     env["breakingweb"] = dict(l.split("=", 1) for l in lock.read_text().split() if "=" in l) if lock.exists() else None
     req = (C.ROOT / "images" / "worker" / "requirements.lock").read_text().splitlines()
     env["browser_use"] = next((l for l in req if l.startswith("browser-use==")), None)
-    try: env["afd_commit"] = subprocess.run(["git", "-C", str(C.ROOT), "rev-parse", "HEAD"], capture_output=True, text=True).stdout.strip() or None
+    try: env["afd_commit"] = subprocess.run(["git", "-c", f"safe.directory={C.ROOT}", "-C", str(C.ROOT), "rev-parse", "HEAD"], capture_output=True, text=True).stdout.strip() or None
     except Exception: env["afd_commit"] = None
     return env
 
