@@ -5,7 +5,9 @@ bearer token; the gateway enforces the job's model allow-list, output-token cap,
 only the request body to the upstream with the real key, and records usage from EVERY upstream response (including
 truncated ones) to a per-job ledger. Client headers are never forwarded; the key is never logged or returned.
 
-Paths (container): key file  AFD_KEY_FILE (default /run/secrets/vultr_key, raw key or KEY=VALUE line)
+Paths: key file  AFD_KEY_FILE (raw key or KEY=VALUE line). Default: $CREDENTIALS_DIRECTORY/vultr_key when run as a systemd
+                 service with LoadCredential= (the service user cannot read the source file), else /run/secrets/vultr_key
+                 (container). "-" reads the key once from an inherited stdin pipe (dev emulation of LoadCredential).
                    tokens    AFD_TOKEN_DIR (read-only): <sha256(token)>.json = {job_id, budget_usd, models, max_tokens}
                    ledger    AFD_LEDGER_DIR (writable): <job_id>.jsonl, one line per upstream call
 Endpoint: POST /v1/chat/completions  (Authorization: Bearer <job token>);  GET /healthz"""
@@ -13,7 +15,8 @@ import hashlib, json, os, threading, time, urllib.error, urllib.request
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 UPSTREAM = os.environ.get("AFD_UPSTREAM_BASE", "https://api.vultrinference.com/v1").rstrip("/")
-KEY_FILE = os.environ.get("AFD_KEY_FILE", "/run/secrets/vultr_key")
+KEY_FILE = os.environ.get("AFD_KEY_FILE") or (os.path.join(os.environ["CREDENTIALS_DIRECTORY"], "vultr_key")
+                                               if os.environ.get("CREDENTIALS_DIRECTORY") else "/run/secrets/vultr_key")
 TOKEN_DIR = os.environ.get("AFD_TOKEN_DIR", "/run/afd/tokens")
 LEDGER_DIR = os.environ.get("AFD_LEDGER_DIR", "/var/lib/afd/ledger")
 MAX_BODY = int(os.environ.get("AFD_MAX_BODY", str(16 * 1024 * 1024)))
@@ -23,7 +26,8 @@ PRICES = {"glm-5.3-flash": (0.10e-6, 0.35e-6), "mimo-v2.6-flash": (0.10e-6, 0.25
 _LOCK = threading.Lock()
 
 def _load_key():
-    raw = open(KEY_FILE).read().strip()
+    import sys
+    raw = (sys.stdin.read() if KEY_FILE == "-" else open(KEY_FILE).read()).strip()
     for line in raw.splitlines():
         if "=" in line and not line.strip().startswith("#"):
             return line.split("=", 1)[1].strip().strip('"').strip("'")
@@ -46,7 +50,11 @@ def _spent(job_id):
     except FileNotFoundError: return 0.0
 
 def _record(job_id, rec):
-    with _LOCK, open(os.path.join(LEDGER_DIR, f"{job_id}.jsonl"), "a") as f: f.write(json.dumps(rec) + "\n")
+    p = os.path.join(LEDGER_DIR, f"{job_id}.jsonl")
+    with _LOCK:
+        fd = os.open(p, os.O_WRONLY | os.O_APPEND | os.O_CREAT, 0o640)   # owner gateway, group = ledger dir's group (orchestrator)
+        os.fchmod(fd, 0o640)   # explicit: independent of the process umask (the orchestrator must be able to read usage)
+        with os.fdopen(fd, "a") as f: f.write(json.dumps(rec) + "\n")
 
 def _cost(model, prompt, completion):
     pi, po = PRICES[model]; return prompt * pi + completion * po
@@ -84,7 +92,9 @@ class Handler(BaseHTTPRequestHandler):
         est_prompt = max(1, n // 3)  # conservative: about 3 bytes per token, images count as text bytes
         worst = _cost(model, est_prompt, out_cap)
         spent = _spent(tok["job_id"])
-        if spent + worst > float(tok["budget_usd"]):
+        if spent + worst > float(tok["budget_usd"]):   # refused before any upstream call; audited at zero cost
+            _record(tok["job_id"], {"t": round(t0, 3), "model": model, "request_bytes": n, "status": 402, "prompt_tokens": 0, "completion_tokens": 0,
+                                    "cost_usd": 0.0, "estimated_upper_bound": False, "refused": "budget", "seconds": 0.0})
             return self._send(402, {"error": "job budget exhausted", "spent_usd": round(spent, 6), "budget_usd": tok["budget_usd"]})
         req = urllib.request.Request(UPSTREAM + "/chat/completions", data=json.dumps(body).encode(), method="POST",
                                      headers={"Authorization": f"Bearer {KEY}", "Content-Type": "application/json", "User-Agent": "agent-fire-drill-gateway/1"})
@@ -116,4 +126,4 @@ class Handler(BaseHTTPRequestHandler):
 
 if __name__ == "__main__":
     os.makedirs(LEDGER_DIR, exist_ok=True)
-    ThreadingHTTPServer(("0.0.0.0", int(os.environ.get("AFD_PORT", "8080"))), Handler).serve_forever()
+    ThreadingHTTPServer((os.environ.get("AFD_BIND", "0.0.0.0"), int(os.environ.get("AFD_PORT", "8080"))), Handler).serve_forever()

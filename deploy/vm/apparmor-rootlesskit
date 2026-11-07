@@ -1,0 +1,10 @@
+# /etc/apparmor.d/usr.bin.rootlesskit: Ubuntu 24.04 restricts unprivileged user namespaces; allow RootlessKit to create one
+# (Docker's documented profile for rootless mode on Ubuntu 24.04+).
+abi <abi/4.0>,
+include <tunables/global>
+
+/usr/bin/rootlesskit flags=(unconfined) {
+  userns,
+
+  include if exists <local/usr.bin.rootlesskit>
+}

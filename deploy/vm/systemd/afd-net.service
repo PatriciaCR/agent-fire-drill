@@ -1,0 +1,10 @@
+[Unit]
+Description=Agent Fire Drill: gateway address on dummy interface afd0
+Before=afd-firewall.service afd-gateway.service
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+EnvironmentFile=/etc/afd/afd.env
+ExecStart=/bin/sh -c 'ip link show afd0 >/dev/null 2>&1 || ip link add afd0 type dummy; ip addr replace ${AFD_GATEWAY_ADDR}/32 dev afd0; ip link set afd0 up'
+[Install]
+WantedBy=multi-user.target

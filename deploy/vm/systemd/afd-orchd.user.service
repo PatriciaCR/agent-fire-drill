@@ -1,0 +1,12 @@
+# Installed as ~afd-orch/.config/systemd/user/afd-orchd.service
+[Unit]
+Description=Agent Fire Drill orchestrator (rootless; runs inside the rootless Docker namespaces)
+After=docker.service
+Requires=docker.service
+[Service]
+ExecStart=/opt/afd/deploy/vm/afd-ns /usr/bin/python3 -I /opt/afd/bin/afd-orchd
+Restart=on-failure
+RestartSec=5
+UMask=0027
+[Install]
+WantedBy=default.target

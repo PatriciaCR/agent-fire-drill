@@ -2,7 +2,7 @@
 One run = one fresh browser container + one fresh worker container. Everything is labelled and removed in `finally`,
 removal is verified, and `janitor()` removes leftovers of jobs that are no longer active."""
 import base64, io, ipaddress, json, os, tarfile, time, uuid, urllib.request
-from . import config as C, dockerops as D, gateway as G
+from . import config as C, dockerops as D, firewall as F, gateway as G
 
 MARK = "=====AFD-RESULT-BASE64====="
 ACTIVE = C.VAR / "active_jobs.json"
@@ -47,12 +47,18 @@ class Job:
     def __enter__(self):
         self.dir.mkdir(parents=True, exist_ok=True); a = _active(); a[self.id] = {"pid": os.getpid(), "t": time.time()}; _set_active(a)
         try:
-            for (k, name), subnet in zip(self.nets.items(), _subnets()): D.create_internal_network(name, subnet, self.id)
+            if C.ROOTLESS: F.ensure_netns()   # in-namespace rules (defence in depth; the host uid rule is the hard boundary)
+            for (k, name), subnet in zip(self.nets.items(), _subnets()):
+                D.create_internal_network(name, subnet, self.id, internal=not (C.ROOTLESS and k == "gw"))
             D.sh("docker", "run", "-d", "--name", self.site, "--network", self.nets["site"], *D.labels(self.id, "site"),
                  *D.hardening("site", C.SITE_UID), "-e", f"BREAKINGWEB_CONTROLLER_SECRET={self.secret}", C.IMAGES["site"])
-            D.sh("docker", "network", "connect", self.nets["gw"], C.GATEWAY_NAME)
+            if C.ROOTLESS:
+                self.gw_ip, self.gw_url = C.GATEWAY_ADDR, G.url()
+            else:
+                D.sh("docker", "network", "connect", self.nets["gw"], C.GATEWAY_NAME)
+                self.gw_ip = D.ip_of(C.GATEWAY_NAME, self.nets["gw"]); self.gw_url = f"http://{self.gw_ip}:8080"
             self.token, self.token_path = G.issue_token(self.id, self.budget)
-            self.site_ip = D.ip_of(self.site, self.nets["site"]); self.gw_ip = D.ip_of(C.GATEWAY_NAME, self.nets["gw"])
+            self.site_ip = D.ip_of(self.site, self.nets["site"])
             self.backend = f"http://{self.site_ip}:8080"
             for _ in range(60):
                 try: http_json(self.backend + "/health", timeout=2); break
@@ -75,7 +81,7 @@ class Job:
             D.sh("docker", "network", "connect", self.nets["cdp"], browser)
             cdp_ip = D.ip_of(browser, self.nets["cdp"])
             env = {"AFD_CDP_URL": f"http://{cdp_ip}:9222", "AFD_LAUNCH_URL": launch_url, "AFD_ALLOWED_HOST": self.site_ip,
-                   "AFD_INSTRUCTION": instruction, "AFD_POLICY": policy_text or "", "AFD_GATEWAY_URL": f"http://{self.gw_ip}:8080/v1",
+                   "AFD_INSTRUCTION": instruction, "AFD_POLICY": policy_text or "", "AFD_GATEWAY_URL": f"{self.gw_url}/v1",
                    "AFD_JOB_TOKEN": self.token, "AFD_MODEL": C.MODEL, "AFD_MAX_STEPS": "25"}
             envargs = [x for k, v in env.items() for x in ("-e", f"{k}={v}")]
             D.sh("docker", "create", "--name", worker, "--network", self.nets["cdp"], *D.labels(self.id, "worker"),
@@ -102,7 +108,7 @@ class Job:
 
     def __exit__(self, *exc):
         rep = {"site_removed": D.remove_container(self.site)}
-        if D.exists("container", C.GATEWAY_NAME): D.sh("docker", "network", "disconnect", "-f", self.nets["gw"], C.GATEWAY_NAME, check=False)
+        if not C.ROOTLESS and D.exists("container", C.GATEWAY_NAME): D.sh("docker", "network", "disconnect", "-f", self.nets["gw"], C.GATEWAY_NAME, check=False)
         for k, n in self.nets.items():
             for c in D.labelled("container", f"afd.job={self.id}"): D.remove_container(c)
             rep[f"net_{k}_removed"] = D.remove_network(n)
@@ -128,7 +134,7 @@ def janitor():
     for n in D.labelled("network", "afd.role=net"):
         job = D.inspect_network(n)["Labels"].get("afd.job")
         if job and job not in active:
-            if D.exists("container", C.GATEWAY_NAME): D.sh("docker", "network", "disconnect", "-f", n, C.GATEWAY_NAME, check=False)
+            if not C.ROOTLESS and D.exists("container", C.GATEWAY_NAME): D.sh("docker", "network", "disconnect", "-f", n, C.GATEWAY_NAME, check=False)
             if D.remove_network(n): removed["networks"].append(n)
     for p in (C.TOKEN_DIR.glob("*.json") if C.TOKEN_DIR.exists() else []):
         try: job = json.loads(p.read_text())["job_id"]

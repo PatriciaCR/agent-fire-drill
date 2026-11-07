@@ -1,0 +1,39 @@
+#!/bin/bash
+# Admin helper (root).
+#   afdctl status                          services, firewall, latest verification, 24 h spend
+#   afdctl set-access-code                 generate a new smoke-run access code (printed once; only its hash is stored)
+#   afdctl qualify [--mini] POLICY...      queue a qualification (candidate presets: generic_guard cautious_no_resubmit)
+#   afdctl janitor                         remove leftovers of dead jobs (inside the rootless namespaces, as afd-orch)
+#   afdctl orch <cmd...>                   run a command as afd-orch inside its namespaces (e.g. docker ps)
+set -euo pipefail
+[ "$(id -u)" = 0 ] || { echo "run as root (sudo)" >&2; exit 1; }
+ROOT=/opt/afd; . /etc/afd/afd.env
+U=$(id -u afd-orch); RUN=/run/user/$U
+as_orch() { sudo -u afd-orch -H env XDG_RUNTIME_DIR="$RUN" DBUS_SESSION_BUS_ADDRESS="unix:path=$RUN/bus" PATH=/usr/bin:/bin:/usr/sbin:/sbin "$@"; }
+case "${1:-}" in
+  status)
+    systemctl --no-pager --lines=0 status afd-net afd-firewall afd-gateway afd-web | grep -E '●|Active:' || true
+    as_orch systemctl --user --no-pager --lines=0 status docker afd-orchd | grep -E '●|Active:' || true
+    python3 -I - "$AFD_ACCEPTANCE/latest.json" <<'PY'
+import json, sys
+try: d = json.load(open(sys.argv[1])); m = {k: v for k, v in d["checks"].items() if v.get("mandatory")}
+except Exception as e: print("verification: none", e); sys.exit()
+print(f"verification: pass={d['pass']} env={d['environment']} at={d['at_utc']} commit={d['commit'][:12]} mandatory={sum(v['status']=='PASS' for v in m.values())}/{len(m)}")
+PY
+    as_orch "$ROOT/deploy/vm/afd-ns" python3 -I -c "import sys; sys.path.insert(0,'$ROOT'); from afd import orchd; print('spend last 24 h: \$%.4f' % orchd.spend_last_24h())" ;;
+  set-access-code)
+    code=$(python3 -I -c 'import secrets; print(secrets.token_urlsafe(12))')
+    printf '%s' "$code" | python3 -I -c "import sys; sys.path.insert(0,'$ROOT'); from afd.web import hash_code; print(hash_code(sys.stdin.read()))" > /etc/afd/.web_access.tmp
+    chown root:afd-web /etc/afd/.web_access.tmp; chmod 0640 /etc/afd/.web_access.tmp; mv -f /etc/afd/.web_access.tmp /etc/afd/web_access
+    echo "smoke-run access code (shown once; share it only with people who may spend inference credit): $code" ;;
+  qualify)
+    shift; prof=full; [ "${1:-}" = --mini ] && { prof=mini; shift; }
+    [ $# -ge 1 ] || { echo "usage: afdctl qualify [--mini] POLICY..." >&2; exit 64; }
+    rid="q-$(date -u +%Y%m%d%H%M%S)-$(head -c4 /dev/urandom | od -An -tx1 | tr -d ' \n')"
+    python3 -I -c 'import json,sys,time; print(json.dumps({"id":sys.argv[1],"kind":"qualify","profile":sys.argv[2],"policies":sys.argv[3:],"t":time.time()}))' "$rid" "$prof" "$@" > "$AFD_SPOOL/.$rid.tmp"
+    chgrp afd-orch "$AFD_SPOOL/.$rid.tmp"; chmod 0640 "$AFD_SPOOL/.$rid.tmp"; mv "$AFD_SPOOL/.$rid.tmp" "$AFD_SPOOL/$rid.json"
+    echo "queued $rid; follow: sudo cat $AFD_RESULTS/_requests/$rid.json" ;;
+  janitor) as_orch "$ROOT/deploy/vm/afd-ns" python3 -I -c "import sys,json; sys.path.insert(0,'$ROOT'); from afd import jobs; print(json.dumps(jobs.janitor()))" ;;
+  orch) shift; as_orch "$ROOT/deploy/vm/afd-ns" "$@" ;;
+  *) sed -n 2,7p "$0"; exit 64 ;;
+esac

@@ -49,3 +49,32 @@ def remove():
 
 def show():
     return "\n".join(ipt("-S", c, check=False).stdout for c in ("AFD-FWD", "AFD-IN"))
+
+# ---- rootless mode: rules INSIDE the rootless Docker network namespace -------------------------------------------------
+# The orchestrator runs as (namespaced) root in that namespace, so it can manage these rules without sudo. They are defence
+# in depth only: the hard boundary is the root-owned host rule (deploy/vm/afd-firewall.sh) that limits every socket the
+# afd-orch user (slirp4netns included) opens on the host to the gateway address and port.
+#   AFD-NS    (jumped to from DOCKER-USER): job pool -> gateway addr:port allowed; established allowed; anything else from the pool dropped
+#   AFD-NS-IN (jumped to from INPUT):       job pool -> the namespace itself dropped (except established)
+def _ipt_ns(*args, check=True):
+    r = subprocess.run(["iptables", "-w", *args], capture_output=True, text=True)
+    if check and r.returncode != 0: raise RuntimeError(f"iptables(netns) {' '.join(args)} failed: {r.stderr.strip()}")
+    return r
+
+def ensure_netns():
+    if _ipt_ns("-n", "-L", "DOCKER-USER", check=False).returncode != 0: _ipt_ns("-N", "DOCKER-USER")
+    for parent, chain in (("DOCKER-USER", "AFD-NS"), ("INPUT", "AFD-NS-IN")):
+        if _ipt_ns("-n", "-L", chain, check=False).returncode != 0: _ipt_ns("-N", chain)
+        _ipt_ns("-F", chain)
+    a = lambda *x: _ipt_ns("-A", "AFD-NS", *x)
+    a("-m", "conntrack", "--ctstate", "ESTABLISHED,RELATED", "-j", "RETURN")
+    a("-s", C.JOB_POOL, "-d", C.GATEWAY_ADDR, "-p", "tcp", "--dport", str(C.GATEWAY_PORT), "-j", "RETURN")
+    a("-s", C.JOB_POOL, "!", "-d", C.JOB_POOL, "-j", "DROP")
+    b = lambda *x: _ipt_ns("-A", "AFD-NS-IN", *x)
+    b("-m", "conntrack", "--ctstate", "ESTABLISHED,RELATED", "-j", "RETURN")
+    b("-s", C.JOB_POOL, "-j", "DROP")
+    for parent, chain in (("DOCKER-USER", "AFD-NS"), ("INPUT", "AFD-NS-IN")):
+        if _ipt_ns("-C", parent, "-j", chain, check=False).returncode != 0: _ipt_ns("-I", parent, "1", "-j", chain)
+
+def show_netns():
+    return "\n".join(_ipt_ns("-S", c, check=False).stdout for c in ("AFD-NS", "AFD-NS-IN"))

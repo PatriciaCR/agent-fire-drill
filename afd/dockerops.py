@@ -21,8 +21,10 @@ def labels(job=None, role=None):
     if role: out += ["--label", f"afd.role={role}"]
     return out
 
-def create_internal_network(name, subnet, job):
-    sh("docker", "network", "create", "--internal", "--driver", "bridge", "--subnet", subnet, *labels(job, "net"), name)
+def create_internal_network(name, subnet, job, internal=True):
+    """internal=False is used only in rootless mode for the worker->gateway network: its only way out of the rootless
+    netns is slirp4netns, whose host socket the host firewall restricts to the gateway address."""
+    sh("docker", "network", "create", *(["--internal"] if internal else []), "--driver", "bridge", "--subnet", subnet, *labels(job, "net"), name)
 
 def ip_of(container, network):
     return sh("docker", "inspect", "-f", f'{{{{(index .NetworkSettings.Networks "{network}").IPAddress}}}}', container).stdout.strip()

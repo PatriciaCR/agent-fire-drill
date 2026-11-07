@@ -1,0 +1,41 @@
+[Unit]
+Description=Agent Fire Drill inference gateway (sole holder of the Vultr key)
+After=afd-net.service afd-firewall.service
+Requires=afd-net.service afd-firewall.service
+[Service]
+User=afd-gw
+Group=afd-gw
+EnvironmentFile=/etc/afd/afd.env
+# The key file is root:root 0400; systemd hands a copy to this service only ($CREDENTIALS_DIRECTORY/vultr_key).
+LoadCredential=vultr_key:/etc/afd/vultr_key
+ExecStart=/usr/bin/env AFD_BIND=${AFD_GATEWAY_ADDR} AFD_PORT=${AFD_GATEWAY_PORT} AFD_TOKEN_DIR=/var/lib/afd/tokens AFD_LEDGER_DIR=/var/lib/afd/ledger /usr/bin/python3 -I /opt/afd/images/gateway/gateway.py
+Restart=on-failure
+RestartSec=2
+UMask=0027
+NoNewPrivileges=yes
+CapabilityBoundingSet=
+AmbientCapabilities=
+ProtectSystem=strict
+ReadWritePaths=/var/lib/afd/ledger
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectKernelLogs=yes
+ProtectControlGroups=yes
+ProtectClock=yes
+ProtectHostname=yes
+ProtectProc=invisible
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+RestrictNamespaces=yes
+RestrictRealtime=yes
+RestrictSUIDSGID=yes
+LockPersonality=yes
+MemoryDenyWriteExecute=yes
+SystemCallArchitectures=native
+SystemCallFilter=@system-service
+MemoryMax=256M
+TasksMax=128
+[Install]
+WantedBy=multi-user.target

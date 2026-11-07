@@ -1,0 +1,6 @@
+[Unit]
+Description=Agent Fire Drill: re-resolve the inference address and re-apply the locked firewall
+After=afd-firewall.service
+[Service]
+Type=oneshot
+ExecStart=/opt/afd/deploy/vm/afd-firewall.sh apply

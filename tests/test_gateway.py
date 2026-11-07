@@ -99,6 +99,8 @@ class TestGateway(unittest.TestCase):
         SEEN.clear(); tok = self.token("j-bud", budget=0.0005)
         st, body = self.call(tok, {"model": "glm-5.3-flash", "messages": [], "max_tokens": 8192})  # worst case > budget
         self.assertEqual(st, 402); self.assertEqual(SEEN, [])
+        rows = self.ledger_rows("j-bud")   # the refusal is audited at zero cost so budget stops are distinguishable
+        self.assertEqual([(r["status"], r["cost_usd"], r.get("refused")) for r in rows], [(402, 0.0, "budget")])
 
     def test_06_unreachable_upstream_charged_worst_case(self):
         # point a second gateway at a closed port
@@ -117,6 +119,36 @@ class TestGateway(unittest.TestCase):
             row = self.ledger_rows("j-dead")[-1]; self.assertTrue(row["estimated_upper_bound"]); self.assertGreater(row["cost_usd"], 0)
         finally:
             p.terminate(); p.communicate(timeout=5)
+
+    def test_07_key_from_stdin_and_credentials_dir_bind_and_ledger_mode(self):
+        """Host-service modes: key read once from an inherited pipe ("-") or $CREDENTIALS_DIRECTORY; AFD_BIND honoured;
+        ledger files created 0640 (not world-readable)."""
+        for mode in ("stdin", "credentials"):
+            port = free_port(); SEEN.clear()
+            env = {**{k: v for k, v in os.environ.items() if "proxy" not in k.lower() and k != "AFD_KEY_FILE"}, "AFD_UPSTREAM_BASE": f"http://127.0.0.1:{self.up_port}/v1",
+                   "AFD_TOKEN_DIR": self.tokens, "AFD_LEDGER_DIR": self.ledger, "AFD_PORT": str(port), "AFD_BIND": "127.0.0.1"}
+            if mode == "stdin": env["AFD_KEY_FILE"] = "-"
+            else:
+                cd = os.path.join(self.tmp, "creds"); os.makedirs(cd, exist_ok=True); kf = os.path.join(cd, "vultr_key")
+                if not os.path.exists(kf): open(kf, "w").write(FAKE_KEY + "\n")
+                env["CREDENTIALS_DIRECTORY"] = cd
+            p = subprocess.Popen([sys.executable, "-I", os.path.join(ROOT, "images", "gateway", "gateway.py")], env=env,
+                                 stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                                 preexec_fn=lambda: os.umask(0o077))   # a restrictive umask must not make usage unreadable
+            if mode == "stdin": p.stdin.write(f"VULTR_INFERENCE_API_KEY={FAKE_KEY}\n".encode()); p.stdin.close()
+            try:
+                for _ in range(50):
+                    try: urllib.request.build_opener(urllib.request.ProxyHandler({})).open(f"http://127.0.0.1:{port}/healthz", timeout=1); break
+                    except Exception: time.sleep(0.1)
+                tok = self.token(f"j-{mode}")
+                r = urllib.request.Request(f"http://127.0.0.1:{port}/v1/chat/completions", method="POST", headers={"Authorization": f"Bearer {tok}", "Content-Type": "application/json"},
+                                           data=json.dumps({"model": "glm-5.3-flash", "messages": [], "max_tokens": 10}).encode())
+                with urllib.request.build_opener(urllib.request.ProxyHandler({})).open(r, timeout=10) as resp: self.assertEqual(resp.status, 200)
+                self.assertEqual(SEEN[-1][0].get("Authorization"), f"Bearer {FAKE_KEY}")
+                mode_bits = os.stat(os.path.join(self.ledger, f"j-{mode}.jsonl")).st_mode & 0o777
+                self.assertEqual(mode_bits, 0o640, oct(mode_bits))
+            finally:
+                p.terminate(); out, err = p.communicate(timeout=5); self.assertNotIn(FAKE_KEY.encode(), out + err)
 
     def test_99_key_never_logged_or_written(self):
         blobs = []

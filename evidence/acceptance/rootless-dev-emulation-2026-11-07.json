@@ -1,0 +1,538 @@
+{
+ "at_utc": "2026-11-07T04:48:52Z",
+ "t": 1794026932.1334443,
+ "environment": "dev",
+ "commit": "123d1e127126d9f3885446cc46f2668bce0b141d",
+ "pass": false,
+ "summary": {
+  "PASS": 37,
+  "FAIL": 6,
+  "SKIPPED": 6
+ },
+ "checks": {
+  "orch_has_no_sudo": {
+   "status": "PASS",
+   "mandatory": true,
+   "detail": {
+    "sudo -l": "User afd-orch is not allowed to run sudo on vultr-research.",
+    "sudo -n true rc": 1
+   }
+  },
+  "service_users_not_in_privileged_groups": {
+   "status": "PASS",
+   "mandatory": true,
+   "detail": {
+    "afd-orch": [
+     "afd-orch"
+    ],
+    "afd-gw": [
+     "afd-gw"
+    ],
+    "afd-web": [
+     "afd-web"
+    ]
+   }
+  },
+  "orch_cannot_use_rootful_docker_socket": {
+   "status": "PASS",
+   "mandatory": true,
+   "detail": "permission denied while trying to connect to the docker API at unix:///var/run/docker.sock"
+  },
+  "rootful_docker_disabled": {
+   "status": "SKIPPED",
+   "mandatory": true,
+   "detail": "not evaluable outside the VM (needs systemd)"
+  },
+  "container_daemon_is_rootless_and_unprivileged": {
+   "status": "PASS",
+   "mandatory": true,
+   "detail": {
+    "docker info": "[\"name=seccomp,profile=builtin\",\"name=rootless\",\"name=cgroupns\"] none 2",
+    "daemon process owners": [
+     "afd-orch",
+     "root"
+    ],
+    "note": "dev emulation also runs the rootful development daemon"
+   }
+  },
+  "cgroup_driver_systemd_v2": {
+   "status": "SKIPPED",
+   "mandatory": true,
+   "detail": "not evaluable outside the VM (needs systemd)"
+  },
+  "cgroup_controllers_delegated": {
+   "status": "SKIPPED",
+   "mandatory": true,
+   "detail": "not evaluable outside the VM (needs systemd)"
+  },
+  "key_file_root_only": {
+   "status": "PASS",
+   "mandatory": true,
+   "detail": {
+    "mode": "0o400",
+    "owner": "0:0",
+    "readable_by": {
+     "afd-orch": false,
+     "afd-gw": false,
+     "afd-web": false
+    }
+   }
+  },
+  "gateway_credential_unreadable_by_other_services": {
+   "status": "SKIPPED",
+   "mandatory": true,
+   "detail": "not evaluable outside the VM (needs systemd)"
+  },
+  "orch_cannot_obtain_key_through_its_docker": {
+   "status": "PASS",
+   "mandatory": true,
+   "detail": {
+    "bind key dir": {
+     "rc": 1,
+     "leaked": false,
+     "stderr": "cat: /x/vultr_key: No such file or directory"
+    },
+    "privileged + host root": {
+     "rc": 1,
+     "leaked": false,
+     "stderr": "cat: /host/etc/afd-dev/vultr_key: No such file or directory"
+    },
+    "credentials dir": {
+     "rc": 1,
+     "leaked": false,
+     "stderr": "cat: '/c/*/vultr_key': No such file or directory"
+    }
+   }
+  },
+  "orch_cannot_read_gateway_process": {
+   "status": "PASS",
+   "mandatory": true,
+   "detail": {
+    "environ_rc": 1,
+    "mem_rc": 1
+   }
+  },
+  "gateway_process_identity": {
+   "status": "PASS",
+   "mandatory": true,
+   "detail": {
+    "Uid": [
+     "998",
+     "998",
+     "998",
+     "998"
+    ],
+    "CapEff": [
+     "0000000000000000"
+    ],
+    "NoNewPrivs": [
+     "1"
+    ]
+   }
+  },
+  "gateway_listens_only_on_gateway_address": {
+   "status": "PASS",
+   "mandatory": true,
+   "detail": [
+    "10.233.0.1:8080"
+   ]
+  },
+  "state_directory_permissions": {
+   "status": "PASS",
+   "mandatory": true,
+   "detail": [
+    {
+     "path": "/var/lib/afd-dev/tokens",
+     "mode": "0o2750",
+     "owner": "afd-orch",
+     "group": "afd-gw",
+     "ok": true
+    },
+    {
+     "path": "/var/lib/afd-dev/ledger",
+     "mode": "0o2750",
+     "owner": "afd-gw",
+     "group": "afd-orch",
+     "ok": true
+    },
+    {
+     "path": "/var/lib/afd-dev/results",
+     "mode": "0o2750",
+     "owner": "afd-orch",
+     "group": "afd-web",
+     "ok": true
+    },
+    {
+     "path": "/var/lib/afd-dev/spool",
+     "mode": "0o2770",
+     "owner": "afd-web",
+     "group": "afd-orch",
+     "ok": true
+    }
+   ]
+  },
+  "orch_host_egress_gateway_only": {
+   "status": "PASS",
+   "mandatory": true,
+   "detail": {
+    "10.233.0.1:8080": "OPEN",
+    "1.1.1.1:443": "blocked ConnectionRefusedError",
+    "155.138.237.57:443": "blocked ConnectionRefusedError",
+    "169.254.169.254:80": "blocked ConnectionRefusedError",
+    "172.17.0.1:22": "blocked ConnectionRefusedError",
+    "172.17.0.1:18080": "blocked ConnectionRefusedError",
+    "127.0.0.1:18080": "blocked ConnectionRefusedError",
+    "10.233.0.1:22": "blocked ConnectionRefusedError",
+    "8.8.8.8:53": "blocked ConnectionRefusedError"
+   }
+  },
+  "gateway_egress_inference_only": {
+   "status": "PASS",
+   "mandatory": true,
+   "detail": {
+    "155.138.237.57:443": "OPEN",
+    "1.1.1.1:443": "blocked ConnectionRefusedError",
+    "169.254.169.254:80": "blocked ConnectionRefusedError",
+    "8.8.8.8:53": "blocked ConnectionRefusedError",
+    "172.17.0.1:18080": "blocked ConnectionRefusedError"
+   }
+  },
+  "web_has_no_egress": {
+   "status": "PASS",
+   "mandatory": true,
+   "detail": {
+    "10.233.0.1:8080": "blocked ConnectionRefusedError",
+    "1.1.1.1:443": "blocked ConnectionRefusedError",
+    "155.138.237.57:443": "blocked ConnectionRefusedError",
+    "169.254.169.254:80": "blocked ConnectionRefusedError",
+    "172.17.0.1:18080": "blocked ConnectionRefusedError"
+   }
+  },
+  "orch_ipv6_egress_blocked": {
+   "status": "PASS",
+   "mandatory": true,
+   "detail": {
+    "[2606:4700:4700::1111]:443": "blocked ConnectionRefusedError"
+   }
+  },
+  "gateway_not_reachable_on_host_interfaces": {
+   "status": "PASS",
+   "mandatory": true,
+   "detail": "172.17.0.1:8080 blocked ConnectionRefusedError"
+  },
+  "no_unexpected_public_listeners": {
+   "status": "SKIPPED",
+   "mandatory": true,
+   "detail": "not evaluable outside the VM (needs systemd)"
+  },
+  "public_listeners": {
+   "status": "PASS",
+   "mandatory": false,
+   "detail": [
+    "0.0.0.0:18080",
+    "0.0.0.0:8000"
+   ]
+  },
+  "firewall_precedes_rootless_daemon_at_boot": {
+   "status": "SKIPPED",
+   "mandatory": true,
+   "detail": "not evaluable outside the VM (needs systemd)"
+  },
+  "orch:gateway_service_reachable_from_namespace": {
+   "status": "PASS",
+   "mandatory": true,
+   "detail": {
+    "url": "http://10.233.0.1:8080"
+   }
+  },
+  "orch:netns_rules_installed": {
+   "status": "PASS",
+   "mandatory": true,
+   "detail": [
+    "-N AFD-NS",
+    "-A AFD-NS -m conntrack --ctstate RELATED,ESTABLISHED -j RETURN",
+    "-A AFD-NS -s 10.231.0.0/16 -d 10.233.0.1/32 -p tcp -m tcp --dport 8080 -j RETURN",
+    "-A AFD-NS -s 10.231.0.0/16 ! -d 10.231.0.0/16 -j DROP",
+    "",
+    "-N AFD-NS-IN",
+    "-A AFD-NS-IN -m conntrack --ctstate RELATED,ESTABLISHED -j RETURN",
+    "-A AFD-NS-IN -s 10.231.0.0/16 -j DROP"
+   ]
+  },
+  "orch:browser_cdp_ready": {
+   "status": "PASS",
+   "mandatory": true,
+   "detail": {
+    "seconds": 10.6
+   }
+  },
+  "orch:site_cgroup_limits_applied": {
+   "status": "FAIL",
+   "mandatory": true,
+   "detail": {
+    "memory.max, pids.max, cpu.max": [
+     "max",
+     "max",
+     "max 100000"
+    ],
+    "expected": [
+     "1073741824",
+     "256",
+     "200000 100000"
+    ]
+   }
+  },
+  "orch:browser_cgroup_limits_applied": {
+   "status": "FAIL",
+   "mandatory": true,
+   "detail": {
+    "memory.max, pids.max, cpu.max": [
+     "max",
+     "max",
+     "max 100000"
+    ],
+    "expected": [
+     "2147483648",
+     "512",
+     "200000 100000"
+    ]
+   }
+  },
+  "orch:worker_scan_written_for_admin_key_comparison": {
+   "status": "PASS",
+   "mandatory": true,
+   "detail": {
+    "scanned_bytes": 7045120
+   }
+  },
+  "orch:worker_no_docker_socket": {
+   "status": "PASS",
+   "mandatory": true,
+   "detail": {
+    "docker_sock": [],
+    "secrets_dir": false
+   }
+  },
+  "orch:worker_no_internet": {
+   "status": "PASS",
+   "mandatory": true,
+   "detail": "blocked:TimeoutError"
+  },
+  "orch:worker_no_direct_inference": {
+   "status": "PASS",
+   "mandatory": true,
+   "detail": "blocked:dns:gaierror"
+  },
+  "orch:worker_no_metadata": {
+   "status": "PASS",
+   "mandatory": true,
+   "detail": "blocked:TimeoutError"
+  },
+  "orch:worker_no_host_ports": {
+   "status": "PASS",
+   "mandatory": true,
+   "detail": {
+    "172.17.0.1": "blocked:TimeoutError",
+    "172.18.0.1": "blocked:TimeoutError",
+    "172.19.0.1": "blocked:TimeoutError",
+    "10.232.0.1": "blocked:TimeoutError",
+    "10.0.2.2": "blocked:TimeoutError",
+    "10.233.0.1": "blocked:TimeoutError"
+   }
+  },
+  "orch:worker_cannot_reach_site_directly": {
+   "status": "PASS",
+   "mandatory": true,
+   "detail": "blocked:TimeoutError"
+  },
+  "orch:worker_reaches_gateway_and_cdp_only_as_allowed": {
+   "status": "PASS",
+   "mandatory": true,
+   "detail": {
+    "gateway_health": 200,
+    "gateway_no_token": 401,
+    "gateway_with_token_bad_model": 403,
+    "cdp": 200
+   }
+  },
+  "orch:worker_identity_and_limits": {
+   "status": "FAIL",
+   "mandatory": true,
+   "detail": {
+    "uid": 10002,
+    "CapEff": "0000000000000000",
+    "NoNewPrivs": "1",
+    "root_write": "blocked:30",
+    "memory_max": "max",
+    "pids_max": "max"
+   }
+  },
+  "orch:worker_blocked_from_every_non_gateway_target": {
+   "status": "PASS",
+   "mandatory": true,
+   "detail": {
+    "10.233.0.1:22": "blocked:TimeoutError",
+    "10.233.0.1:18080": "blocked:TimeoutError",
+    "10.0.2.2:18080": "blocked:TimeoutError",
+    "10.0.2.2:22": "blocked:TimeoutError",
+    "10.0.2.3:53": "blocked:TimeoutError",
+    "169.254.169.254:80": "blocked:TimeoutError",
+    "1.1.1.1:443": "blocked:TimeoutError",
+    "8.8.8.8:53": "blocked:TimeoutError",
+    "172.17.0.1:18080": "blocked:TimeoutError",
+    "172.18.0.1:18080": "blocked:TimeoutError",
+    "172.19.0.1:18080": "blocked:TimeoutError",
+    "10.232.0.1:18080": "blocked:TimeoutError",
+    "172.17.0.1:22": "blocked:TimeoutError",
+    "172.18.0.1:22": "blocked:TimeoutError",
+    "172.19.0.1:22": "blocked:TimeoutError",
+    "10.232.0.1:22": "blocked:TimeoutError"
+   }
+  },
+  "orch:worker_no_unix_sockets_visible": {
+   "status": "PASS",
+   "mandatory": true,
+   "detail": []
+  },
+  "orch:host_boundary_holds_without_namespace_rules": {
+   "status": "PASS",
+   "mandatory": true,
+   "detail": {
+    "targets": {
+     "10.233.0.1:22": "blocked:TimeoutError",
+     "10.233.0.1:18080": "blocked:TimeoutError",
+     "10.0.2.2:18080": "blocked:OSError",
+     "10.0.2.2:22": "blocked:OSError",
+     "10.0.2.3:53": "blocked:TimeoutError",
+     "169.254.169.254:80": "blocked:TimeoutError",
+     "1.1.1.1:443": "blocked:TimeoutError",
+     "8.8.8.8:53": "blocked:TimeoutError",
+     "172.17.0.1:18080": "blocked:TimeoutError",
+     "172.18.0.1:18080": "blocked:ConnectionRefusedError",
+     "172.19.0.1:18080": "blocked:TimeoutError",
+     "10.232.0.1:18080": "blocked:TimeoutError",
+     "172.17.0.1:22": "blocked:TimeoutError",
+     "172.18.0.1:22": "blocked:ConnectionRefusedError",
+     "172.19.0.1:22": "blocked:TimeoutError",
+     "10.232.0.1:22": "blocked:TimeoutError"
+    },
+    "gateway_still_reachable": 200
+   }
+  },
+  "orch:worker_memory_limit_enforced": {
+   "status": "FAIL",
+   "mandatory": true,
+   "detail": {
+    "OOMKilled": false,
+    "exit": 0
+   }
+  },
+  "orch:worker_pids_limit_enforced": {
+   "status": "FAIL",
+   "mandatory": true,
+   "detail": {
+    "forks_before_limit": 3000,
+    "pids_limit": 256
+   }
+  },
+  "orch:worker_cpu_limit_enforced": {
+   "status": "FAIL",
+   "mandatory": true,
+   "detail": {
+    "per_process_cpu_share": [
+     1.0,
+     1.0,
+     1.0,
+     1.0
+    ],
+    "cpus_limit": "2"
+   }
+  },
+  "orch:browser_reaches_site_only": {
+   "status": "PASS",
+   "mandatory": true,
+   "detail": {
+    "1.1.1.1:80": "blocked",
+    "169.254.169.254:80": "blocked",
+    "172.17.0.1:18080": "blocked",
+    "172.18.0.1:18080": "blocked",
+    "172.19.0.1:18080": "blocked",
+    "10.232.0.1:18080": "blocked",
+    "10.233.0.1:8080": "blocked",
+    "10.0.2.2:18080": "blocked",
+    "10.231.0.2:8080": "OPEN"
+   }
+  },
+  "orch:browser_identity_and_env": {
+   "status": "PASS",
+   "mandatory": true,
+   "detail": {
+    "uid": [
+     "65534"
+    ],
+    "CapEff": [
+     "0000000000000000"
+    ],
+    "env": "HOME HOSTNAME PATH PWD"
+   }
+  },
+  "orch:teardown_removes_everything": {
+   "status": "PASS",
+   "mandatory": true,
+   "detail": {
+    "site_removed": true,
+    "net_site_removed": true,
+    "net_cdp_removed": true,
+    "net_gw_removed": true,
+    "token_revoked": true,
+    "leftover_containers": [],
+    "leftover_networks": []
+   }
+  },
+  "orch:revoked_token_rejected_after_job": {
+   "status": "PASS",
+   "mandatory": true,
+   "detail": 401
+  },
+  "orch:janitor_cleans_after_orchestrator_sigkill": {
+   "status": "PASS",
+   "mandatory": true,
+   "detail": {
+    "left_by_crash": {
+     "containers": [
+      "afd-crash-20261106204848-079ef5-site"
+     ],
+     "networks": [
+      "afdnet-crash-20261106204848-079ef5-cdp",
+      "afdnet-crash-20261106204848-079ef5-gw",
+      "afdnet-crash-20261106204848-079ef5-site"
+     ]
+    },
+    "after_janitor": {
+     "containers": [],
+     "networks": []
+    },
+    "tokens_revoked": 1
+   }
+  },
+  "orch:orchestrator_suite_completed": {
+   "status": "PASS",
+   "mandatory": true,
+   "detail": null
+  },
+  "worker_key_absent_env_and_files": {
+   "status": "PASS",
+   "mandatory": true,
+   "detail": {
+    "scanned_bytes": 7045120
+   }
+  },
+  "key_not_in_repo_state_tmp_or_logs": {
+   "status": "PASS",
+   "mandatory": true,
+   "detail": {
+    "hits": []
+   }
+  }
+ }
+}

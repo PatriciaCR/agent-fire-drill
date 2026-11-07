@@ -1,0 +1,20 @@
+#!/bin/sh
+# Run a command as afd-orch INSIDE its rootless Docker namespaces (user + mount + the detached network namespace), so the
+# orchestrator can reach per-job container addresses directly. Everything it sends outside that namespace leaves through
+# slirp4netns, i.e. as afd-orch on the host, where afd-firewall.sh allows only the gateway address:port.
+# Usage (as afd-orch): afd-ns <command> [args...]
+set -eu
+[ "$(id -un)" = afd-orch ] || { echo "afd-ns: run as afd-orch" >&2; exit 1; }
+: "${XDG_RUNTIME_DIR:=/run/user/$(id -u)}"; export XDG_RUNTIME_DIR
+ENV_FILE=${AFD_ENV_FILE:-/etc/afd/afd.env}
+if [ -r "$ENV_FILE" ]; then set -a; . "$ENV_FILE"; set +a; fi
+export DOCKER_HOST="unix://$XDG_RUNTIME_DIR/docker.sock"
+unset http_proxy https_proxy HTTP_PROXY HTTPS_PROXY all_proxy ALL_PROXY no_proxy NO_PROXY
+S="$XDG_RUNTIME_DIR/dockerd-rootless"
+[ -r "$S/child_pid" ] || { echo "afd-ns: rootless dockerd not running ($S/child_pid missing)" >&2; exit 1; }
+PID=$(cat "$S/child_pid")
+# With RootlessKit --detach-netns (default in current dockerd-rootless.sh) the container netns is bind-mounted at
+# $S/netns inside RootlessKit's mount namespace; otherwise it is the child's own netns.
+exec nsenter -U --preserve-credentials -m -t "$PID" -- /bin/sh -c '
+  if [ "$(stat -f -c %T "$1/netns" 2>/dev/null)" = nsfs ]; then n=$1; shift; exec nsenter --net="$n/netns" -- "$@"
+  else p=$(cat "$1/child_pid"); shift; exec nsenter -n -t "$p" -- "$@"; fi' afd-ns "$S" "$@"

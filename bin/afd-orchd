@@ -1,0 +1,6 @@
+#!/usr/bin/env python3
+"""Entry point for the orchestrator daemon (run inside the rootless namespaces via deploy/vm/afd-ns)."""
+import os, sys
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from afd import orchd  # noqa: E402
+os.umask(0o027); orchd.main()

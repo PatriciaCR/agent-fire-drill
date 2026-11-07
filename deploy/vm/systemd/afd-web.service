@@ -1,0 +1,38 @@
+[Unit]
+Description=Agent Fire Drill web interface (no Docker, no key; loopback only, published by the reverse proxy after verification)
+After=network-online.target afd-firewall.service
+Requires=afd-firewall.service
+[Service]
+User=afd-web
+Group=afd-web
+EnvironmentFile=/etc/afd/afd.env
+ExecStart=/usr/bin/python3 -I /opt/afd/bin/afd-web
+Restart=on-failure
+UMask=0007
+NoNewPrivileges=yes
+CapabilityBoundingSet=
+AmbientCapabilities=
+ProtectSystem=strict
+ReadWritePaths=/var/lib/afd/spool
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectKernelLogs=yes
+ProtectControlGroups=yes
+ProtectClock=yes
+ProtectHostname=yes
+ProtectProc=invisible
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+RestrictNamespaces=yes
+RestrictRealtime=yes
+RestrictSUIDSGID=yes
+LockPersonality=yes
+MemoryDenyWriteExecute=yes
+SystemCallArchitectures=native
+SystemCallFilter=@system-service
+MemoryMax=256M
+TasksMax=64
+[Install]
+WantedBy=multi-user.target

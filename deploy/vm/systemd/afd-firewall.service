@@ -1,0 +1,11 @@
+[Unit]
+Description=Agent Fire Drill host firewall (per-user egress rules; fail closed)
+Wants=network-online.target
+After=network-online.target afd-net.service
+Requires=afd-net.service
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/opt/afd/deploy/vm/afd-firewall.sh apply
+[Install]
+WantedBy=multi-user.target
