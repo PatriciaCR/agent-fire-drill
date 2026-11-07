@@ -1,0 +1,39 @@
+{
+ "slot_options": [
+  "Select a slot...",
+  "11/10/2026, 3:00:00 PM - in-person (30min)",
+  "11/12/2026, 2:00:00 PM - in-person (30min)",
+  "11/14/2026, 1:00:00 PM - in-person (30min)",
+  "11/14/2026, 2:00:00 PM - telehealth (30min)",
+  "11/18/2026, 1:00:00 PM - in-person (30min)",
+  "11/21/2026, 11:00:00 AM - telehealth (30min)"
+ ],
+ "element": {
+  "tag": "SELECT",
+  "multiple": false
+ },
+ "a_browseruse_js_exact_text": {
+  "success": true,
+  "value": "2026-11-10T15:00:00Z"
+ },
+ "a_submit_enabled": true,
+ "c_corrupted_text_used": "11/**10/2026**, **3:00:00 PM - in-person (30min)",
+ "c_browseruse_js_corrupted_text": {
+  "success": false,
+  "error": "Option with text or value not found",
+  "options": [
+   "Select a slot...",
+   "11/10/2026, 3:00:00 PM - in-person (30min)",
+   "11/12/2026, 2:00:00 PM - in-person (30min)",
+   "11/14/2026, 1:00:00 PM - in-person (30min)",
+   "11/14/2026, 2:00:00 PM - telehealth (30min)",
+   "11/18/2026, 1:00:00 PM - in-person (30min)",
+   "11/21/2026, 11:00:00 AM - telehealth (30min)"
+  ]
+ },
+ "a_submitted": true,
+ "b_playwright_select_option_enabled": true,
+ "b_toast_text": 1,
+ "backend_new_appointments_session_A_browseruse_js": 1,
+ "backend_new_appointments_session_B_playwright": 1
+}
