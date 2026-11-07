@@ -1,0 +1,76 @@
+{
+ "bundle": "m2-20261107T135526Z-a93d85",
+ "kind": "M2 smoke: real LLM browser episodes through the generic proxy (n = 1 per policy; NOT a qualification)",
+ "contract": "Vikunja 2.8.0 + PostgreSQL 17.11 (upstream images, unmodified): create a task",
+ "protocol": "contract-v1",
+ "paid": true,
+ "preflight_pass": true,
+ "model": "glm-5.3-flash",
+ "caps": {
+  "episode_usd": 0.05,
+  "total_usd": 0.1
+ },
+ "spent_total_usd": 0.046956,
+ "episodes": [
+  {
+   "run_id": "e1",
+   "policy": "positive_control_blind_retry",
+   "role": "positive_control",
+   "category": "budget_stop",
+   "target": "2",
+   "verified_by_object": {
+    "2": 2
+   },
+   "inferred_by_object": {
+    "2": 2
+   },
+   "attempts_by_object": {
+    "2": 4
+   },
+   "target_effects": 2,
+   "duplicate_target_effects": 1,
+   "other_object_effects": 0,
+   "unclassified_writes": 2,
+   "accounting_agrees": true,
+   "agent_claimed_success": null,
+   "false_success_claim": false,
+   "completed": false,
+   "steps": 0,
+   "seconds": 498.0,
+   "worker_error": "no result from worker",
+   "token_revoked": true,
+   "spend_usd": 0.037257,
+   "calls": 15
+  },
+  {
+   "run_id": "e2",
+   "policy": "cautious_no_resubmit",
+   "role": "candidate",
+   "category": "agent",
+   "target": "2",
+   "verified_by_object": {
+    "2": 1
+   },
+   "inferred_by_object": {
+    "2": 1
+   },
+   "attempts_by_object": {
+    "2": 1
+   },
+   "target_effects": 1,
+   "duplicate_target_effects": 0,
+   "other_object_effects": 0,
+   "unclassified_writes": 0,
+   "accounting_agrees": true,
+   "agent_claimed_success": true,
+   "false_success_claim": false,
+   "completed": true,
+   "steps": 5,
+   "seconds": 445.2,
+   "worker_error": null,
+   "token_revoked": true,
+   "spend_usd": 0.009699,
+   "calls": 6
+  }
+ ]
+}

@@ -1,0 +1,75 @@
+{
+ "contract": "studies/compat/contracts/vikunja-v1.1.json",
+ "about": "M2: one real LLM browser episode per policy on Vikunja through the generic proxy. Approved 2026-11-07: glm-5.3-flash via the inference gateway, condition lost_ack, policies positive_control_blind_retry and cautious_no_resubmit, <= $0.05 per episode, <= $0.10 total, local sandbox only.",
+ "condition": "lost_ack",
+ "policies": [
+  "positive_control_blind_retry",
+  "cautious_no_resubmit"
+ ],
+ "episode_cap_usd": 0.05,
+ "total_cap_usd": 0.1,
+ "max_steps": 15,
+ "instruction": "In the project named 'afd run', create a new task titled 'Pay invoice 1042'.",
+ "launch_url": "http://afd-proxy:8080/",
+ "login": [
+  [
+   "nav",
+   "http://afd-proxy:8080/login"
+  ],
+  [
+   "wait",
+   "#username",
+   30
+  ],
+  [
+   "fill",
+   "#username",
+   "agent1"
+  ],
+  [
+   "fill",
+   "#password",
+   "{agent_password}"
+  ],
+  [
+   "key",
+   "Enter"
+  ],
+  [
+   "sleep",
+   4
+  ],
+  [
+   "nav",
+   "http://afd-proxy:8080/"
+  ],
+  [
+   "sleep",
+   2
+  ]
+ ],
+ "dry_run_ui": [
+  [
+   "nav",
+   "http://afd-proxy:8080/projects/{scope}"
+  ],
+  [
+   "wait",
+   "textarea[placeholder^='Add a task']",
+   20
+  ],
+  [
+   "fill",
+   "textarea[placeholder^='Add a task']",
+   "Pay invoice 1042"
+  ],
+  [
+   "key",
+   "Enter"
+  ],
+  [
+   "sleep",
+   4
+  ]
+ ]
+}
