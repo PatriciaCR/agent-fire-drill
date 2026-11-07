@@ -112,8 +112,9 @@ def landing(records, cview):
 <section class=hero><div class=hero-grid><div>
   <span class=eyebrow>Recovery-safety drills for browser agents</span>
   <h1 style='margin-top:14px'>When a click's outcome is ambiguous, does your browser agent repeat it?</h1>
-  <p class=lead>Agent Fire Drill runs a browser agent's recovery policy against a synthetic refill workflow while the website loses
-  acknowledgments, delays commits and fabricates successes, then audits what the backend actually committed.</p>
+  <p class=lead>Agent Fire Drill qualifies a browser agent's recovery policy: it makes the website lose acknowledgments, delay commits
+  and fabricate successes, then audits what the backend actually committed. Today it runs one reference workflow, a synthetic
+  prescription refill.</p>
   <div class=cta><a class='btn primary' href='/drill'>Run a drill →</a><a class=btn href='/results'>See recorded results</a></div>
 </div>{hero_record(drills)}</div></section>
 <section>
@@ -135,6 +136,16 @@ def landing(records, cview):
   </div>
   <p class='muted small' style='margin-top:12px'>Every qualification includes a deliberately unsafe positive control. If the harness cannot catch its duplicates, no verdict is issued.</p>
 </section>
+<section><div class='grid g2 scopegrid'>
+  <div class=card><span class=eyebrow>The method · general</span><h3 style='margin-top:10px'>Recovery-safety qualification</h3>
+  <p class=small style='margin-top:8px'>Inject ambiguous outcomes at the HTTP boundary of a consequential write, audit the backend's actual effects, prove
+  the detector with a deliberately unsafe positive control, and report effect safety, outcome integrity and completion separately.
+  Nothing in the method is specific to prescriptions.</p></div>
+  <div class=card><span class=eyebrow>Implemented today · reference workflow</span><h3 style='margin-top:10px'>One synthetic workflow, one agent stack</h3>
+  <ul class=small style='margin:8px 0 0;padding-left:18px'><li>Workflow: one prescription refill in BreakingWeb's synthetic patient portal.</li>
+  <li>Agent: browser-use with one model; recovery policies are preset prompts.</li>
+  <li>Not yet supported: your own agent, your own website, or other workflows. Appointment booking failed its feasibility check and is excluded.</li></ul></div>
+</div></section>
 <section><div class='grid g2'>{feature}{trust}</div></section>
 <section>
   <div class=spread><h2>Latest recorded drills</h2><a href='/results' class=small>All results →</a></div>
@@ -305,6 +316,11 @@ def role_badge(run):
         return "<span class='badge engine' title='Deliberately unsafe policy used to prove the harness detects duplicates'>Positive control · deliberately unsafe</span>"
     return "<span class='badge recorded'>Candidate policy</span>"
 
+def sequence_card(seq):
+    items = "".join(f"<li class='seq-{E(x['tone'])}'><span class='mono tiny muted'>{'+%.1f s' % x['t'] if x['t'] is not None else ''}</span><span>{E(x['text'])}</span></li>" for x in seq["steps"])
+    return (f"<div class='card seqcard'><span class=eyebrow>What happened, from the evidence</span><p class=seqsum>{E(seq['summary'])}</p>"
+            f"<ol class=seq>{items}</ol><p class='muted tiny' style='margin:10px 0 0'>Derived only from this bundle's {E(seq['basis'])}. The full four-lane evidence is below.</p></div>")
+
 def replay(bid, summary, run, result, ver, live, cview, protocol):
     tl = M.timeline(run, result)
     cond = CONDITIONS.get(run["condition"], (run["condition"], "", ""))
@@ -323,6 +339,7 @@ def replay(bid, summary, run, result, ver, live, cview, protocol):
 <h1 style='margin-top:12px'>{E(pol[1])} <span class=muted>under</span> {E(cond[0].lower())}</h1>
 <p class='muted' style='margin-top:6px'>{E(cond[1])} · {E(run.get('steps'))} agent steps · {E(run.get('seconds'))} s · ${float(run.get('cost_usd') or 0):.4f} inference · finished {utc_iso(summary.get('finished_utc'))}</p></section>
 <section>{signature(run, tl)}</section>
+<section style='margin-top:20px'>{sequence_card(M.sequence(run, result))}</section>
 <section><div class=spread><h2>Replay</h2><span class='legend small'><span><span class='g ok'>■</span> authorised</span><span><span class='g dup'>■</span> unauthorised</span><span><span class='g false'>■</span> error or fabricated response</span></span></div>
 {''.join(f"<p class='note' style='margin-top:12px'>{n}</p>" for n in notes)}{shots_note}
 <div class=lanes style='margin-top:16px' role=table aria-label='Replay timeline'><div class=h role=columnheader>Time</div><div class=h role=columnheader>Agent saw</div><div class=h role=columnheader>Agent did</div><div class=h role=columnheader>Site reported</div><div class=h role=columnheader>Backend committed</div>
@@ -344,7 +361,7 @@ def verdict_page(bid, summary, runs, plan, ver, cview, protocol):
     harness = (f"<section><div class=card><div class=spread><h2>Can the harness see duplicates?</h2>{status_pill('PASS' if hv['valid'] else 'FAIL')}</div>"
                f"<p style='margin-top:10px'>The deliberately unsafe positive control produced <b>{E(pc['duplicates'])} duplicate(s) in {E(pc['scored_runs'])} scored runs</b>. "
                f"{'The detector works, so a candidate with no duplicates is meaningful.' if hv['valid'] else 'Harness validity failed: candidates are NOT ASSESSED.'}</p>"
-               f"<ul class='small' style='list-style:none;padding:0;columns:2'>{hv_items}</ul></div></section>")
+               f"<ul class='small hvlist'>{hv_items}</ul></div></section>")
     conds = mx["conditions"]
     th = "".join(f"<th scope=col>{E(CONDITIONS.get(c, (c,))[0])}</th>" for c in conds)
     trs = ""
@@ -367,8 +384,21 @@ def verdict_page(bid, summary, runs, plan, ver, cview, protocol):
     legend = ("<p class='legend' style='margin-top:12px'><span><span class='g ok'>●</span> completed</span><span><span class='g abstain'>○</span> safe abstention</span>"
               "<span><span class='g dup'>◆</span> unauthorised duplicate</span><span><span class='g false'>▲</span> false success claim</span><span><span class='g other'>·</span> other / not run</span></p>")
     stmts = "".join(f"<p class=small><b>{E(POLICIES.get(n, ('', n))[1])}:</b> {E(c['effect_safety']['statement'])}.</p>" for n, c in v.get("candidates", {}).items() if c.get("status") == "ASSESSED")
-    body = head + harness + (f"<section><h2>Policies across conditions</h2><p class='muted small' style='margin-top:6px'>Each mark is one real run; select it to replay.</p>"
-                             f"<div class=tw style='margin-top:12px'><table class=matrix><thead><tr><th scope=col>Policy</th>{th}<th scope=col>Effect safety</th><th scope=col>Integrity</th><th scope=col>Completed</th></tr></thead>"
+    stacked = ""
+    for row in mx["rows"]:
+        name = POLICIES.get(row["policy"], ("", row["policy"], ""))
+        cand = v.get("candidates", {}).get(row["policy"]) if row["role"] == "candidate" else None
+        lines = "".join(f"<li><span>{E(CONDITIONS.get(c, (c,))[0])}</span><span class=marks>"
+                        + ("—" if not row["cells"][c]["planned"] else "".join(f"<a href='/results/{E(bid)}/{E(x['run_id'])}'>{glyph(x['cls'])}</a>" for x in row["cells"][c]["runs"]))
+                        + "</span></li>" for c in conds)
+        if cand and cand.get("status") == "ASSESSED":
+            ax = (f"<p class=small>Effect safety {status_pill(cand['effect_safety']['status'])} · Integrity {status_pill(cand['outcome_integrity']['status'])} · "
+                  f"Completed <span class=mono>{cand['completion']['completed']}/{cand['completion']['scored']}</span></p>")
+        elif cand: ax = "<p class=small><span class='pill warnp'>NOT ASSESSED</span></p>"
+        else: ax = "<p class='muted small'>Detector check, not a candidate</p>"
+        stacked += f"<div class='card pcard'><h3>{E(name[1])} <span class='prole'>{E(name[0])}</span></h3><ul class=clist>{lines}</ul>{ax}</div>"
+    body = head + harness + (f"<section><h2>Policies across conditions</h2><div class=stacked>{stacked}</div><p class='muted small' style='margin-top:6px'>Each mark is one real run; select it to replay.</p>"
+                             f"<div class='tw matrixwrap' style='margin-top:12px'><table class=matrix><thead><tr><th scope=col>Policy</th>{th}<th scope=col>Effect safety</th><th scope=col>Integrity</th><th scope=col>Completed</th></tr></thead>"
                              f"<tbody>{trs}</tbody></table></div>{legend}{stmts}<p class='note' style='margin-top:12px'>{scope_line(summary, protocol)}</p></section>"
                              f"<section class='grid g2'>{evidence_card(bid, summary, ver)}<div class=card><h3>How to read this</h3><p class=small style='margin-top:8px'>"
                              "The three axes are independent and never combined into a score. \"0 duplicates in N runs\" comes with a 95% upper bound on the per-run rate, never a guarantee. "

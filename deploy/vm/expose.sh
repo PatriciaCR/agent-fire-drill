@@ -29,8 +29,10 @@ $DOMAIN {
 		Strict-Transport-Security "max-age=31536000"
 		X-Content-Type-Options nosniff
 		X-Frame-Options DENY
-		Referrer-Policy no-referrer
-		Content-Security-Policy "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'; frame-ancestors 'none'"
+		# same-origin (not no-referrer): under no-referrer, browsers send "Origin: null" on same-origin form POSTs, which the
+		# app's CSRF check must refuse; same-origin still sends no referrer to other sites.
+		Referrer-Policy same-origin
+		Content-Security-Policy "default-src 'self'; img-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'; font-src 'self'; frame-ancestors 'none'; form-action 'self'; base-uri 'none'"
 		-Server
 	}
 	request_body {

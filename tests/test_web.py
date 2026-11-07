@@ -90,9 +90,44 @@ class TestWeb(unittest.TestCase):
         rid = h["Location"].rsplit("/", 1)[1]
         st, body, _ = self.get(f"/api/requests/{rid}.json"); self.assertEqual(st, 200); self.assertEqual(json.loads(body)["state"], "queued")
         st, _, h2 = self.get(f"/requests/{rid}"); self.assertEqual((st, h2.get("Location")), (301, f"/drill/{rid}"))
+    def test_06_origin_handling_over_http(self):
+        good = {"code": "correct-code", "policy": "generic_guard", "condition": "lost_ack"}
+        host = self.base.split("//")[1]
+        def post(ip, **h):
+            for f in os.listdir(self.env["AFD_SPOOL"]): os.remove(os.path.join(self.env["AFD_SPOOL"], f))
+            return self.post(good, {"X-Forwarded-For": ip, **{k.replace("_", "-"): v for k, v in h.items()}})[0]
+        self.assertEqual(post("10.9.0.1", Origin="null", Sec_Fetch_Site="same-origin"), 303)
+        self.assertEqual(post("10.9.0.2", Origin=f"http://{host}", Sec_Fetch_Site="same-origin"), 303)
+        self.assertEqual(post("10.9.0.3", Origin="null"), 403)
+        self.assertEqual(post("10.9.0.4", Origin="https://1-2-3-4.sslip.io", Sec_Fetch_Site="same-site"), 403)
+        self.assertEqual(post("10.9.0.5", Origin="https://evil.example", Sec_Fetch_Site="cross-site"), 403)
+        st, _, h = self.get("/drill"); self.assertEqual(h.get("Referrer-Policy"), "same-origin")
+
     def test_05_rate_limit(self):
         codes = [self.post({"code": "wrong", "policy": "generic_guard", "condition": "clean"})[0] for _ in range(6)]
         self.assertIn(429, codes)
+
+class TestOriginPolicy(unittest.TestCase):
+    """CSRF decisions for POST /smoke. Regression: behind Caddy's former Referrer-Policy: no-referrer, browsers sent
+    "Origin: null" on legitimate same-origin form posts and the public site refused them (403)."""
+    H = "45-63-90-26.sslip.io"
+    def ok(self, **h):
+        from afd.web import origin_allowed
+        return origin_allowed({k.replace("_", "-"): v for k, v in h.items()}, self.H)[0]
+    def test_legitimate_browser_submissions(self):
+        self.assertTrue(self.ok(Origin=f"https://{self.H}", Sec_Fetch_Site="same-origin"))
+        self.assertTrue(self.ok(Origin="null", Sec_Fetch_Site="same-origin"))       # the public-site regression (no-referrer policy)
+        self.assertTrue(self.ok(Origin=f"https://{self.H}"))                         # HTTP / older browsers: no Sec-Fetch-*
+        self.assertTrue(self.ok(Referer=f"https://{self.H}/drill"))
+        self.assertTrue(self.ok())                                                   # non-browser client: access code still required
+    def test_malicious_requests(self):
+        for h in (dict(Origin="https://evil.example", Sec_Fetch_Site="cross-site"), dict(Origin="https://evil.example"),
+                  dict(Origin="https://1-2-3-4.sslip.io", Sec_Fetch_Site="same-site"),    # another *.sslip.io name: same site, other origin
+                  dict(Origin=f"https://{self.H}", Sec_Fetch_Site="same-site"), dict(Origin=f"https://{self.H}", Sec_Fetch_Site="cross-site"),
+                  dict(Origin="null"), dict(Origin="null", Sec_Fetch_Site="cross-site"), dict(Sec_Fetch_Site="cross-site"), dict(Sec_Fetch_Site="none"),
+                  dict(Referer="https://evil.example/x"), dict(Origin=f"https://{self.H}.evil.example"), dict(Origin=f"https://{self.H}:8443"),
+                  dict(Origin=f"javascript://{self.H}")):
+            self.assertFalse(self.ok(**h), h)
 
 class TestValidate(unittest.TestCase):
     def test_orchd_accepts_only_presets_and_protocol_conditions(self):

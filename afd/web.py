@@ -30,6 +30,29 @@ CSP = "default-src 'self'; img-src 'self'; style-src 'self' 'unsafe-inline'; scr
 PRESET_NAMES = tuple(V.POLICIES)
 _RATE, _RATE_LOCK = {}, threading.Lock()
 
+def origin_allowed(headers, host):
+    """CSRF decision for POST /smoke, from headers only browsers control. Returns (allowed, reason).
+      - Sec-Fetch-Site (sent by browsers on HTTPS) must be exactly "same-origin": "same-site" is refused because every
+        *.sslip.io name is the same site; "cross-site" and "none" are refused.
+      - Origin must match this host exactly. "null" (sandboxed frames, data: URLs, or a page served with
+        Referrer-Policy: no-referrer) is refused unless the browser itself reports Sec-Fetch-Site: same-origin.
+      - Without Origin, a Referer (if any) must match this host.
+      - With no browser headers at all (a non-browser client), the request is allowed: CSRF needs a victim's browser, and
+        the access code is still required."""
+    sfs = (headers.get("Sec-Fetch-Site") or "").strip().lower()
+    origin = (headers.get("Origin") or "").strip()
+    referer = (headers.get("Referer") or "").strip()
+    host = (host or "").strip().lower()
+    if sfs and sfs != "same-origin": return False, f"Sec-Fetch-Site: {sfs}"
+    if origin:
+        if origin == "null": return (True, "null origin, browser-attested same-origin") if sfs == "same-origin" else (False, "Origin: null")
+        u = urllib.parse.urlsplit(origin)
+        if u.scheme not in ("http", "https") or not host or u.netloc.lower() != host: return False, "Origin does not match this site"
+        return True, "same origin"
+    if referer:
+        return (True, "same-origin referer") if host and urllib.parse.urlsplit(referer).netloc.lower() == host else (False, "Referer does not match this site")
+    return (True, "browser-attested same-origin") if sfs == "same-origin" else (True, "no browser origin headers (non-browser client)")
+
 def hash_code(code, salt=None, it=200_000):
     salt = salt or secrets.token_hex(16)
     return f"pbkdf2_sha256${it}${salt}${hashlib.pbkdf2_hmac('sha256', code.encode(), bytes.fromhex(salt), it).hex()}"
@@ -113,7 +136,7 @@ class H(BaseHTTPRequestHandler):
     def log_message(self, fmt, *a): sys.stderr.write("%s %s\n" % (self.command, self.path.split("?")[0][:120]))
     def send(self, code, body, ctype="text/html; charset=utf-8", extra=None, cache="no-store"):
         self.send_response(code); self.send_header("Content-Type", ctype); self.send_header("Content-Length", str(len(body)))
-        self.send_header("X-Content-Type-Options", "nosniff"); self.send_header("Cache-Control", cache); self.send_header("Referrer-Policy", "no-referrer")
+        self.send_header("X-Content-Type-Options", "nosniff"); self.send_header("Cache-Control", cache); self.send_header("Referrer-Policy", "same-origin")
         if ctype.startswith("text/html"): self.send_header("Content-Security-Policy", CSP); self.send_header("X-Frame-Options", "DENY")
         for k, v in (extra or {}).items(): self.send_header(k, v)
         self.end_headers(); self.wfile.write(body)
@@ -186,8 +209,9 @@ class H(BaseHTTPRequestHandler):
         if urllib.parse.urlsplit(self.path).path != "/smoke": return self.not_found()
         n = int(self.headers.get("Content-Length") or 0)
         if n <= 0 or n > 4096: return self.send(413, V.simple("Request too large", "The form submission was too large.", cview()))
-        origin = self.headers.get("Origin") or self.headers.get("Referer") or ""
-        if origin and urllib.parse.urlsplit(origin).netloc != self.headers.get("Host", ""):
+        allowed, why = origin_allowed(self.headers, self.headers.get("Host", ""))
+        if not allowed:
+            sys.stderr.write(f"csrf refused: {why}\n")
             return self.send(403, V.simple("Cross-site request refused", "Start drills from this site's own form.", cview()))
         form = {k: v[0] for k, v in urllib.parse.parse_qs(self.rfile.read(n).decode("utf-8", "replace")).items()}
         if not rate_ok(self.client_ip()): return self.send(429, V.drill_form(cview(), "Too many attempts from your address. Try again later.", presets()))

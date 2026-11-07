@@ -234,3 +234,24 @@ code, .mono, .quote, .ev, .d { overflow-wrap: anywhere; }
   .nav { margin: 0 -16px; padding: 0 16px; }
   .lanes { grid-template-columns: 1fr; }
 }
+
+/* final refinements */
+.seqcard { border-left: 3px solid var(--ink); }
+.seqsum { font-size: 19px; line-height: 1.4; margin: 10px 0 14px; font-weight: 600; }
+.seq { list-style: none; padding: 0; margin: 0; counter-reset: s; }
+.seq li { display: grid; grid-template-columns: 72px minmax(0, 1fr); gap: 10px; padding: 9px 0 9px 14px; border-top: 1px solid var(--rule-2); font-size: 15px; position: relative; }
+.seq li::before { content: ""; position: absolute; left: 0; top: 14px; width: 8px; height: 8px; border-radius: 2px; background: var(--other); }
+.seq li.seq-auth::before { background: var(--ok); } .seq li.seq-unauth::before { background: var(--dup); } .seq li.seq-warn::before { background: var(--false); }
+.seq li.seq-unauth span:last-child { color: var(--dup); font-weight: 600; }
+.stacked { display: none; margin-top: 12px; }
+.pcard { margin-bottom: 12px; } .pcard h3 .prole { font: 400 12px var(--mono); color: var(--muted); margin-left: 6px; }
+.clist { list-style: none; padding: 0; margin: 10px 0; }
+.clist li { display: flex; justify-content: space-between; gap: 12px; padding: 9px 0; border-top: 1px solid var(--rule-2); font-size: 15px; }
+.clist .marks { font-size: 20px; letter-spacing: 4px; } .clist .marks a { text-decoration: none; }
+@media (max-width: 680px) {
+  .stacked { display: block; } .matrixwrap { display: none; }
+  .seq li { grid-template-columns: 1fr; gap: 2px; }
+  .seqsum { font-size: 17px; }
+}
+.hvlist { list-style: none; padding: 0; columns: 2; } .hvlist li { margin-bottom: 6px; break-inside: avoid; }
+@media (max-width: 680px) { .hvlist { columns: 1; } }
