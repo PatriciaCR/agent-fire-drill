@@ -64,7 +64,7 @@ per job:   site (BreakingWeb + our interventions/effect ledger) ─ browser (Chr
 ## Build and test (development)
 ```bash
 make images                                   # fetches BreakingWeb at the pinned commit, builds afd/{site,browser,worker,gateway}:1
-python3 -m unittest tests.test_gateway tests.test_engine tests.test_web tests.test_deploy tests.test_listeners   # no Docker, no cost
+python3 -m unittest tests.test_gateway tests.test_engine tests.test_web tests.test_deploy tests.test_listeners tests.test_ui_model tests.test_validate_bundle   # no Docker, no cost
 python3 tests/acceptance/containment.py       # rootful containment suite (no inference cost; needs sudo)
 python3 scripts/qualify.py --profile mini --policy cautious_no_resubmit --budget 0.15   # engine end to end (~$0.05); NOT a qualification
 python3 scripts/qualify.py --profile full --policy generic_guard --policy cautious_no_resubmit   # the protocol (~46 runs)
