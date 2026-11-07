@@ -6,8 +6,10 @@ key, and writes $AFD_ACCEPTANCE/latest.json.
 Every check has a status PASS / FAIL / SKIPPED and a `mandatory` flag. A check that cannot be evaluated in the current
 environment is SKIPPED, never PASS. The overall result passes only if every mandatory check PASSED (none skipped), so a dev
 emulation can never produce evidence that expose.sh accepts (it also requires environment == "vm")."""
-import json, os, pwd, grp, re, socket, subprocess, sys, threading, time, http.server, socketserver
+import contextlib, json, os, pwd, grp, re, socket, subprocess, sys, time
 from pathlib import Path
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import listeners as L  # noqa: E402  (guarded temporary probe + public-listener classification)
 
 ROOT = Path(__file__).resolve().parent.parent.parent
 ENV = os.environ.get("AFD_ENV", "vm")
@@ -21,6 +23,7 @@ PROBE_PORT = 18080
 ORCH, GWU, WEB = (pwd.getpwnam(u) for u in ("afd-orch", "afd-gw", "afd-web"))
 RUN = f"/run/user/{ORCH.pw_uid}"
 CHECKS = {}
+STACK = contextlib.ExitStack()   # owns the temporary probe listener; closed before evidence is written, and on any exit
 
 def record(name, status, detail=None, mandatory=True):
     CHECKS[name] = {"status": status, "mandatory": mandatory, "detail": detail}
@@ -46,13 +49,6 @@ def host_ips():
     out = subprocess.run(["ip", "-4", "-o", "addr", "show", "scope", "global"], capture_output=True, text=True).stdout
     return [m for m in re.findall(r"inet (\d+\.\d+\.\d+\.\d+)", out) if m != GW]
 
-def listener():
-    class Q(http.server.BaseHTTPRequestHandler):
-        def do_GET(self): self.send_response(200); self.end_headers(); self.wfile.write(b"host-service")
-        def log_message(self, *a): pass
-    socketserver.TCPServer.allow_reuse_address = True
-    srv = socketserver.TCPServer(("0.0.0.0", PROBE_PORT), Q); threading.Thread(target=srv.serve_forever, daemon=True).start(); return srv
-
 def gateway_pid():
     out = subprocess.run(["pgrep", "-u", "afd-gw", "-f", "gateway.py"], capture_output=True, text=True).stdout.split()
     return int(out[0]) if out else None
@@ -67,7 +63,10 @@ def main():
     key = KEY_SOURCE.read_bytes().strip()
     key = key.split(b"=", 1)[1].strip().strip(b'"').strip(b"'") if b"=" in key else key
     if len(key) < 20: sys.exit("key source missing or too short")
-    ips = host_ips(); srv = listener()
+    ips = host_ips()
+    STACK.enter_context(L.probe_listener(PROBE_PORT))
+    check("probe_listener_guarded_from_external_interfaces", L.guard_active(PROBE_PORT),
+          {"port": PROBE_PORT, "rule": f"INPUT -> {L.CHAIN}: tcp dport {PROBE_PORT} ! -i lo DROP (IPv4 and IPv6)"})
     inference_ip = socket.getaddrinfo(INFERENCE, 443, socket.AF_INET, socket.SOCK_STREAM)[0][4][0]
 
     # ---------------- identities and privilege ----------------
@@ -146,11 +145,12 @@ def main():
     check("orch_ipv6_egress_blocked", all(v.startswith("blocked") for v in six.values()), six)
     r = subprocess.run(["python3", "-I", "-c", CONNECT, f"{pub}:{GWPORT}"], capture_output=True, text=True).stdout.strip()
     check("gateway_not_reachable_on_host_interfaces", "blocked" in r, r)
-    ss = subprocess.run(["ss", "-ltnH"], capture_output=True, text=True).stdout.split("\n")
-    public = sorted({l.split()[3] for l in ss if l.strip() and not re.match(r"^(127\.|\[::1\]|::1|10\.233\.)", l.split()[3])})
-    allowed = re.compile(r":(22|80|443)$")
-    vm_only("no_unexpected_public_listeners", lambda: check("no_unexpected_public_listeners", all(allowed.search(a) for a in public), public))
-    record("public_listeners", "PASS", public, mandatory=False)
+    # Only this suite's own guarded probe socket (probe port AND owned solely by this process) is excluded; anything else,
+    # including another process on the probe port, counts as unexpected.
+    unexpected, own_probe, allowed_seen = L.classify_public(L.listeners_now(), own_probe=(PROBE_PORT, os.getpid()))
+    vm_only("no_unexpected_public_listeners", lambda: check("no_unexpected_public_listeners", not unexpected,
+            {"unexpected": unexpected, "allowed (22/80/443)": allowed_seen, "excluded: this suite's guarded probe": own_probe}))
+    record("public_listeners", "PASS", {"allowed": allowed_seen, "unexpected": unexpected, "own_probe": own_probe}, mandatory=False)
     def boot_order():
         dropin = Path(f"/etc/systemd/system/user@{ORCH.pw_uid}.service.d/afd.conf")
         en = sh("systemctl", "is-enabled", "afd-firewall.service").stdout.strip()
@@ -177,7 +177,9 @@ def main():
         j = subprocess.run(["journalctl", "-u", "afd-gateway", "-u", "afd-web", "--no-pager", "-o", "cat"], capture_output=True, text=True).stdout
         if key.decode() in j: hits.append("journal")
     check("key_not_in_repo_state_tmp_or_logs", not hits, {"hits": hits})
-    srv.shutdown()
+    STACK.close()   # shut down the probe and remove its guard, then prove both are gone
+    left = [a for a, _ in L.listeners_now() if L.port_of(a) == PROBE_PORT]
+    check("probe_listener_cleaned_up", not left and L.guard_absent(), {"listeners_on_probe_port": left, "guard_chain_removed": L.guard_absent()})
     del key
     mand = {k: v for k, v in CHECKS.items() if v["mandatory"]}
     ok = ENV == "vm" and all(v["status"] == "PASS" for v in mand.values())
@@ -191,4 +193,5 @@ def main():
     sys.exit(0 if ok else 1)
 
 if __name__ == "__main__":
-    main()
+    try: main()
+    finally: STACK.close()
