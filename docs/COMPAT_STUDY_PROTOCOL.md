@@ -116,4 +116,61 @@ Saleor (E) informs the GraphQL and multi-service conclusions, but does not count
 - **Outputs:** per-app evidence bundles, the D1–D8 table with raw measurements, a list of every generic change with lines of code, a list of every app-specific workaround, and the GO / NARROW GO / NO-GO decision under §3.
 
 ## Amendments
-(none)
+Recorded 2026-11-07, **before any application was evaluated**. §§1–5 above are unchanged: the original rules, floors,
+GO / NARROW GO / NO-GO thresholds and predictions stand as written. These amendments change only what is measured and
+reported alongside them.
+
+**AM-1: three distinct effect quantities (methodology).** Every run reports three separate counts:
+- **attempts:** HTTP requests matching the watched action, as seen by the proxy, each with the status returned to the client;
+- **proxy-inferred effects:** attempts whose upstream response matched the contract's success classification. This is an
+  *inference* from the response, not evidence of a commit;
+- **verified effects:** from the independent backend oracle. They are **authoritative**: all scoring uses verified
+  effects only.
+
+Agreement between proxy-inferred and verified effects is a *diagnostic*, valid only under an explicit assumption: "an upstream
+success response ⇔ exactly one committed effect, visible to the oracle at measurement time". Each app records whether the
+assumption holds (it fails, for example, for 202 Accepted, asynchronous effects, or 303 responses that are not classified as
+success). A disagreement is reported with its cause. It is never silently treated as an injector or oracle failure.
+(Contract-v0's own harness-validity rule is unchanged; where it reports NOT ASSESSED because of such a disagreement, the
+study reports why.)
+
+**AM-2: why a duplicate did not occur.** When the positive control does not produce a duplicate, the run is classified
+as exactly one of the following, from evidence:
+- **native duplicate prevention:** the fault was applied (proxy evidence shows the intervention), at least 2 matching
+  attempts reached the app, verified effects = 1, and the app's response to the extra attempt shows rejection,
+  deduplication, or the same resource returned;
+- **fault-injection failure:** the intervention was not applied, or the request was not matched;
+- **oracle failure:** the oracle disagrees with the independent datastore cross-check (D3).
+
+These are reported distinctly and never merged. The §3 decision rule is unchanged. D7's original text already allows native
+prevention when it is demonstrated.
+
+**AM-3 (approved revised PA-3): additional write attempts.**
+- **Recorded:** every HTTP write attempt other than the watched action (method not GET/HEAD/OPTIONS): method, path with
+  id-like segments masked, status, and time. Never headers, cookies or bodies.
+- **Classified** as an *authorised supporting write* only where the contract declares it (e.g. login, session refresh);
+  everything else is *unclassified*.
+- **Not counted as unauthorised writes** in this study.
+
+**AM-4 (approved PA-4, clarified): what "delayed commit" means here.**
+- **Edge-deferred delivery** is what AFD's generic proxy implements, and also what the refill-v1 in-process wrapper
+  implements. The first matching request is **held at the edge**; the client receives 503; the application receives the
+  identical request only after D seconds and processes it normally. This is consistent with LIMBO's late-commit
+  definition (the request executes at t0+δ).
+- **Accepted-then-late-commit** is **not implemented**: the application accepts and acknowledges work, or has begun
+  processing it, and its backend commit happens later (for example 202 Accepted plus a background job).
+- The two are not interchangeable. The study reports delayed-commit fidelity *relative to edge-deferred semantics*, and
+  records separately, per app, whether an accepted-then-late-commit path exists natively (observed, not injected).
+- The §4 prediction (delayed commit F1, "ordering inversion") is kept as recorded. Note: under edge-deferred semantics the
+  ordering is the defined behaviour, not an inversion.
+
+**AM-5 (approved PA-2): descriptive app properties.** Per app, record:
+- read lag λ, measured as the time from a verified commit until it is visible to (a) the user check and (b) the oracle;
+- native idempotency-key support, from documentation or API inspection;
+- any documented in-flight bound.
+
+These are descriptive only.
+
+**AM-6 (approved PA-1, exploratory only): pre-commit failure and stale reads.** Assess feasibility per app (F2 / F1 / F0)
+by analysis and by probes that need no new primitives. These are **not prerequisites** for completing the primary study,
+do not affect D1–D8 or §3, and are reported in a separate exploratory section.
