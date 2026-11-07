@@ -1,0 +1,6 @@
+third_party/breakingweb/
+build/
+var/
+__pycache__/
+*.pyc
+.venv/

@@ -1,0 +1,16 @@
+Agent Fire Drill
+Copyright 2026 The Agent Fire Drill authors
+
+Licensed under the Apache License, Version 2.0 (see LICENSE).
+
+This product uses, without modification, the BreakingWeb benchmark environments:
+  BreakingWeb — "Constructing Challenging Browser-Use Tasks by Controlled Environment Interventions"
+  (Yin et al., arXiv:2609.35814), https://github.com/Arvid-pku/BreakingWeb
+  Licensed under the Apache License, Version 2.0. Pinned at commit 2de159869c24ad4b4054c490606b54ebf39bd235.
+  BreakingWeb is fetched at build time and is not redistributed in this repository. Its patient-portal application,
+  seeded sessions, task definitions, backend success evaluation and the fabricated-success intervention variant are
+  BreakingWeb's work. The lost-acknowledgment and delayed-commit interventions, the effect ledger and everything else
+  in this repository are Agent Fire Drill's own (see PROVENANCE.md).
+
+This product runs browser agents with browser-use (https://github.com/browser-use/browser-use), MIT License,
+installed from PyPI at a pinned version. Inference is provided by Vultr Serverless Inference.

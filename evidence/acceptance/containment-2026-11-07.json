@@ -1,0 +1,182 @@
+{
+ "at_utc": "2026-11-07T02:19:07Z",
+ "pass": true,
+ "checks": {
+  "firewall_installed": {
+   "pass": true,
+   "detail": {
+    "inference_ips": [
+     "155.138.237.57"
+    ]
+   }
+  },
+  "orchestrator_user_cannot_read_key_file": {
+   "pass": true,
+   "detail": {
+    "key_file_mode": "0o400"
+   }
+  },
+  "browser_cdp_ready": {
+   "pass": true,
+   "detail": {
+    "seconds": 10.6
+   }
+  },
+  "worker_key_absent_env_and_files": {
+   "pass": true,
+   "detail": {
+    "scanned_bytes": 7045120
+   }
+  },
+  "worker_no_docker_socket": {
+   "pass": true,
+   "detail": {
+    "docker_sock": [],
+    "secrets_dir": false
+   }
+  },
+  "worker_no_internet": {
+   "pass": true,
+   "detail": "blocked:OSError"
+  },
+  "worker_no_direct_inference": {
+   "pass": true,
+   "detail": "blocked:dns:gaierror"
+  },
+  "worker_no_metadata": {
+   "pass": true,
+   "detail": "blocked:OSError"
+  },
+  "worker_no_host_ports": {
+   "pass": true,
+   "detail": {
+    "10.231.0.1": "blocked:OSError",
+    "10.231.0.17": "blocked:TimeoutError",
+    "10.231.0.33": "blocked:TimeoutError"
+   }
+  },
+  "worker_cannot_reach_site_directly": {
+   "pass": true,
+   "detail": "blocked:OSError"
+  },
+  "worker_reaches_gateway_and_cdp_only_as_allowed": {
+   "pass": true,
+   "detail": {
+    "gateway_health": 200,
+    "gateway_no_token": 401,
+    "gateway_with_token_bad_model": 403,
+    "cdp": 200
+   }
+  },
+  "worker_identity_and_limits": {
+   "pass": true,
+   "detail": {
+    "uid": 10002,
+    "CapEff": "0000000000000000",
+    "NoNewPrivs": "1",
+    "root_write": "blocked:30",
+    "memory_max": "1610612736",
+    "pids_max": "256"
+   }
+  },
+  "worker_memory_limit_enforced": {
+   "pass": true,
+   "detail": {
+    "OOMKilled": true,
+    "exit": 137
+   }
+  },
+  "worker_pids_limit_enforced": {
+   "pass": true,
+   "detail": {
+    "forks_before_limit": 254,
+    "pids_limit": 256
+   }
+  },
+  "browser_reaches_site_only": {
+   "pass": true,
+   "detail": {
+    "1.1.1.1:80": "blocked",
+    "169.254.169.254:80": "blocked",
+    "10.231.0.1:18080": "blocked",
+    "10.231.0.17:18080": "blocked",
+    "10.231.0.33:18080": "blocked",
+    "10.231.0.34:8080": "blocked",
+    "10.231.0.2:8080": "OPEN"
+   }
+  },
+  "browser_identity_and_env": {
+   "pass": true,
+   "detail": {
+    "uid": [
+     "65534"
+    ],
+    "CapEff": [
+     "0000000000000000"
+    ],
+    "env": "HOME HOSTNAME PATH PWD"
+   }
+  },
+  "gateway_egress_inference_only": {
+   "pass": true,
+   "detail": [
+    "155.138.237.57 443 OPEN",
+    "1.1.1.1 443 blocked TimeoutError",
+    "169.254.169.254 80 blocked TimeoutError",
+    "8.8.8.8 53 blocked TimeoutError"
+   ]
+  },
+  "gateway_identity": {
+   "pass": true,
+   "detail": [
+    "10001",
+    "0000000000000000"
+   ]
+  },
+  "diagnostic_without_firewall": {
+   "host_ports": {
+    "10.231.0.1": "blocked:OSError",
+    "10.231.0.17": "OPEN",
+    "10.231.0.33": "OPEN"
+   },
+   "metadata": "blocked:OSError",
+   "internet": "blocked:OSError"
+  },
+  "teardown_removes_everything": {
+   "pass": true,
+   "detail": {
+    "site_removed": true,
+    "net_site_removed": true,
+    "net_cdp_removed": true,
+    "net_gw_removed": true,
+    "token_revoked": true,
+    "leftover_containers": [],
+    "leftover_networks": []
+   }
+  },
+  "revoked_token_rejected_after_job": {
+   "pass": true,
+   "detail": 401
+  },
+  "janitor_cleans_after_orchestrator_sigkill": {
+   "pass": true,
+   "detail": {
+    "left_by_crash": {
+     "containers": [
+      "afd-crash-20261106181903-8e8413-site"
+     ],
+     "networks": [
+      "afdnet-crash-20261106181903-8e8413-cdp",
+      "afdnet-crash-20261106181903-8e8413-gw",
+      "afdnet-crash-20261106181903-8e8413-site"
+     ]
+    },
+    "after_janitor": {
+     "containers": [],
+     "networks": []
+    },
+    "tokens_revoked": 1
+   }
+  }
+ }
+}

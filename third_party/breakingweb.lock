@@ -1,0 +1,4 @@
+# Pinned upstream for the synthetic environment. Verified by scripts/fetch_breakingweb.sh.
+repo=https://github.com/Arvid-pku/BreakingWeb.git
+commit=2de159869c24ad4b4054c490606b54ebf39bd235
+license=Apache-2.0
