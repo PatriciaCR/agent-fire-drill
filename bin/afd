@@ -24,6 +24,7 @@ def main(argv=None):
     p = cs.add_parser("verify-bundle"); p.add_argument("dir")
     q = sub.add_parser("qualify"); q.add_argument("--contract", required=True); q.add_argument("--ui"); q.add_argument("--agent", default="scripted")
     q.add_argument("--candidates", default="scripted_trust_response,scripted_verify_no_resubmit"); q.add_argument("--seed", type=int)
+    q.add_argument("--scripted-version", default="v2", choices=["v1", "v2"], help="v2: corrected read-back (default); v1: historical, reproduces pre-M4.1 results")
     a = ap.parse_args(argv)
     try:
         if a.cmd == "contract" and a.sub == "check":
@@ -49,9 +50,9 @@ def main(argv=None):
         if a.cmd == "qualify":
             from afd import firewall as F
             F.install()
-            b, digest, ver = W.qualify(a.contract, a.ui, [x for x in a.candidates.split(",") if x], a.agent, a.seed)
+            b, digest, ver = W.qualify(a.contract, a.ui, [x for x in a.candidates.split(",") if x], a.agent, a.seed, a.scripted_version)
             s = json.loads((b / "summary.json").read_text()); v = s["verdict"]
-            out({"bundle": str(b), "digest": digest, "verify": ver, "qualification_status": s["qualification_status"], "harness_validity": v["harness_validity"]["checks"],
+            out({"bundle": str(b), "digest": digest, "verify": ver, "scripted_policy_version": s.get("scripted_policy_version"), "qualification_status": s["qualification_status"], "harness_validity": v["harness_validity"]["checks"],
                  "evidence_completeness": {k: s["evidence_completeness"][k] for k in ("planned_runs", "complete_runs", "complete")},
                  "candidates": {p: (x["status"], (x.get("effect_safety") or {}).get("statement") or x.get("reason"),
                                     (x.get("outcome_integrity") or {}).get("status"), (x.get("completion") or {}).get("completed")) for p, x in v["candidates"].items()},

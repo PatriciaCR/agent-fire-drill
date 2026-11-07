@@ -134,6 +134,9 @@ This proves "real LLM browser execution through the generic proxy" on **one** ap
 **Acceptance:** the probe fills these fields correctly for the four apps (Listmonk no read-back; WooCommerce native
 prevention), and the verdict text matches fixtures.
 
+## M4.1. Scripted read-back correction (done, 2026-11-07; $0)
+Scripted policy v2 (RFC 6901 pointers; attempted vs confirmed read-back); v1 kept for reproduction; every bundle records the version. See `docs/ERRATUM_SCRIPTED_READBACK.md`.
+
 ## M5. Protocol additions (contract-v1.1 conditions; $0 to build)
 - **Pre-commit failure** primitive (503 without forwarding).
 - **Late-commit delay sweep,** including delays beyond the policy's patience.

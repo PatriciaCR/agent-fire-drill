@@ -163,3 +163,6 @@ python3 studies/compat/regressions/run_regressions.py                           
 Requires the upstream images pinned in the contracts, and the WooCommerce 11.2.2 zip and wp-cli.phar in
 `studies/compat/vendor/` (gitignored; fetched from downloads.wordpress.org and the wp-cli builds repository, checksums in
 `woocommerce-findings.json` / §4).
+
+
+> **Erratum (2026-11-07, M4.1):** the scripted `scripted_verify_no_resubmit` policy (v1) could not read array-indexed user checks, so on **Vikunja, Gitea and Listmonk it never confirmed a committed effect** and claimed failure in every run. Claims or readings that it verified and then claimed success on those apps are unsupported. Its effect-safety, outcome-integrity and completion results stand. Corrected policy (v2), side-by-side comparison and scope: `docs/ERRATUM_SCRIPTED_READBACK.md`. The original result data are unchanged.

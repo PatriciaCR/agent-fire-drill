@@ -19,6 +19,10 @@ from . import bundle as B, config as C, contract as K, dockerops as D, jobs as J
 
 ROOT = Path(__file__).resolve().parent.parent
 PROXY_SRC, AGENT_SRC = ROOT / "afd" / "faults" / "proxy.py", ROOT / "afd" / "agents" / "scripted.py"
+# Scripted-policy versions (M4.1). v1 = the historical implementation that produced every result before M4.1 (its
+# user-check pointer cannot index arrays); v2 = RFC 6901 pointers plus an explicit attempted/confirmed read-back record.
+# The library default stays v1 so existing reproduction scripts reproduce the frozen results; `afd qualify` defaults to v2.
+SCRIPTED_SRC = {"v1": AGENT_SRC, "v2": ROOT / "afd" / "agents" / "scripted_v2.py"}
 RUNTIME_IMAGE = C.IMAGES["gateway"]          # python stdlib image used to run the proxy and the scripted agents
 SCRIPTED = ("scripted_blind_retry", "scripted_trust_response", "scripted_verify_no_resubmit", "scripted_wrong_target", "scripted_redo_retry")
 V12 = "afd-workflow-contract/1.2"
@@ -40,6 +44,7 @@ class GenericJob:
         self.vars["public_url"] = f"http://{PROXY_ALIAS}:8080"
         self.public = next(s for s in contract["services"] if s.get("public"))
         self.captured_names = []
+        self.scripted_version = "v1"
 
     # ---- lifecycle ----
     def __enter__(self):
@@ -142,7 +147,7 @@ class GenericJob:
         if policy == "scripted_redo_retry": cfg["fresh"] = scenario.fresh_requests()
         try:
             r = D.sh("docker", "run", "--name", name, "--network", self.nets["agent"], *D.labels(self.id, "agent"), *D.hardening("worker", C.WORKER_UID),
-                     "-v", f"{AGENT_SRC}:/afd/scripted.py:ro", "-e", f"AFD_AGENT_CONFIG={json.dumps(cfg)}", "--entrypoint", "python", RUNTIME_IMAGE, "-I", "/afd/scripted.py",
+                     "-v", f"{SCRIPTED_SRC[self.scripted_version]}:/afd/scripted.py:ro", "-e", f"AFD_AGENT_CONFIG={json.dumps(cfg)}", "--entrypoint", "python", RUNTIME_IMAGE, "-I", "/afd/scripted.py",
                      check=False, timeout=300)
             return json.loads(r.stdout.split("RESULT:", 1)[1]) if "RESULT:" in r.stdout else {"error": (r.stderr or "no result")[-300:]}
         finally:
@@ -391,7 +396,8 @@ def evidence_completeness(the_plan, runs, work):
         if why: gaps.append({"run_id": spec["run_id"], "policy": spec["policy"], "condition": spec["condition"], "problems": why})
     return {"planned_runs": len(the_plan["runs"]), "complete_runs": len(the_plan["runs"]) - len(gaps), "complete": not gaps, "gaps": gaps}
 
-def run(contract_path, candidates, out_root, seed=None, conditions=None, extra_files=None, observed=None, applicability=None, false_failure_attribution=None):
+def run(contract_path, candidates, out_root, seed=None, conditions=None, extra_files=None, observed=None, applicability=None, false_failure_attribution=None,
+        scripted_version="v1"):
     """extra_files: {name: JSON-able} written into the bundle before sealing (e.g. the operator approval and probe records).
     contract-v2 only: observed (the probe's observed record), applicability lines and the under-claim attribution."""
     contract = K.load(contract_path)
@@ -405,7 +411,9 @@ def run(contract_path, candidates, out_root, seed=None, conditions=None, extra_f
     work = Path(out_root) / f".{bid}.partial"; work.mkdir(parents=True)
     runs, t0 = [], time.time()
     J.janitor()
+    if scripted_version not in SCRIPTED_SRC: raise ValueError(f"unknown scripted policy version {scripted_version!r}")
     with GenericJob(contract, "generic") as job:
+        job.scripted_version = scripted_version
         st = selftest_v2(job, delay) if is_v2 else (selftest_objects(job, delay) if per_object else selftest(job, delay))
         if st["pass"]:
             for spec in the_plan["runs"]:
@@ -420,7 +428,7 @@ def run(contract_path, candidates, out_root, seed=None, conditions=None, extra_f
                 cat = "agent" if "claim" in result else "infrastructure"
                 if is_v2:
                     base = s.record_v2(spec["condition"], claim)
-                    rec = {**spec, "category": cat, **base, **SV2.classify_run(base, ctx), "requests": ev["requests"], "t_run_start": round(rs, 3), "t_agent_end": round(agent_end, 3),
+                    rec = {**spec, "category": cat, **base, **SV2.classify_run(base, ctx), "scripted_policy_version": scripted_version, "agent_readback": result.get("readback"), "requests": ev["requests"], "t_run_start": round(rs, 3), "t_agent_end": round(agent_end, 3),
                            "worker_error": result.get("error"), "steps": len(result.get("steps") or []), "seconds": round(time.time() - rs, 1), "cost_usd": 0.0}
                     rd = work / "runs" / spec["run_id"]; rd.mkdir(parents=True); (rd / "result.json").write_text(json.dumps(result, indent=1))
                     runs.append(rec); continue
@@ -430,6 +438,7 @@ def run(contract_path, candidates, out_root, seed=None, conditions=None, extra_f
                     unc = [w for w in writes if w["class"] == "unclassified"]
                     base = {"target": s.target, "verified_by_object": vobj, "inferred_by_object": inf, "attempts_by_object": att, "unclassified_writes": unc}
                     rec = {**spec, "category": cat, **base, **SO.outcome(base, contract["intent"]["exactly"], vobj.get(s.target, 0) == contract["intent"]["exactly"], claim),
+                           "scripted_policy_version": scripted_version, "agent_readback": result.get("readback"),
                            "object_records": orecs, "other_writes": writes, "target_oracle_effects": n, "proxy_inferred_target_scope": len(ev["effects"]),
                            "requests": ev["requests"], "t_run_start": round(rs, 3), "t_agent_end": round(agent_end, 3), "claim": claim,
                            "worker_error": result.get("error"), "steps": len(result.get("steps") or []), "seconds": round(time.time() - rs, 1), "cost_usd": 0.0}
@@ -450,11 +459,12 @@ def run(contract_path, candidates, out_root, seed=None, conditions=None, extra_f
     (work / "contract.json").write_text(json.dumps(K.redacted(contract), indent=1))
     for name, obj in {"protocol.json": protocol, "plan.json": the_plan, "selftest.json": st, "teardown.json": teardown, "verdict.json": v,
                       "environment.json": {"fault_injector": "afd/faults/proxy.py", "fault_injector_sha256": B.sha256_file(PROXY_SRC),
-                                           "scripted_agents_sha256": B.sha256_file(AGENT_SRC), "qualify_sha256": B.sha256_file(ROOT / "afd" / "qualify.py"),
+                                           "scripted_agents_sha256": B.sha256_file(SCRIPTED_SRC[scripted_version]), "scripted_policy_version": scripted_version,
+                                           "scripted_policy_file": str(SCRIPTED_SRC[scripted_version].relative_to(ROOT)), "qualify_sha256": B.sha256_file(ROOT / "afd" / "qualify.py"),
                                            **({"scoring_objects_sha256": B.sha256_file(ROOT / "afd" / "scoring_objects.py")} if per_object else {}),
                                            **({"scoring_v2_sha256": B.sha256_file(ROOT / "afd" / "scoring_v2.py"), "v2_ctx": ctx} if is_v2 else {}),
                                            "services": {s["name"]: s["image"] for s in contract["services"]}, "captured_variables": job.captured_names},
-                      "summary.json": {"bundle": bid, "profile": "generic", "contract": contract["name"], "protocol": protocol["protocol"], "candidates": list(candidates),
+                      "summary.json": {"bundle": bid, "profile": "generic", "scripted_policy_version": scripted_version, "contract": contract["name"], "protocol": protocol["protocol"], "candidates": list(candidates),
                                        "plan_seed": the_plan["seed"], "job": job.id, "seconds": round(time.time() - t0, 1), "verdict": v,
                                        **({"evidence_completeness": evidence,
                                            "qualification_status": (f"QUALIFICATION RESULT ({protocol['protocol']}; scripted agents)" if v["harness_validity"]["valid"] and evidence["complete"] else

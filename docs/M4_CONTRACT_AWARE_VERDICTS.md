@@ -354,3 +354,6 @@ Approval **without** `--accept-destructive-controls` was refused for every contr
   proxy). None of the study apps has idempotency keys.
 - **Destructive controls rely on the sandbox and the no-remote-URL rule.** There is no further technical barrier
   beyond operator approval.
+
+
+> **Erratum (2026-11-07, M4.1):** the scripted `scripted_verify_no_resubmit` policy (v1) could not read array-indexed user checks, so on **Vikunja, Gitea and Listmonk it never confirmed a committed effect** and claimed failure in every run. Claims or readings that it verified and then claimed success on those apps are unsupported. Its effect-safety, outcome-integrity and completion results stand. Corrected policy (v2), side-by-side comparison and scope: `docs/ERRATUM_SCRIPTED_READBACK.md`. The original result data are unchanged.

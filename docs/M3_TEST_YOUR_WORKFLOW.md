@@ -124,3 +124,6 @@ Unit tests: **106/106 OK**. New:
 - **API-only actions** (Listmonk) can only be probed at the API, and that is reported as a limitation.
 - **Run time:** probe 47–72 s; qualify 4–8 minutes per app (28 runs).
 - Approver names are restricted to `[\w .@-]`; my acceptance driver first used parentheses and was refused.
+
+
+> **Erratum (2026-11-07, M4.1):** the scripted `scripted_verify_no_resubmit` policy (v1) could not read array-indexed user checks, so on **Vikunja, Gitea and Listmonk it never confirmed a committed effect** and claimed failure in every run. Claims or readings that it verified and then claimed success on those apps are unsupported. Its effect-safety, outcome-integrity and completion results stand. Corrected policy (v2), side-by-side comparison and scope: `docs/ERRATUM_SCRIPTED_READBACK.md`. The original result data are unchanged.

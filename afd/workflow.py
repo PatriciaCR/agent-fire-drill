@@ -304,8 +304,10 @@ def probe(path, ui_path=None, delay=6):
     return res
 
 # ------------------------------------------------------------------------------------------------------------- qualify
-def qualify(path, ui_path=None, candidates=("scripted_trust_response", "scripted_verify_no_resubmit"), agent="scripted", seed=None):
+def qualify(path, ui_path=None, candidates=("scripted_trust_response", "scripted_verify_no_resubmit"), agent="scripted", seed=None, scripted_version="v2"):
+    """scripted_version: v2 (corrected read-back, default for new runs) or v1 (historical; reproduces pre-M4.1 results)."""
     if agent != "scripted": raise Refused("only --agent scripted is enabled ($0); LLM candidates are not part of M3")
+    if scripted_version not in GEN.SCRIPTED_SRC: raise Refused(f"unknown --scripted-version {scripted_version!r} (v1 historical, v2 corrected)")
     for p in candidates: GEN.validate_scripted(p)
     approval, rep = require_approval(path, ui_path); require_local_images(rep["images"])
     pf = PROBES / f"{rep['contract_sha256']}.json"
@@ -321,13 +323,35 @@ def qualify(path, ui_path=None, candidates=("scripted_trust_response", "scripted
     if rep["protocol"] == "contract-v2":
         extra["probe.json"].update({k: pr.get(k) for k in ("observed", "declared", "declared_vs_observed", "applicability", "false_failure_attribution")})
         b, digest = GEN.run(path, list(candidates), RUNS, seed=seed, extra_files=extra, observed=pr.get("observed"), applicability=pr.get("applicability"),
-                            false_failure_attribution=pr.get("false_failure_attribution"))
+                            false_failure_attribution=pr.get("false_failure_attribution"), scripted_version=scripted_version)
         return b, digest, verify_bundle(b)
-    b, digest = GEN.run(path, list(candidates), RUNS, seed=seed, extra_files=extra)
+    b, digest = GEN.run(path, list(candidates), RUNS, seed=seed, extra_files=extra, scripted_version=scripted_version)
     return b, digest, verify_bundle(b)
 
 # ------------------------------------------------------------------------------------------------------------- verify
+def scripted_version_check(b):
+    """Which scripted-policy version produced the evidence; consistency across summary, environment and run results."""
+    J = lambda n: json.loads((b / n).read_text())
+    env, summ = J("environment.json"), J("summary.json")
+    ver = env.get("scripted_policy_version")
+    if ver is None: return {"scripted_policy_version": "unrecorded (bundle predates M4.1; v1 implied)", "problems": []}
+    probs = []
+    if summ.get("scripted_policy_version") != ver: probs.append("summary and environment disagree on the scripted-policy version")
+    for f in sorted((b / "runs").glob("*/result.json")):
+        rv = json.loads(f.read_text()).get("scripted_policy_version", "v1")
+        if rv != ver and "claim" in json.loads(f.read_text()): probs.append(f"{f.parent.name}: result produced by scripted policy {rv}, bundle says {ver}")
+    cur = GEN.SCRIPTED_SRC.get(ver)
+    return {"scripted_policy_version": ver, "scripted_policy_sha256": env.get("scripted_agents_sha256"),
+            "matches_current_file": bool(cur and cur.exists() and sha_file(cur) == env.get("scripted_agents_sha256")), "problems": probs}
+
 def verify_bundle(b):
+    b = Path(b)
+    r = _verify_bundle(b)
+    if r.get("files") is None: return r
+    sv = scripted_version_check(b)
+    return {**r, "ok": r["ok"] and not sv["problems"], "problems": r["problems"] + sv["problems"], **{k: v for k, v in sv.items() if k != "problems"}}
+
+def _verify_bundle(b):
     b = Path(b); probs = []
     m = B.verify(b)
     if not m["ok"]: return {"ok": False, "problems": [f"manifest: {m['problems']}"]}
