@@ -1,0 +1,9 @@
+# rsync filter for the image build context (used by build-images.sh and tested by tests/test_deploy.py).
+# Patterns are ANCHORED to the repository root (leading /). An unanchored "third_party" also excluded the tracked
+# third_party/breakingweb.lock, which scripts/fetch_breakingweb.sh needs.
+# Excluded paths are kept on the receiving side by --delete (no --delete-excluded), so the cached BreakingWeb clone in
+# the build directory survives between builds; fetch_breakingweb.sh re-verifies its pinned commit and clean tree every time.
+- /.git/
+- /build/
+- /var/
+- /third_party/breakingweb/

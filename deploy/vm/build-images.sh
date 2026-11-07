@@ -14,7 +14,8 @@ trap '"$ROOT/deploy/vm/afd-firewall.sh" apply; as_orch systemctl --user start af
 "$ROOT/deploy/vm/afd-firewall.sh" build-window
 SRC=/var/lib/afd-orch/build-src
 as_orch mkdir -p "$SRC"
-rsync -a --delete --exclude .git --exclude build --exclude third_party --exclude var "$ROOT/" "$SRC/"
+rsync -a --delete --exclude-from="$ROOT/deploy/vm/build-context.exclude" "$ROOT/" "$SRC/"
+[ -s "$SRC/third_party/breakingweb.lock" ] || { echo "build context is missing third_party/breakingweb.lock" >&2; exit 1; }
 chown -R afd-orch:afd-orch "$SRC"
 as_orch bash -c "cd '$SRC' && make images"
 as_orch docker image inspect --format '{{index .RepoTags 0}} {{.Id}}' afd/site:1 afd/browser:1 afd/worker:1 afd/gateway:1 \
