@@ -1,0 +1,29 @@
+{
+ "contract": "studies/compat/contracts/vikunja-v0.json",
+ "at_utc": "2026-11-07T08:59:18Z",
+ "stage": "v0-unchanged",
+ "contract_valid": true,
+ "app_started": false,
+ "failed_at": "app start / health",
+ "error": "RuntimeError: not healthy: http://10.231.0.2:3456/api/v1/info",
+ "diagnosis": {
+  "observed": [
+   "level=ERROR msg=\"service.publicurl is required when cors.enable is true\" (exit 1)",
+   "image configured only by env/config file"
+  ],
+  "root_cause": "contract v0 has no channel for app configuration (env vars, writable data paths)",
+  "also_blocking_in_v0": [
+   "no auth: every Vikunja API call needs a bearer token (scenario creation, action, oracle)",
+   "scope lives in the URL path (/projects/{id}/tasks); v0 reads scope only from JSON body/query/header",
+   "read-only root filesystem: the default SQLite path is inside /app/vikunja"
+  ],
+  "app_source_changes": 0,
+  "app_specific_afd_code": 0
+ },
+ "upstream": {
+  "image": "vikunja/vikunja@sha256:35d937baf3b5d5803bed6b9e11d007448b7b536df9e4346dc35551e1072636c3",
+  "version": "2.8.0",
+  "revision": "6e788bf87cebe50e2b8d034b213fcf94ae5449ee",
+  "license": "AGPL-3.0"
+ }
+}

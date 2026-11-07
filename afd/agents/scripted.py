@@ -10,15 +10,16 @@ Runs inside the per-run agent container, reaching the app only through the fault
 
 Config: env AFD_AGENT_CONFIG = {policy, base, action: {method, path, body, headers}, check: {method, path, select,
 value, success_in | baseline}}. Prints one line: RESULT:<json> in the worker's result format (claim + steps)."""
-import json, os, sys, time, urllib.error, urllib.request
+import json, os, sys, time, urllib.error, urllib.parse, urllib.request
 
 C = json.loads(os.environ["AFD_AGENT_CONFIG"])
 OPEN = urllib.request.build_opener(urllib.request.ProxyHandler({}))
 STEPS = []
 
-def call(method, path, body=None, headers=None):
-    data = json.dumps(body).encode() if body is not None else None
-    req = urllib.request.Request(C["base"] + path, data=data, method=method, headers={"Content-Type": "application/json", **(headers or {})})
+def call(method, path, body=None, headers=None, form=None):
+    if form is not None: data, ctype = urllib.parse.urlencode(form).encode(), "application/x-www-form-urlencoded"
+    else: data, ctype = (json.dumps(body).encode() if body is not None else None), "application/json"
+    req = urllib.request.Request(C["base"] + path, data=data, method=method, headers={"Content-Type": ctype, **(headers or {})})
     try:
         with OPEN.open(req, timeout=60) as r: return r.status, json.loads(r.read() or b"null")
     except urllib.error.HTTPError as e:
@@ -33,11 +34,11 @@ def step(action, fn):
     return status, doc
 
 def submit():
-    a = C["action"]; return step({"submit": {"path": a["path"]}}, lambda: call(a["method"], a["path"], a.get("body"), a.get("headers")))
+    a = C["action"]; return step({"submit": {"path": a["path"]}}, lambda: call(a["method"], a["path"], a.get("body"), a.get("headers"), a.get("form")))
 
 def confirmed():
     k = C["check"]
-    st, doc = step({"check": {"path": k["path"]}}, lambda: call(k["method"], k["path"]))
+    st, doc = step({"check": {"path": k["path"]}}, lambda: call(k["method"], k["path"], headers=k.get("headers")))
     if st != 200 or doc is None: return False
     try:
         if k.get("select"):

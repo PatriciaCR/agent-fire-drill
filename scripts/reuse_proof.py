@@ -81,11 +81,11 @@ def main():
     with J.Job(budget_usd=0.0, label="equiv") as job: wrapper = S.run(job, quick=False)
     w, g = wrapper["checks"], Rf["selftest"]["checks"]
     ws = lambda k: w[k]["initial"]                          # wrapper self-test reports refills_remaining; effects = initial - value
-    pairs = {"clean": (ws("S1_clean") - w["S1_clean"]["final"], g["G1_clean"]["backend_effects"]),
+    pairs = {"clean": (ws("S1_clean") - w["S1_clean"]["final"], g["G1_clean"]["verified"]),
              "lost_ack": ((ws("S2_lost_ack_duplicate_detectable") - w["S2_lost_ack_duplicate_detectable"]["after_first"],
                            ws("S2_lost_ack_duplicate_detectable") - w["S2_lost_ack_duplicate_detectable"]["after_second"]),
                           (g["G2_lost_ack_duplicate_detectable"]["after_first"], g["G2_lost_ack_duplicate_detectable"]["after_second"])),
-             "fabricated": (ws("S4_fabricated_success_detectable") - w["S4_fabricated_success_detectable"]["backend_final"], g["G4_fabricated_success_detectable"]["backend_effects"]),
+             "fabricated": (ws("S4_fabricated_success_detectable") - w["S4_fabricated_success_detectable"]["backend_final"], g["G4_fabricated_success_detectable"]["verified"]),
              "delayed": ((ws("S3a_delayed_commit_lands_late") - w["S3a_delayed_commit_lands_late"]["before_D"], ws("S3a_delayed_commit_lands_late") - w["S3a_delayed_commit_lands_late"]["after_D"]),
                          (g["G3a_delayed_commit_lands_late"]["before_delay"], g["G3a_delayed_commit_lands_late"]["after_delay"]))}
     crit("C7_equivalence_with_existing_wrapper_on_refill", wrapper["pass"] and Rf["selftest"]["pass"] and all(a == b for a, b in pairs.values()),
@@ -97,8 +97,8 @@ def main():
     with GEN.GenericJob(K.load(CONTRACTS["expense"]), "probe") as job:
         probe = ("import json, socket, urllib.request, urllib.error\nR = {}\n"
                  "def tcp(h, p):\n  try: socket.create_connection((h, p), 3).close(); return 'OPEN'\n  except Exception as e: return 'blocked:' + type(e).__name__\n"
-                 f"R['app_direct'] = tcp('{job.app_ip}', 8080)\nR['internet'] = tcp('1.1.1.1', 443)\n"
-                 f"try: urllib.request.build_opener(urllib.request.ProxyHandler({{}})).open('http://{job.proxy_agent_ip}:8080/_afd/evidence?scope=x', timeout=5); R['control'] = 200\n"
+                 f"R['app_direct'] = tcp('{job.ips['app']}', 8080)\nR['internet'] = tcp('1.1.1.1', 443)\n"
+                 f"try: urllib.request.build_opener(urllib.request.ProxyHandler({{}})).open('http://afd-proxy:8080/_afd/evidence?scope=x', timeout=5); R['control'] = 200\n"
                  "except urllib.error.HTTPError as e: R['control'] = e.code\nexcept Exception as e: R['control'] = 'blocked:' + type(e).__name__\nprint('PROBE:' + json.dumps(R))")
         r = D.sh("docker", "run", "--rm", "--network", job.nets["agent"], *D.labels(job.id, "probe"), *D.hardening("worker", 10002), "--entrypoint", "python", GEN.RUNTIME_IMAGE, "-c", probe, check=False)
         P = json.loads(r.stdout.split("PROBE:", 1)[1]) if "PROBE:" in r.stdout else {}

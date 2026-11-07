@@ -1,0 +1,16 @@
+{
+  "contract": "afd-workflow-contract/0",
+  "name": "Gitea 28.3.0 (upstream image, unmodified): create an issue. Stage 0, best effort within contract v0",
+  "authorization": {"owner": "Study operator; upstream MIT image run locally", "attestation": "Unmodified upstream image with synthetic data, inside the AFD sandbox only.",
+                    "synthetic_data": true, "runs_in_sandbox": true},
+  "app": {"image": "gitea/gitea@sha256:8967bf9deaf3c5c4adae13519436dc1b20c646ac83fe37ae810c933a1045227d", "command": ["/usr/bin/entrypoint"], "port": 3000,
+          "uid": 1000, "health_path": "/api/healthz", "mounts": []},
+  "scenario": {"method": "POST", "path": "/api/v1/user/repos", "body": {"name": "afd-scope", "auto_init": true}},
+  "scope": {"response_field": "full_name", "in": "json_body", "field": "repo"},
+  "item": {"from_scenario": "name"},
+  "action": {"name": "create_issue", "method": "POST", "path": "/afd/{item}/issues/new", "body": {"title": "Refund order 1042"}, "path_regex": "^/[^/]+/[^/]+/issues/new$"},
+  "user_check": {"method": "GET", "path": "/api/v1/repos/afd/{item}/issues", "value": "/0/title", "success_in": ["Refund order 1042"]},
+  "effects": {"method": "GET", "path": "/api/v1/repos/afd/{item}/issues?state=all", "mode": "items", "value": ""},
+  "intent": {"exactly": 1},
+  "fabricated": {"status": 303, "body": {}}
+}

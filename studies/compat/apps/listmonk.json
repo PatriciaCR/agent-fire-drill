@@ -1,0 +1,6 @@
+{"contract": "studies/compat/contracts/listmonk-v1.json",
+ "reset_method": "fresh subscriber (unique recipient address) per run, created through the app's own API (setup_per_run)",
+ "second_source": {"describe": "Mailpit message LIST endpoint (same sink, different query path) - NOT an independent store: Listmonk keeps no record of sent transactional mail",
+                   "service": "mailpit", "method": "GET", "path": "/api/v1/messages?limit=500", "pointer": "/messages", "filter_to": "{scope}"},
+ "browser": null,
+ "browser_note": "POST /api/tx is an API-only action with no UI; D6 = B0 for this action by design (not a proxy failure)"}

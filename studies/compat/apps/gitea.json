@@ -1,0 +1,68 @@
+{
+ "contract": "studies/compat/contracts/gitea-v1.json",
+ "reset_method": "fresh repository per run, created through the app's own API (setup_per_run)",
+ "second_source": {
+  "describe": "Gitea REST API issue listing with an API token (L1), independent of the SQL oracle (L2)",
+  "service": "app",
+  "method": "GET",
+  "path": "/api/v1/repos/afdagent/{scope}/issues?state=all&type=issues",
+  "headers": {
+   "Authorization": "token {setup_api_token}"
+  },
+  "pointer": ""
+ },
+ "browser": [
+  [
+   "nav",
+   "http://afd-proxy:8080/user/login"
+  ],
+  [
+   "wait",
+   "#user_name",
+   30
+  ],
+  [
+   "fill",
+   "#user_name",
+   "afdagent"
+  ],
+  [
+   "fill",
+   "#password",
+   "{agent_password}"
+  ],
+  [
+   "submit",
+   "#password"
+  ],
+  [
+   "sleep",
+   3
+  ],
+  [
+   "nav",
+   "http://afd-proxy:8080/afdagent/{scope}/issues/new"
+  ],
+  [
+   "wait",
+   "input[name=title]",
+   20
+  ],
+  [
+   "fill",
+   "input[name=title]",
+   "Refund order 1042"
+  ],
+  [
+   "submit",
+   "input[name=title]"
+  ],
+  [
+   "sleep",
+   3
+  ],
+  [
+   "shot"
+  ]
+ ]
+}

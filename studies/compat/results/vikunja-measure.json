@@ -1,0 +1,74 @@
+{
+ "app": "vikunja",
+ "contract": "studies/compat/contracts/vikunja-v1.json",
+ "at_utc": "2026-11-07T09:20:04Z",
+ "D3_oracle_cross_check": {
+  "rows": [
+   {
+    "planned": 0,
+    "oracle": 0,
+    "second_source": 0
+   },
+   {
+    "planned": 1,
+    "oracle": 1,
+    "second_source": 1
+   },
+   {
+    "planned": 2,
+    "oracle": 2,
+    "second_source": 2
+   },
+   {
+    "planned": 1,
+    "oracle": 1,
+    "second_source": 1
+   },
+   {
+    "planned": 0,
+    "oracle": 0,
+    "second_source": 0
+   }
+  ],
+  "pass": true,
+  "independence": "L2: read-only SQL role, separate credentials, sidecar container",
+  "second_source": "Vikunja REST API listing with the agent's token (L1), independent of the SQL oracle (L2)"
+ },
+ "D4_isolation_no_contamination": {
+  "pass": true,
+  "reset_method": "fresh project per run, created through the app's own API (setup_per_run)",
+  "observed": [
+   0,
+   1,
+   2,
+   1,
+   0
+  ]
+ },
+ "AM5_read_lag_s": {
+  "oracle": 0.19,
+  "user_check": 0.2,
+  "note": "upper bound: includes polling interval (0.1 s) and request time; measured once"
+ },
+ "D8_containment": {
+  "probes": {
+   "10.231.0.2:5432": "blocked:OSError",
+   "10.231.0.3:3456": "blocked:OSError",
+   "1.1.1.1:443": "blocked:OSError",
+   "169.254.169.254:80": "blocked:OSError",
+   "control": 403,
+   "proxy_reachable": 200
+  },
+  "pass": true
+ },
+ "teardown": {
+  "db_removed": true,
+  "app_removed": true,
+  "proxy_removed": true,
+  "net_app_removed": true,
+  "net_agent_removed": true,
+  "token_revoked": true,
+  "leftover_containers": [],
+  "leftover_networks": []
+ }
+}

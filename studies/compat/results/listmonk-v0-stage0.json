@@ -1,0 +1,14 @@
+{
+ "stage": "v0-unchanged",
+ "at_utc": "2026-11-07T09:07:13Z",
+ "app": "listmonk",
+ "services": [
+  "listmonk/listmonk 6.2.0 (AGPL-3.0)",
+  "postgres 17.11",
+  "axllent/mailpit 1.33.0 (MIT)"
+ ],
+ "failed_at": "contract expressiveness (not run)",
+ "root_cause": "contract v0 describes exactly one container; this app needs several services (database / mail sink / workers)",
+ "app_source_changes": 0,
+ "app_specific_afd_code": 0
+}

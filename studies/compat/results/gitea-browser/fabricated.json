@@ -1,0 +1,145 @@
+{
+ "app": "gitea",
+ "condition": "fabricated",
+ "at_utc": "2026-11-07T09:44:21Z",
+ "oracle_series": [
+  {
+   "t_after_start_s": 21.3,
+   "verified": 0
+  }
+ ],
+ "app_log_writes": [
+  "2026/11/07 09:44:44 HTTPRequest [I] router: completed GET /afdagent/run-aac9bd989e/issues/new for 10.231.0.4:38174, 200 OK in 38.8ms @ repo/issue_new.go:100(repo.NewIssue)"
+ ],
+ "proxy_effects": [],
+ "steps": [
+  {
+   "step": [
+    "nav",
+    "http://afd-proxy:8080/user/login"
+   ],
+   "text": "Explore\nHelp\nSign In\nSign In\nUsername or Email Address\nPassword\nForgot password?\nRemember This Device\nSign In\nPowered by Gitea\nVersion: 28.3.0\nPage: 6ms Template: 5ms\nAuto\nEnglish\nLicenses\nAPI",
+   "url": "http://afd-proxy:8080/user/login"
+  },
+  {
+   "step": [
+    "wait",
+    "#user_name",
+    30
+   ],
+   "found": true,
+   "text": "Explore\nHelp\nSign In\nSign In\nUsername or Email Address\nPassword\nForgot password?\nRemember This Device\nSign In\nPowered by Gitea\nVersion: 28.3.0\nPage: 6ms Template: 5ms\nAuto\nEnglish\nLicenses\nAPI",
+   "url": "http://afd-proxy:8080/user/login"
+  },
+  {
+   "step": [
+    "fill",
+    "#user_name",
+    "afdagent"
+   ],
+   "text": "Explore\nHelp\nSign In\nSign In\nUsername or Email Address\nPassword\nForgot password?\nRemember This Device\nSign In\nPowered by Gitea\nVersion: 28.3.0\nPage: 6ms Template: 5ms\nAuto\nEnglish\nLicenses\nAPI",
+   "url": "http://afd-proxy:8080/user/login"
+  },
+  {
+   "step": [
+    "fill",
+    "#password",
+    "[redacted]"
+   ],
+   "text": "Explore\nHelp\nSign In\nSign In\nUsername or Email Address\nPassword\nForgot password?\nRemember This Device\nSign In\nPowered by Gitea\nVersion: 28.3.0\nPage: 6ms Template: 5ms\nAuto\nEnglish\nLicenses\nAPI",
+   "url": "http://afd-proxy:8080/user/login"
+  },
+  {
+   "step": [
+    "submit",
+    "#password"
+   ],
+   "submitted": true,
+   "text": "Issues\nPull Requests\nMilestones\nExplore\n afdagent \nafdagent created repository afdagent/run-aac9bd989e ",
+   "url": "http://afd-proxy:8080/"
+  },
+  {
+   "step": [
+    "sleep",
+    3
+   ],
+   "text": "Issues\nPull Requests\nMilestones\nExplore\n afdagent \nDec\nJan\nFeb\nMar\nApr\nMay\nJun\nJul\nAug\nSep\nOct\nNov\nMon\nWed\nFri\n1 contributions in the last 12 months\nLess\nMore\nafdagent created repository afdagent/run-aac9bd989e \nRepository\nOrganization\nRepositories\n1\nAll\n1\nSources\nForks\nMirrors\nafdagent/run-aac9bd989e\nPowered by Gitea\nVersion: 28.3.0\nPage: 6ms Template: 3ms\nAuto\nEnglish\nLicenses\nAPI",
+   "url": "http://afd-proxy:8080/"
+  },
+  {
+   "step": [
+    "nav",
+    "http://afd-proxy:8080/afdagent/run-aac9bd989e/issues/new"
+   ],
+   "text": "Issues\nPull Requests\nMilestones\nExplore\nafdagent\n/\nrun-aac9bd989e\nWatching\n1\nStar\n0\nFork\n0\nCode\nIssues\nPull Requests\nActions\nPackages\nProjects\nReleases\nWiki\nActivity\nSettings\nWrite\nPreview\nDrop files here to upload\nCreate Issue\nNo Branch/Tag Specified\nLabels\nNo labels\nMilestone\nNo Milestone\nProjects\nNo projects\nAssignees\nNo Assignees\nPowered by Gitea\nVersion: 28.3.0\nPage: 36ms Template: 19ms\nAuto\nEnglish\nLicenses\nAPI",
+   "url": "http://afd-proxy:8080/afdagent/run-aac9bd989e/issues/new"
+  },
+  {
+   "step": [
+    "wait",
+    "input[name=title]",
+    20
+   ],
+   "found": true,
+   "text": "Issues\nPull Requests\nMilestones\nExplore\nafdagent\n/\nrun-aac9bd989e\nWatching\n1\nStar\n0\nFork\n0\nCode\nIssues\nPull Requests\nActions\nPackages\nProjects\nReleases\nWiki\nActivity\nSettings\nWrite\nPreview\nDrop files here to upload\nCreate Issue\nNo Branch/Tag Specified\nLabels\nNo labels\nMilestone\nNo Milestone\nProjects\nNo projects\nAssignees\nNo Assignees\nPowered by Gitea\nVersion: 28.3.0\nPage: 36ms Template: 19ms\nAuto\nEnglish\nLicenses\nAPI",
+   "url": "http://afd-proxy:8080/afdagent/run-aac9bd989e/issues/new"
+  },
+  {
+   "step": [
+    "fill",
+    "input[name=title]",
+    "Refund order 1042"
+   ],
+   "text": "Issues\nPull Requests\nMilestones\nExplore\nafdagent\n/\nrun-aac9bd989e\nWatching\n1\nStar\n0\nFork\n0\nCode\nIssues\nPull Requests\nActions\nPackages\nProjects\nReleases\nWiki\nActivity\nSettings\nWrite\nPreview\nDrop files here to upload\nCreate Issue\nNo Branch/Tag Specified\nLabels\nNo labels\nMilestone\nNo Milestone\nProjects\nNo projects\nAssignees\nNo Assignees\nPowered by Gitea\nVersion: 28.3.0\nPage: 36ms Template: 19ms\nAuto\nEnglish\nLicenses\nAPI",
+   "url": "http://afd-proxy:8080/afdagent/run-aac9bd989e/issues/new"
+  },
+  {
+   "step": [
+    "submit",
+    "input[name=title]"
+   ],
+   "submitted": true,
+   "text": "Issues\nPull Requests\nMilestones\nExplore\nafdagent\n/\nrun-aac9bd989e\nWatching\n1\nStar\n0\nFork\n0\nCode\nIssues\nPull Requests\nActions\nPackages\nProjects\nReleases\nWiki\nActivity\nSettings\nWrite\nPreview\nDrop files here to upload\nCreate Issue\nNo Branch/Tag Specified\nLabels\nNo labels\nMilestone\nNo Milestone\nProjects\nNo projects\nAssignees\nNo Assignees\nPowered by Gitea\nVersion: 28.3.0\nPage: 36ms Template: 19ms\nAuto\nEnglish\nLicenses\nAPI",
+   "url": "http://afd-proxy:8080/afdagent/run-aac9bd989e/issues/new"
+  },
+  {
+   "step": [
+    "sleep",
+    3
+   ],
+   "text": "Issues\nPull Requests\nMilestones\nExplore\nafdagent\n0 Followers \u00b7 0 Following \nafdagent@example.invalid\n Joined on \nRepositories\n1\nProjects\nPackages\nPublic Activity\nStarred Repositories\nFilter\nSort\nrun-aac9bd989e\n0\n0\n0\nUpdated\nPowered by Gitea\nVersion: 28.3.0\nPage: 14ms Template: 3ms\nAuto\nEnglish\nLicenses\nAPI",
+   "url": "http://afd-proxy:8080/afdagent"
+  },
+  {
+   "step": [
+    "shot"
+   ],
+   "text": "Issues\nPull Requests\nMilestones\nExplore\nafdagent\n0 Followers \u00b7 0 Following \nafdagent@example.invalid\n Joined on \nRepositories\n1\nProjects\nPackages\nPublic Activity\nStarred Repositories\nFilter\nSort\nrun-aac9bd989e\n0\n0\n0\nUpdated\nPowered by Gitea\nVersion: 28.3.0\nPage: 14ms Template: 3ms\nAuto\nEnglish\nLicenses\nAPI",
+   "url": "http://afd-proxy:8080/afdagent",
+   "png": "fabricated-11.png"
+  }
+ ],
+ "proxy_requests": [
+  {
+   "seq": 1,
+   "route": "create_issue",
+   "t_received": 1794044687.002,
+   "t_responded": 1794044687.002,
+   "status_to_client": 200,
+   "intervention": "fabricated",
+   "outcome": "fabricated_success",
+   "effect_index": null
+  }
+ ],
+ "verified": 0,
+ "proxy_inferred": 0,
+ "other_writes": [
+  {
+   "t": 1794044681.877,
+   "method": "POST",
+   "path": "/user/login",
+   "status": 303,
+   "class": "authorised_supporting"
+  }
+ ]
+}

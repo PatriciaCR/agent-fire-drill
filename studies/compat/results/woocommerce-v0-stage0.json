@@ -1,0 +1,14 @@
+{
+ "stage": "v0-unchanged",
+ "at_utc": "2026-11-07T09:07:13Z",
+ "app": "woocommerce",
+ "services": [
+  "wordpress (PHP 8.3.36; GPL)",
+  "mariadb 11.8.9 (GPL-2.0)",
+  "WooCommerce plugin (not yet fetched)"
+ ],
+ "failed_at": "contract expressiveness (not run)",
+ "root_cause": "contract v0 describes exactly one container; this app needs several services (database / mail sink / workers)",
+ "app_source_changes": 0,
+ "app_specific_afd_code": 0
+}

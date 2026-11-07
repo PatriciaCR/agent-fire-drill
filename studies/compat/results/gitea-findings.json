@@ -1,0 +1,23 @@
+{
+ "app": "Gitea 28.3.0 (upstream rootless image variant, unmodified) + PostgreSQL 17.11",
+ "stage0": "UNSUPPORTED by v0 as-is: the default image needs root + writable /data + s6 (incompatible with AFD hardening); no config/auth/path-scope/form channel",
+ "generic_extensions_used": ["multi-service", "env config + writable paths", "setup steps incl. exec (gitea admin CLI) and form login capturing a session cookie",
+                             "agent_headers (session cookie)", "scope from URL path", "form-encoded action bodies", "configurable success statuses", "exec SQL oracle (L2)", "per-run nonce for unique names"],
+ "app_specific_workarounds": [
+   {"what": "upstream's own rootless image variant (gitea/gitea:*-rootless) instead of the root/s6 default", "why": "AFD hardening forbids root and a writable root filesystem", "kind": "image variant choice (upstream, unmodified)"},
+   {"what": "PGDATA on a dedicated writable path", "why": "Gitea's schema exceeds the 64 MB hardening /tmp", "kind": "service configuration"},
+   {"what": "setup API token via `gitea admin user generate-access-token`", "why": "the API rejects cookie sessions for writes (401)", "kind": "contract data (app's own CLI)"}
+ ],
+ "prediction_vs_observed": {"success_status": "predicted 303 PRG; observed 200 JSON {redirect} (form-fetch-action)", "csrf": "predicted a session-bound CSRF token; observed none: header-based cross-origin protection"},
+ "generic_bug_found": {"what": "the proxy rewrote Host to the upstream address; the browser's Origin (the proxy address) then failed Gitea's cross-origin check -> 403 on every browser submission (fault applied, nothing committed)",
+                       "how_found": "real-browser check: proxy outcome not_committed, oracle 0, Gitea log '403 Forbidden @ web.verifyAuthWithOptionsWeb'",
+                       "fix": "preserve the client's Host by default (transparent proxy)", "regression_test": "tests/test_contract.py::test_client_host_is_preserved_for_origin_checks"},
+ "browser_D6": {"lost_ack": "Gitea's own error banner 'Error 503 Service Unavailable', form still filled; verified 1",
+                "delayed_commit": "error banner; verified 0 then 1; app log shows one POST 200",
+                "fabricated": "UI followed the fabricated redirect to the user profile; verified 0 (F1: plausible but synthetic target)",
+                "driver_note": "native forms need form.requestSubmit(); a bare synthetic Enter key did not submit (driver fix, study harness)",
+                "level": "B1: works after a generic proxy fix (Host preservation)"},
+ "fidelity_D2": {"lost_ack": "F2", "delayed_commit": "F2 relative to edge-deferred delivery (AM-4)", "fabricated": "F1"},
+ "AM5": {"read_lag_s": {"oracle": 0.18, "user_check": 0.2}, "native_idempotency_keys": "none found for web issue creation", "in_flight_bound": "none documented"},
+ "AM6_exploratory": {"pre_commit_failure": "feasible F2 by analysis (same error banner)", "stale_read": "feasible F1 for the JSON API; server-rendered issue lists would need HTML snapshotting"}
+}

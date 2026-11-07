@@ -1,0 +1,19 @@
+{
+ "app": "Listmonk 6.2.0 + PostgreSQL 17.11 + Mailpit 1.33.0 (upstream images, unmodified)",
+ "stage0": "NOT EXPRESSIBLE in v0 (three services)",
+ "generic_extensions_used": ["multi-service (app + postgres + SMTP sink)", "env config + entrypoint/args override (binary run directly; the stock entrypoint needs root to create OS users)",
+                             "setup steps: SQL via psql exec, nonce-cookie form login, session cookie, admin reload, API-user token capture", "per-run nonce", "agent_headers (API token)",
+                             "http oracle on a different service (external sink) with a settle policy", "then_sleep_s for setup steps"],
+ "app_specific_workarounds": [
+   {"what": "run ./listmonk directly with an install-then-serve shell command instead of the stock entrypoint", "why": "the entrypoint creates OS users (needs root)", "kind": "service configuration"},
+   {"what": "SMTP target and root URL set with one SQL UPDATE of the settings table, then the app's own admin reload", "why": "Listmonk stores SMTP settings in the DB; its settings API needs a read-modify-write the contract language does not express", "kind": "contract data (app's own datastore tooling)"}
+ ],
+ "AM1_assumption": "200 from /api/tx means ACCEPTED for sending, not delivered: the success<=>commit assumption is not guaranteed; it held in every observed run only because delivery completed within the settle window",
+ "AM4_native_late_commit": "yes: the app acknowledges (200) and delivers asynchronously (accepted-then-late-commit exists natively; not injected)",
+ "browser_D6": {"level": "B0 for this action: POST /api/tx has no UI (API-only, by design)"},
+ "read_back": "none: Listmonk exposes no user-visible record of sent transactional mail; a verification-based policy can never confirm and always abstains",
+ "D3_independence_note": "oracle L3 (external sink); the cross-check source is a second Mailpit endpoint (same store), so D3 shows counting consistency, not independent agreement",
+ "fidelity_D2": {"lost_ack": "F2 for API clients (503 to the client, exactly one email delivered)", "delayed_commit": "F2 relative to edge-deferred delivery", "fabricated": "F1"},
+ "AM5": {"read_lag_s": {"oracle": "<0.1 (delivery effectively synchronous at this load)", "user_check": "never (no read-back)"}, "native_idempotency_keys": "none found for /api/tx", "in_flight_bound": "none documented"},
+ "AM6_exploratory": {"pre_commit_failure": "feasible F2 by analysis", "stale_read": "not applicable (no read path)"}
+}

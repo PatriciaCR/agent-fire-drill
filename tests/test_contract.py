@@ -54,7 +54,7 @@ class Upstream(BaseHTTPRequestHandler):
     def log_message(self, *a): pass
     def do_POST(self):
         n = int(self.headers.get("Content-Length") or 0); body = json.loads(self.rfile.read(n) or b"{}")
-        Upstream.commits.append((body.get("k"), self.headers.get("Cookie"))); data = b'{"ok":true}'
+        Upstream.commits.append((body.get("k"), self.headers.get("Cookie"))); getattr(Upstream, "paths", []).append((self.path, body.get("k"))); getattr(Upstream, "hosts", []).append(self.headers.get("Host")); data = b'{"ok":true}'
         self.send_response(200); self.send_header("Content-Length", str(len(data))); self.end_headers(); self.wfile.write(data)
     def do_GET(self):
         data = b'{"page":true}'; self.send_response(200); self.send_header("Content-Length", str(len(data))); self.end_headers(); self.wfile.write(data)
@@ -103,6 +103,27 @@ class TestFaultProxy(unittest.TestCase):
         blob = json.dumps([l1, f1, d1, self.ev("c1")])
         self.assertNotIn("browser-cookie", blob)
         self.assertTrue(all(list(r) == ["seq", "route", "t_received", "t_responded", "status_to_client", "intervention", "outcome", "effect_index"] for e in (l1, f1, d1) for r in e["requests"]))
+    def test_delayed_replay_survives_keepalive_connection_reuse(self):
+        """Regression (compatibility study, Vikunja browser path): a browser reuses the keep-alive connection, so the
+        replay must forward the HELD request, not whatever request the handler served last."""
+        import http.client
+        Upstream.commits.clear(); Upstream.paths = []
+        self.assertEqual(self.arm("ka1", "delayed_commit", 1), 200)
+        conn = http.client.HTTPConnection("127.0.0.1", self.port, timeout=10)
+        conn.request("POST", "/act", body=json.dumps({"k": "ka1"}), headers={"Content-Type": "application/json"}); r = conn.getresponse(); r.read()
+        self.assertEqual(r.status, 503)
+        conn.request("POST", "/other", body=json.dumps({"k": "unrelated"}), headers={"Content-Type": "application/json"}); r2 = conn.getresponse(); r2.read()  # same connection
+        time.sleep(2); conn.close()
+        self.assertIn(("/act", "ka1"), Upstream.paths)                      # the held request was the one replayed
+        self.assertEqual([x for x in Upstream.paths if x[1] == "ka1"], [("/act", "ka1")])
+
+    def test_client_host_is_preserved_for_origin_checks(self):
+        """Regression (compatibility study, Gitea browser path): rewriting Host to the upstream address made the app's
+        cross-origin check reject same-origin browser submissions (403)."""
+        Upstream.hosts = []
+        self.req("/act", {"k": "host1"}, {"Host": "afd-proxy:8080"})
+        self.assertEqual(Upstream.hosts[-1], "afd-proxy:8080")
+
     def test_unwatched_and_unscoped_pass_through_without_evidence(self):
         self.assertEqual(self.req("/page")[0], 200); self.assertEqual(self.ev("")["requests"], [])
 

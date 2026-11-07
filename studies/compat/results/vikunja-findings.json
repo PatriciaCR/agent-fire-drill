@@ -1,0 +1,21 @@
+{
+ "app": "Vikunja 2.8.0 + PostgreSQL 17.11 (upstream images, unmodified)",
+ "stage0": "UNSUPPORTED by v0 as-is: no app configuration channel (exit 1: service.publicurl required); also no auth, path scope, writable data path",
+ "generic_extensions_used": ["multi-service (app + postgres)", "service env config + writable tmpfs paths", "setup_once / setup_per_run steps with captures (register, login token, per-run project)",
+                             "agent_headers (bearer token)", "scope from URL path regex", "configurable success statuses", "exec oracle: read-only SQL role in a sidecar (L2)"],
+ "app_specific_workarounds": [
+   {"what": "action declared from the app's OBSERVED UI traffic (POST /api/v2/projects/{id}/tasks/bulk), not the documented v1 route", "why": "the UI never calls PUT /api/v1/projects/{id}/tasks; with the doc-derived contract the browser path received NO fault (proxy saw 0 watched requests; caught by the AM-3 write log and the AM-1 proxy-inferred vs verified mismatch)", "kind": "contract data"},
+   {"what": "read-only oracle role created with psql in setup_once", "kind": "contract data (app's own datastore tooling)"},
+   {"what": "postgres as uid 70 with PGDATA on tmpfs and a writable socket dir", "kind": "service configuration under AFD hardening"}
+ ],
+ "generic_bug_found": {"what": "delayed_commit replay closure read self.command/self.path at fire time; under HTTP/1.1 keep-alive the handler had served later requests, so the proxy replayed the UI's token refresh instead of the held write and counted its 200 as a late commit",
+                       "how_found": "real-browser check (D6): proxy said committed_late, SQL oracle said 0, app log showed no bulk create",
+                       "fix": "capture method and path when the request is held (afd/faults/proxy.py)", "regression_test": "tests/test_contract.py::test_delayed_replay_survives_keepalive_connection_reuse (fails on the old proxy)"},
+ "browser_D6": {"lost_ack": "UI error toast 'Service temporarily unavailable (HTTP 503)' AND the committed task visible in the list; verified 1",
+                "delayed_commit": "UI error toast, project shows empty; verified 0 then 1 after the delay; app log shows exactly one create",
+                "fabricated": "UI cleared the input (success path) but rendered no task; verified 0 -> synthetic response not rendered naturally (F1)",
+                "level": "B1: works after a generic proxy fix and a traffic-derived contract"},
+ "fidelity_D2": {"lost_ack": "F2", "delayed_commit": "F2 relative to edge-deferred delivery (AM-4)", "fabricated": "F1"},
+ "AM5": {"read_lag_s": {"oracle": 0.19, "user_check": 0.2}, "native_idempotency_keys": "none found in the v1/v2 API descriptions for task creation", "in_flight_bound": "none documented"},
+ "AM6_exploratory": {"pre_commit_failure": "feasible F2 by analysis: the same UI error path handles a 503 that was never forwarded", "stale_read": "feasible F1 by analysis: task lists are JSON GETs a proxy could serve from a pre-write snapshot"}
+}

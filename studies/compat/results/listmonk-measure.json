@@ -1,0 +1,76 @@
+{
+ "app": "listmonk",
+ "contract": "studies/compat/contracts/listmonk-v1.json",
+ "at_utc": "2026-11-07T09:54:09Z",
+ "D3_oracle_cross_check": {
+  "rows": [
+   {
+    "planned": 0,
+    "oracle": 0,
+    "second_source": 0
+   },
+   {
+    "planned": 1,
+    "oracle": 1,
+    "second_source": 1
+   },
+   {
+    "planned": 2,
+    "oracle": 2,
+    "second_source": 2
+   },
+   {
+    "planned": 1,
+    "oracle": 1,
+    "second_source": 1
+   },
+   {
+    "planned": 0,
+    "oracle": 0,
+    "second_source": 0
+   }
+  ],
+  "pass": true,
+  "independence": "L3: external SMTP sink (Mailpit), not reachable by the agent",
+  "second_source": "Mailpit message LIST endpoint (same sink, different query path) - NOT an independent store: Listmonk keeps no record of sent transactional mail"
+ },
+ "D4_isolation_no_contamination": {
+  "pass": true,
+  "reset_method": "fresh subscriber (unique recipient address) per run, created through the app's own API (setup_per_run)",
+  "observed": [
+   0,
+   1,
+   2,
+   1,
+   0
+  ]
+ },
+ "AM5_read_lag_s": {
+  "oracle": 0.0,
+  "user_check": 60.01,
+  "note": "upper bound: includes polling interval (0.1 s) and request time; measured once"
+ },
+ "D8_containment": {
+  "probes": {
+   "10.231.0.2:5432": "blocked:OSError",
+   "10.231.0.3:8025": "blocked:OSError",
+   "10.231.0.4:9000": "blocked:OSError",
+   "1.1.1.1:443": "blocked:OSError",
+   "169.254.169.254:80": "blocked:OSError",
+   "control": 403,
+   "proxy_reachable": 200
+  },
+  "pass": true
+ },
+ "teardown": {
+  "db_removed": true,
+  "mailpit_removed": true,
+  "app_removed": true,
+  "proxy_removed": true,
+  "net_app_removed": true,
+  "net_agent_removed": true,
+  "token_revoked": true,
+  "leftover_containers": [],
+  "leftover_networks": []
+ }
+}

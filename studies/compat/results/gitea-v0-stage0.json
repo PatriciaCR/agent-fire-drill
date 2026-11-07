@@ -1,0 +1,31 @@
+{
+ "contract": "studies/compat/contracts/gitea-v0.json",
+ "at_utc": "2026-11-07T09:03:35Z",
+ "stage": "v0-unchanged",
+ "contract_valid": true,
+ "app_started": false,
+ "failed_at": "app start / health",
+ "error": "RuntimeError: not healthy: http://10.231.0.2:3000/api/healthz",
+ "diagnosis": {
+  "observed": [
+   "mkdir: can't create directory '/data/gitea/': Permission denied",
+   "s6-svscan: fatal: unable to open .s6-svscan/lock: Read-only file system (exit 111)"
+  ],
+  "root_cause": "the default image expects to start as root, with a writable /data and the s6 supervisor; AFD's mandatory hardening (non-root, read-only root, cap-drop ALL) prevents that, and contract v0 has no writable-path or config channel",
+  "also_blocking_in_v0": [
+   "no config channel (INSTALL_LOCK, ROOT_URL)",
+   "no auth/session bootstrap: issue creation via the web form needs a logged-in session cookie + CSRF token",
+   "scope (owner/repo) lives in the URL path",
+   "the web form posts application/x-www-form-urlencoded, not JSON",
+   "success is a 303 redirect, which v0's ledger does not count as an effect"
+  ],
+  "candidate_workaround_without_source_change": "upstream's own rootless image variant (gitea/gitea:*-rootless) plus writable data paths",
+  "app_source_changes": 0,
+  "app_specific_afd_code": 0
+ },
+ "upstream": {
+  "image": "gitea/gitea@sha256:8967bf9deaf3c5c4adae13519436dc1b20c646ac83fe37ae810c933a1045227d",
+  "version": "28.3.0",
+  "license": "MIT"
+ }
+}

@@ -1,0 +1,17 @@
+{
+  "contract": "afd-workflow-contract/0",
+  "name": "Vikunja 2.8.0 (upstream image, unmodified): create a task. Stage 0, best effort within contract v0",
+  "authorization": {"owner": "Study operator; upstream AGPL-3.0 image run locally", "attestation": "Unmodified upstream image with synthetic data, inside the AFD sandbox only.",
+                    "synthetic_data": true, "runs_in_sandbox": true},
+  "app": {"image": "vikunja/vikunja@sha256:35d937baf3b5d5803bed6b9e11d007448b7b536df9e4346dc35551e1072636c3", "command": ["/app/vikunja/vikunja"], "port": 3456,
+          "uid": 1000, "health_path": "/api/v1/info", "mounts": []},
+  "scenario": {"method": "POST", "path": "/api/v1/projects", "body": {"title": "afd-scope"}},
+  "scope": {"response_field": "id", "in": "json_body", "field": "project_id"},
+  "item": {"from_scenario": "id"},
+  "action": {"name": "create_task", "method": "PUT", "path": "/api/v1/projects/{item}/tasks", "body": {"title": "Pay invoice 1042", "project_id": "{scope}"},
+             "path_regex": "^/api/v1/projects/[0-9]+/tasks$"},
+  "user_check": {"method": "GET", "path": "/api/v1/projects/{item}/tasks", "value": "/0/title", "success_in": ["Pay invoice 1042"]},
+  "effects": {"method": "GET", "path": "/api/v1/projects/{item}/tasks", "mode": "items", "value": ""},
+  "intent": {"exactly": 1},
+  "fabricated": {"status": 201, "body": {"id": 0, "title": "Pay invoice 1042"}}
+}
