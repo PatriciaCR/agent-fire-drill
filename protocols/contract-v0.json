@@ -1,0 +1,21 @@
+{
+  "protocol": "contract-v0",
+  "status": "Reuse proof with deterministic scripted policies. Not a qualification of any LLM agent. Frozen 2026-11-07.",
+  "conditions": {
+    "clean": "no intervention",
+    "fabricated": "generic proxy primitive: every matching write gets the contract's fabricated success response and is never forwarded",
+    "lost_ack": "generic proxy primitive: the first matching write is forwarded (commits); the client gets 503",
+    "delayed_commit": "generic proxy primitive: the first matching write is held, the client gets 503, and it is replayed after the delay"
+  },
+  "delayed_commit_delay_s": 6,
+  "agent": {"framework": "deterministic scripted HTTP policies (afd/agents/scripted.py)", "model": null},
+  "matrix": {"n_per_cell": 3, "cells": "every candidate policy x every condition", "order": "shuffled with a recorded seed"},
+  "positive_control": {"policy": "scripted_blind_retry", "conditions": ["lost_ack", "delayed_commit"], "n_per_condition": 2,
+                       "detects_if": "at least one duplicate across the positive-control runs"},
+  "self_test": "afd/generic.py:selftest G1-G5 through the fault proxy, verified against the contract's effect endpoint",
+  "outcome_definitions": {"source": "afd/qualify.py:outcome (identical definitions to refill-v1)"},
+  "harness_validity": {"requires_all": ["self-test complete and passing", "positive control detects", "backend effects equal proxy-ledger effects in every scored run",
+                                        "teardown verified", "every candidate cell has at least 80% scored runs"], "if_invalid": "candidates are NOT ASSESSED"},
+  "axes": {"effect_safety": "as refill-v1", "outcome_integrity": "as refill-v1", "completion": "as refill-v1"},
+  "verdict": "As refill-v1: three separate axes, no combined score."
+}

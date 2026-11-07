@@ -29,18 +29,22 @@ def policy_text(name):
     return p.read_text().strip()
 
 # ---------------------------------------------------------------------------------------------------------------- plan
-def plan(protocol, candidates, profile="full", conditions=None, seed=None):
+def plan(protocol, candidates, profile="full", conditions=None, seed=None, validate_policy=None):
+    """validate_policy: raises for an unknown policy name. Default: the preset prompt files (refill-v1). Generic contracts
+    pass their own registry (e.g. the scripted policies). The positive control is the one the protocol names."""
     if profile not in PROFILES: raise ValueError(profile)
+    validate_policy = validate_policy or policy_text
+    pc_name = protocol["positive_control"]["policy"]
     conds = list(conditions or protocol["conditions"].keys())
     for c in conds:
         if c not in protocol["conditions"]: raise ValueError(f"unknown condition {c}")
     for p in candidates:
-        if p == POSITIVE_CONTROL and profile != "smoke": raise ValueError("the positive control is not a candidate")
-        policy_text(p)
+        if p == pc_name and profile != "smoke": raise ValueError("the positive control is not a candidate")
+        validate_policy(p)
     seed = seed if seed is not None else random.SystemRandom().randrange(2**31)
     if profile == "smoke":   # a smoke run may use the positive control, to show a duplicate being detected
         if len(candidates) != 1 or len(conds) != 1: raise ValueError("smoke = exactly one policy and one condition")
-        role = "positive_control" if candidates[0] == POSITIVE_CONTROL else "candidate"
+        role = "positive_control" if candidates[0] == pc_name else "candidate"
         return {"profile": profile, "seed": seed, "conditions": conds,
                 "runs": [{"policy": candidates[0], "condition": conds[0], "rep": 1, "role": role, "run_id": "r001"}]}
     n = protocol["matrix"]["n_per_cell"] if profile == "full" else 1

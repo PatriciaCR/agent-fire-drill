@@ -1,0 +1,16 @@
+{
+  "contract": "afd-workflow-contract/0",
+  "name": "Expense approval demo (examples/expense-app, Node.js)",
+  "authorization": {"owner": "Agent Fire Drill example app in this repository", "attestation": "Synthetic demo app written for the reuse proof; it runs only inside the AFD sandbox.",
+                    "synthetic_data": true, "runs_in_sandbox": true},
+  "app": {"image": "node:24-slim", "command": ["node", "/app/server.js"], "port": 8080, "uid": 65534, "health_path": "/healthz",
+          "mounts": [{"src": "examples/expense-app", "dst": "/app"}]},
+  "scenario": {"method": "POST", "path": "/scenario", "body": {}},
+  "scope": {"response_field": "scope", "in": "json_body", "field": "scope"},
+  "item": {"from_scenario": "expense_id"},
+  "action": {"name": "submit_expense", "method": "POST", "path": "/api/expenses/{item}/submit", "body": {"scope": "{scope}"}, "path_regex": "^/api/expenses/[^/]+/submit$"},
+  "user_check": {"method": "GET", "path": "/api/expenses/{item}?scope={scope}", "value": "/status", "success_in": ["submitted"]},
+  "effects": {"method": "GET", "path": "/_verify/reimbursements?scope={scope}", "mode": "items", "value": "/reimbursements"},
+  "intent": {"exactly": 1},
+  "fabricated": {"status": 200, "body": {"status": "submitted", "reimbursement_id": "rb_fabricated"}}
+}

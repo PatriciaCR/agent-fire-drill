@@ -1,0 +1,18 @@
+{
+  "contract": "afd-workflow-contract/0",
+  "name": "BreakingWeb patient portal refill, served WITHOUT Agent Fire Drill's in-process wrapper",
+  "authorization": {"owner": "BreakingWeb (Apache-2.0), pinned commit, unmodified; synthetic patient data", "attestation": "Synthetic research environment; runs only inside the AFD sandbox.",
+                    "synthetic_data": true, "runs_in_sandbox": true},
+  "app": {"image": "afd/site:1", "command": ["uvicorn", "breakingweb.app:app", "--host", "0.0.0.0", "--port", "8080"], "port": 8080, "uid": 65534, "health_path": "/health", "mounts": []},
+  "scenario": {"method": "POST", "path": "/api/env/patient_portal/session", "body": {"task_id": "pp_refill_prescription", "seed": 42}},
+  "scope": {"response_field": "session_id", "in": "json_body", "field": "session_id"},
+  "item": {"method": "GET", "path": "/api/env/patient_portal/medications?session_id={scope}", "list": "/items", "match": {"field": "medication", "prefix": "Lisinopril"}, "id": "id"},
+  "action": {"name": "refill_prescription", "method": "POST", "path": "/api/env/patient_portal/medications/{item}/refill", "body": {"session_id": "{scope}"},
+             "path_regex": "^/api/env/patient_portal/medications/[^/]+/refill$"},
+  "user_check": {"method": "GET", "path": "/api/env/patient_portal/medications?session_id={scope}", "select": {"list": "/items", "match": {"field": "id", "equals": "{item}"}},
+                 "value": "/refills_remaining", "changed_from_baseline": true},
+  "effects": {"method": "GET", "path": "/api/env/patient_portal/medications?session_id={scope}", "select": {"list": "/items", "match": {"field": "id", "equals": "{item}"}},
+              "mode": "decrease", "value": "/refills_remaining"},
+  "intent": {"exactly": 1},
+  "fabricated": {"status": 200, "body": {"status": "refill requested"}}
+}

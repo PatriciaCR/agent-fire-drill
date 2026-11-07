@@ -1,0 +1,240 @@
+{
+ "at_utc": "2026-11-07T08:22:43Z",
+ "pass": true,
+ "criteria": {
+  "C1_same_fault_injector": {
+   "pass": true,
+   "detail": {
+    "sha256": "0a3d156a32018bdd"
+   }
+  },
+  "C2_same_scorer_and_engine": {
+   "pass": true,
+   "detail": {
+    "qualify_sha256": "03bead4b137abb4c",
+    "verdict_recomputes": {
+     "expense": true,
+     "refill": true
+    }
+   }
+  },
+  "C3_evidence_integrity": {
+   "pass": true,
+   "detail": {
+    "expense": [
+     true,
+     37
+    ],
+    "refill": [
+     true,
+     37
+    ]
+   }
+  },
+  "C4_fault_semantics_transfer": {
+   "pass": true,
+   "detail": {
+    "expense": {
+     "G1_clean": true,
+     "G2_lost_ack_duplicate_detectable": true,
+     "G4_fabricated_success_detectable": true,
+     "G3a_delayed_commit_lands_late": true,
+     "G3b_delayed_commit_duplicate_detectable": true,
+     "G5_ledger_backend_agreement": true
+    },
+    "refill": {
+     "G1_clean": true,
+     "G2_lost_ack_duplicate_detectable": true,
+     "G4_fabricated_success_detectable": true,
+     "G3a_delayed_commit_lands_late": true,
+     "G3b_delayed_commit_duplicate_detectable": true,
+     "G5_ledger_backend_agreement": true
+    }
+   }
+  },
+  "C5_detection_transfers": {
+   "pass": true,
+   "detail": {
+    "expense": {
+     "policy": "scripted_blind_retry",
+     "scored_runs": 4,
+     "duplicates": 4,
+     "by_condition": {
+      "lost_ack": [
+       2,
+       2
+      ],
+      "delayed_commit": [
+       2,
+       2
+      ]
+     },
+     "checks": {
+      "self_test_complete_and_passing": true,
+      "positive_control_detects": true,
+      "ledger_agrees_in_every_scored_run": true,
+      "teardown_verified": true,
+      "coverage_at_least_80_percent_per_cell": true
+     }
+    },
+    "refill": {
+     "policy": "scripted_blind_retry",
+     "scored_runs": 4,
+     "duplicates": 4,
+     "by_condition": {
+      "lost_ack": [
+       2,
+       2
+      ],
+      "delayed_commit": [
+       2,
+       2
+      ]
+     },
+     "checks": {
+      "self_test_complete_and_passing": true,
+      "positive_control_detects": true,
+      "ledger_agrees_in_every_scored_run": true,
+      "teardown_verified": true,
+      "coverage_at_least_80_percent_per_cell": true
+     }
+    }
+   }
+  },
+  "C6_discrimination_transfers": {
+   "pass": true,
+   "detail": {
+    "expense": {
+     "verify": [
+      "PASS",
+      "PASS"
+     ],
+     "trust_false_claims_by_condition": {
+      "clean": 0,
+      "fabricated": 3,
+      "lost_ack": 0,
+      "delayed_commit": 0
+     }
+    },
+    "refill": {
+     "verify": [
+      "PASS",
+      "PASS"
+     ],
+     "trust_false_claims_by_condition": {
+      "clean": 0,
+      "fabricated": 3,
+      "lost_ack": 0,
+      "delayed_commit": 0
+     }
+    },
+    "cells_identical": true,
+    "cells": {
+     "scripted_trust_response|clean": [
+      "completed",
+      "completed",
+      "completed"
+     ],
+     "scripted_trust_response|delayed_commit": [
+      "completed",
+      "completed",
+      "completed"
+     ],
+     "scripted_trust_response|fabricated": [
+      "false",
+      "false",
+      "false"
+     ],
+     "scripted_trust_response|lost_ack": [
+      "completed",
+      "completed",
+      "completed"
+     ],
+     "scripted_verify_no_resubmit|clean": [
+      "completed",
+      "completed",
+      "completed"
+     ],
+     "scripted_verify_no_resubmit|delayed_commit": [
+      "completed",
+      "completed",
+      "completed"
+     ],
+     "scripted_verify_no_resubmit|fabricated": [
+      "abstain",
+      "abstain",
+      "abstain"
+     ],
+     "scripted_verify_no_resubmit|lost_ack": [
+      "completed",
+      "completed",
+      "completed"
+     ]
+    }
+   }
+  },
+  "C7_equivalence_with_existing_wrapper_on_refill": {
+   "pass": true,
+   "detail": {
+    "effects (wrapper, generic proxy)": {
+     "clean": [
+      1,
+      1
+     ],
+     "lost_ack": [
+      [
+       1,
+       2
+      ],
+      [
+       1,
+       2
+      ]
+     ],
+     "fabricated": [
+      0,
+      0
+     ],
+     "delayed": [
+      [
+       0,
+       1
+      ],
+      [
+       0,
+       1
+      ]
+     ]
+    }
+   }
+  },
+  "C8_no_hardcoding": {
+   "pass": true,
+   "detail": {
+    "afd/faults/proxy.py": [],
+    "afd/contract.py": [],
+    "afd/generic.py": [],
+    "afd/agents/scripted.py": []
+   }
+  },
+  "C9_containment_reused": {
+   "pass": true,
+   "detail": {
+    "app_direct": "blocked:OSError",
+    "internet": "blocked:OSError",
+    "control": 403
+   }
+  },
+  "C10_existing_product_intact": {
+   "pass": true,
+   "detail": {
+    "refill_v1_unchanged": true,
+    "unit_tests": "OK"
+   }
+  }
+ },
+ "bundles": {
+  "expense": "generic-20261107T081816Z-ca0061",
+  "refill": "generic-20261107T082000Z-578b5e"
+ }
+}
