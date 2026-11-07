@@ -96,13 +96,28 @@ def yes_bad(x): return "<span class=bad>YES</span>" if x else ("no" if x is not 
 
 def mark(ok): return "<span class=ok>PASS</span>" if ok is True else ("<span class=bad>FAIL</span>" if ok is False else "<span class=warn>n/a</span>")
 
+def check_counts(d):
+    """Mandatory checks decide the result; informational records (e.g. the public-listener inventory) are counted apart.
+    Evidence without a `mandatory` flag (the rootful development suite) treats every check as mandatory."""
+    checks = d.get("checks", {})
+    passed = lambda v: v.get("status") == "PASS" or (v.get("status") is None and v.get("pass") is True)
+    mand = [v for v in checks.values() if v.get("mandatory", True)]
+    return {"mandatory": len(mand), "mandatory_passed": sum(passed(v) for v in mand),
+            "skipped": sum(v.get("status") == "SKIPPED" for v in mand), "informational": len(checks) - len(mand)}
+
+def counts_text(d):
+    c = check_counts(d)
+    t = f"{c['mandatory_passed']}/{c['mandatory']} mandatory checks passed"
+    if c["skipped"]: t += f" ({c['skipped']} skipped)"
+    if c["informational"]: t += f" · {c['informational']} informational"
+    return t
+
 def containment_summary():
     p, d = containment()
     if not d: return "<div class=card><span class=warn>No containment evidence recorded yet.</span></div>"
-    checks = d.get("checks", {}); n = len(checks)
-    npass = sum(1 for v in checks.values() if v.get("pass") is True or v.get("status") == "PASS")
     env = d.get("environment", "dev-rootful")
-    return (f"<div class=card>{mark(d.get('pass'))} &nbsp;{npass}/{n} checks · environment <b>{E(env)}</b> · {E(d.get('at_utc', ''))}"
+    commit = f" · commit <code>{E(d['commit'][:7])}</code>" if d.get("commit") else ""
+    return (f"<div class=card>{mark(d.get('pass'))} &nbsp;{E(counts_text(d))} · environment <b>{E(env)}</b>{commit} · {E(d.get('at_utc', ''))}"
             f"<br><span class=sub>Untrusted agent workers have no key, no Docker socket, no internet and no host access; only the gateway holds the inference key. "
             f"<a href='/containment'>All checks</a></span></div>")
 
@@ -240,8 +255,8 @@ class H(BaseHTTPRequestHandler):
         rows = ""
         for k, v in d.get("checks", {}).items():
             st = v.get("status") or ("PASS" if v.get("pass") else "FAIL")
-            rows += f"<tr><td>{E(k)}</td><td class={E(st)}>{E(st)}</td><td>{'mandatory' if v.get('mandatory', True) else 'info'}</td><td class=mono>{E(json.dumps(v.get('detail'), default=str)[:300])}</td></tr>"
-        body = (f"<h1>Containment evidence</h1><p class=sub>{E(p.name)} · environment {E(d.get('environment', 'dev-rootful'))} · {E(d.get('at_utc', ''))} · overall {mark(d.get('pass'))}"
+            rows += f"<tr><td>{E(k)}</td><td class={E(st)}>{E(st)}</td><td>{'mandatory' if v.get('mandatory', True) else 'informational (not part of the result)'}</td><td class=mono>{E(json.dumps(v.get('detail'), default=str)[:300])}</td></tr>"
+        body = (f"<h1>Containment evidence</h1><p class=sub>{E(p.name)} · environment {E(d.get('environment', 'dev-rootful'))} · {E(d.get('at_utc', ''))} · overall {mark(d.get('pass'))} · {E(counts_text(d))}"
                 f"{' · commit <code>' + E(d['commit'][:12]) + '</code>' if d.get('commit') else ''}</p><div class=tw><table><tr><th>check</th><th>status</th><th></th><th>detail</th></tr>{rows}</table></div>")
         return page("Containment", body)
 

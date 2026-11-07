@@ -32,7 +32,8 @@ class TestWeb(unittest.TestCase):
         open(os.path.join(d, "runs.jsonl"), "w").write("".join(json.dumps(r) + "\n" for r in runs))
         B.seal(d); B.archive(d, os.path.join(t, "results", cls.bid + ".tar.gz"))
         os.makedirs(os.path.join(t, "acc")); open(os.path.join(t, "acc", "latest.json"), "w").write(json.dumps({"pass": True, "environment": "vm", "at_utc": "x", "commit": "abc",
-                                                                                                             "checks": {"<script>x</script>": {"status": "PASS", "mandatory": True, "detail": "<b>"}}}))
+                                                                                                             "checks": {"<script>x</script>": {"status": "PASS", "mandatory": True, "detail": "<b>"},
+                                                                                                                        "inventory": {"status": "PASS", "mandatory": False, "detail": []}}}))
         cls.base = f"http://127.0.0.1:{cls.env['AFD_WEB_PORT']}"
         cls.p = subprocess.Popen([sys.executable, "-I", os.path.join(ROOT, "bin", "afd-web")], env=cls.env, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         for _ in range(50):
@@ -59,6 +60,10 @@ class TestWeb(unittest.TestCase):
             self.assertEqual(h.get("X-Content-Type-Options"), "nosniff")
             self.assertNotIn(b"<script", body, path)                 # no scripts at all, and evidence text is escaped
         st, body, _ = self.get("/containment"); self.assertIn(b"&lt;script&gt;", body)
+        # counts: mandatory checks decide the result; informational records are shown apart (VM showed "52/52" for 51 + 1)
+        for path in ("/", "/containment"):
+            body = self.get(path)[1]
+            self.assertIn(b"1/1 mandatory checks passed", body, path); self.assertIn(b"1 informational", body, path); self.assertNotIn(b"2/2", body, path)
         st, body, _ = self.get(f"/results/{self.bid}")
         self.assertIn(b"NOT a qualification", body); self.assertIn(b"Effect safety", body); self.assertIn(b"Bundle integrity", body)
     def test_02_bundle_download_verifies(self):
