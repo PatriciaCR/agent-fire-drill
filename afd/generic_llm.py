@@ -37,7 +37,9 @@ class LLMEpisodeJob(GEN.GenericJob):
         try:
             self.nets2 = {"cdp": f"afdnet-{self.id}-cdp", "gw": f"afdnet-{self.id}-gw"}
             for (k, name), subnet in zip(self.nets2.items(), J._subnets()): D.create_internal_network(name, subnet, self.id)
-            if C.ROOTLESS: raise RuntimeError("M2 runs locally in rootful dev mode only (VM rootless topology is M6)")
+            # The LLM gateway attachment is not implemented for the rootless VM topology; harness-only sessions
+            # (with_gateway=False, e.g. `afd contract probe`) need no gateway and run in both modes.
+            if C.ROOTLESS and self.with_gateway: raise RuntimeError("LLM gateway attachment for generic jobs is not implemented in rootless mode (use with_gateway=False)")
             if self.with_gateway:
                 D.sh("docker", "network", "connect", self.nets2["gw"], C.GATEWAY_NAME)
                 self.gw_ip = D.ip_of(C.GATEWAY_NAME, self.nets2["gw"]); self.gw_url = f"http://{self.gw_ip}:{C.GATEWAY_PORT}"

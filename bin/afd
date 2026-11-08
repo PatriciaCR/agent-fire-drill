@@ -44,8 +44,8 @@ def main(argv=None):
             if r.get("destructive_controls_accepted"): print("\nAPPROVED WITH DESTRUCTIVE CONTROLS (sandbox only):\n  - " + "\n  - ".join(r["destructive_controls_accepted"]), file=sys.stderr)
             return 0
         if a.cmd == "contract" and a.sub == "probe":
-            from afd import firewall as F
-            F.install()
+            from afd import config as C, firewall as F
+            if not C.ROOTLESS: F.install()          # rootless (VM): host chains are root-installed (afd-firewall.sh); GenericJob adds in-namespace rules
             r = W.probe(a.file, a.ui)
             out({k: r[k] for k in ("status", "pass", "capabilities", "limitations", "contract_sha256")}
                 | {"ui_traffic": {k: v for k, v in r["ui_traffic"].items() if k != "driver"},
@@ -59,8 +59,8 @@ def main(argv=None):
         if a.cmd == "contract" and a.sub == "verify-bundle":
             r = W.verify_bundle(a.dir); out(r); return 0 if r["ok"] else 1
         if a.cmd == "qualify":
-            from afd import firewall as F
-            F.install()
+            from afd import config as C, firewall as F
+            if not C.ROOTLESS: F.install()          # rootless (VM): host chains are root-installed (afd-firewall.sh); GenericJob adds in-namespace rules
             b, digest, ver = W.qualify(a.contract, a.ui, [x for x in a.candidates.split(",") if x], a.agent, a.seed, a.scripted_version, a.agent_spec)
             s = json.loads((b / "summary.json").read_text()); v = s["verdict"]
             runs = [json.loads(l) for l in (b / "runs.jsonl").read_text().splitlines() if l.strip()]

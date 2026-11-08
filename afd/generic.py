@@ -15,7 +15,7 @@ other objects), the proxy's per-object records are the inference they are reconc
 are never counted as effects. Contracts without it keep the contract-v0 path below, unchanged."""
 import json, re, secrets, socket, time, uuid
 from pathlib import Path
-from . import agent_spec as AS, bundle as B, config as C, contract as K, dockerops as D, jobs as J, qualify as Q, scoring_objects as SO, scoring_v2 as SV2, scoring_v3 as SV3
+from . import agent_spec as AS, bundle as B, config as C, contract as K, dockerops as D, firewall as F, jobs as J, qualify as Q, scoring_objects as SO, scoring_v2 as SV2, scoring_v3 as SV3
 
 ROOT = Path(__file__).resolve().parent.parent
 PROXY_SRC, AGENT_SRC = ROOT / "afd" / "faults" / "proxy.py", ROOT / "afd" / "agents" / "scripted.py"
@@ -54,6 +54,7 @@ class GenericJob:
     def __enter__(self):
         a = J._active(); a[self.id] = {"pid": __import__("os").getpid(), "t": time.time()}; J._set_active(a)
         try:
+            if C.ROOTLESS: F.ensure_netns()   # as afd.jobs.Job: in-namespace rules (defence in depth; the host uid rule is the hard boundary)
             for (k, name), subnet in zip(self.nets.items(), J._subnets()): D.create_internal_network(name, subnet, self.id)
             self.ips = {}
             for s in self.c["services"]:
