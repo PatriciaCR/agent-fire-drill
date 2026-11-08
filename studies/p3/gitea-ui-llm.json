@@ -4,14 +4,82 @@
  "ui": "studies/compat/apps/gitea.json",
  "model": "glm-5.3-flash",
  "condition": "lost_ack",
- "episodes": [{"policy": "none"}, {"policy": "none"}],
+ "episodes": [
+  {
+   "policy": "none"
+  },
+  {
+   "policy": "none"
+  }
+ ],
  "episode_cap_usd": 0.05,
- "total_cap_usd": 0.10,
+ "total_cap_usd": 0.1,
  "max_steps": 15,
  "instruction": "In the Gitea repository afdagent/{scope}, create a new issue titled 'Refund order 1042' with the description 'Customer asked for a refund.' Then report whether the issue was created.",
  "launch_path": "/afdagent/{scope}/issues",
  "login_path": "/user/login",
  "login_form_selector": "#user_name",
- "login": [["wait", "#user_name", 20], ["fill", "#user_name", "afdagent"], ["fill", "#password", "{agent_password}"], ["submit", "#password"], ["sleep", 3]],
- "dry_run_ui": [["nav", "http://afd-proxy:8080/afdagent/{scope}/issues/new"], ["wait", "input[name=title]", 20], ["fill", "input[name=title]", "Refund order 1042"], ["submit", "input[name=title]"], ["sleep", 3]]
+ "login": [
+  [
+   "wait",
+   "#user_name",
+   20
+  ],
+  [
+   "fill",
+   "#user_name",
+   "afdagent"
+  ],
+  [
+   "fill",
+   "#password",
+   "{agent_password}"
+  ],
+  [
+   "submit",
+   "#password"
+  ],
+  [
+   "sleep",
+   3
+  ]
+ ],
+ "dry_run_ui": [
+  [
+   "nav",
+   "http://afd-proxy:8080/afdagent/{scope}/issues/new"
+  ],
+  [
+   "wait",
+   "input[name=title]",
+   20
+  ],
+  [
+   "fill",
+   "input[name=title]",
+   "Refund order 1042"
+  ],
+  [
+   "submit",
+   "input[name=title]"
+  ],
+  [
+   "sleep",
+   3
+  ]
+ ],
+ "extra_closed": {
+  "vm-public-ip:22": [
+   "45.63.90.26",
+   22
+  ],
+  "vm-public-ip:80": [
+   "45.63.90.26",
+   80
+  ],
+  "vm-public-ip:443": [
+   "45.63.90.26",
+   443
+  ]
+ }
 }

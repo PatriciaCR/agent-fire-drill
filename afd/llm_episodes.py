@@ -56,6 +56,9 @@ def load_config(path):
     if not (isinstance(ec, (int, float)) and 0 < ec <= MAX_EPISODE_CAP_USD): probs.append(f"episode_cap_usd must be in (0, {MAX_EPISODE_CAP_USD}]")
     if not (isinstance(tc, (int, float)) and 0 < tc <= MAX_TOTAL_CAP_USD): probs.append(f"total_cap_usd must be in (0, {MAX_TOTAL_CAP_USD}]")
     if not 1 <= int(cfg.get("max_steps", 0)) <= 25: probs.append("max_steps must be 1..25")
+    ec_ = cfg.get("extra_closed") or {}
+    if not isinstance(ec_, dict) or not all(isinstance(v, list) and len(v) == 2 and isinstance(v[0], str) and isinstance(v[1], int) for v in ec_.values()):
+        probs.append("extra_closed must map names to [host, port]")
     for k in ("contract", "ui", "instruction", "launch_path", "dry_run_ui", "login_path"):
         if not cfg.get(k): probs.append(f"missing {k}")
     if probs: raise Refused("; ".join(probs))
@@ -136,6 +139,7 @@ def chromium_paths(job, s, cfg):
 def preflight(cfg, contract):
     res = {}
     with GL.LLMEpisodeJob(contract, "llmpre") as job:
+        job.extra_closed = cfg.get("extra_closed") or {}
         st = GEN.selftest_objects(job, 6)
         check(res, "P1_selftest_G1_G7", st["pass"] and st["complete"], {"checks": {k: v["pass"] for k, v in st["checks"].items()}})
         # P2 + P6: one $0 token (budget below any call's worst case) used for the gate run and the gateway tests
@@ -195,6 +199,7 @@ def preflight(cfg, contract):
 
 def episode(cfg, contract, ep, idx, work):
     with GL.LLMEpisodeJob(contract, f"llme{idx}") as job:
+        job.extra_closed = cfg.get("extra_closed") or {}
         s = GEN.Scenario(job); job.arm(s.scope, cfg["condition"], 6, s.target)
         lg = login(job, s, cfg)
         hb = worker_hash(job, cfg.get("required_worker_commit"))

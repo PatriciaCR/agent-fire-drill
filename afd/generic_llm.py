@@ -170,6 +170,7 @@ class LLMEpisodeJob(GEN.GenericJob):
                        "internet-v6-2606:4700:4700::1111:443": ["2606:4700:4700::1111", 443], "rootless-host-10.0.2.2:22": ["10.0.2.2", 22],
                        "rootless-host-10.0.2.2:80": ["10.0.2.2", 80], "rootless-host-10.0.2.2:443": ["10.0.2.2", 443], "rootless-dns-10.0.2.3:53": ["10.0.2.3", 53]})
         if self.with_gateway: closed[f"gateway-other-port:{self.gw_ip}:22"] = [self.gw_ip, 22]
+        closed.update({k: list(v) for k, v in (getattr(self, "extra_closed", None) or {}).items()})   # deployment-specific, e.g. the VM's public address
         dns = ["example.com", C.INFERENCE_HOST]
         proxy_agent_ip = D.ip_of(self.proxy, self.nets["agent"])
         if position == "worker":

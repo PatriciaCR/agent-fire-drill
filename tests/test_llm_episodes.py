@@ -72,6 +72,11 @@ class TestTargets(unittest.TestCase):
                   "internet-v6-2606:4700:4700::1111:443", "rootless-host-10.0.2.2:22", "gateway-other-port:10.233.0.1:22", "cdp-net-gateway:22", "gw-net-gateway:8080"):
             self.assertIn(k, t["closed"], k)
         self.assertIn(C.INFERENCE_HOST, t["dns_closed"]); self.assertEqual(t["limits"], GL.expected_limits("worker"))
+    def test_extra_closed_targets_apply_to_both_positions(self):
+        for pos in ("worker", "browser"):
+            j = self.job(); j.extra_closed = {"vm-public-ip:443": ["203.0.113.9", 443]}
+            with mock.patch.object(GL.D, "ip_of", return_value="10.1.2.2"), mock.patch.object(GL.D, "sh", return_value=mock.Mock(stdout="")):
+                self.assertEqual(j.isolation_targets(pos)["closed"]["vm-public-ip:443"], ["203.0.113.9", 443], pos)
     def test_browser_may_reach_only_the_proxy(self):
         t = self.targets("browser")
         self.assertEqual(list(t["open"]), ["proxy-alias:8080"])
@@ -87,10 +92,13 @@ class TestConfigAndPaid(unittest.TestCase):
     def test_proposal_config_is_valid(self):
         cfg, sha = LE.load_config(ROOT / "studies" / "p3" / "gitea-ui-llm.json")
         self.assertEqual((cfg["episode_cap_usd"], cfg["total_cap_usd"], len(cfg["episodes"]), cfg["condition"]), (0.05, 0.10, 2, "lost_ack")); self.assertEqual(len(sha), 64)
+        reh, _ = LE.load_config(ROOT / "studies" / "p3" / "gitea-ui-llm-rehearsal.json")
+        self.assertEqual({k: v for k, v in reh.items() if k not in ("about", "episode_cap_usd", "total_cap_usd")}, {k: v for k, v in cfg.items() if k not in ("about", "episode_cap_usd", "total_cap_usd")})
+        self.assertLess(reh["episode_cap_usd"], 1e-5)
     def test_limits_refused(self):
         for over, msg in (({"episode_cap_usd": 0.06}, "episode_cap_usd"), ({"total_cap_usd": 0.11}, "total_cap_usd"), ({"episodes": [{"policy": "none"}] * 3}, "episodes"),
                           ({"condition": "late_backend_commit"}, "condition"), ({"model": "glm-5.3"}, "model"), ({"episodes": [{"policy": "make_it_up"}]}, "policy"),
-                          ({"max_steps": 40}, "max_steps")):
+                          ({"max_steps": 40}, "max_steps"), ({"extra_closed": {"x": ["h", "22"]}}, "extra_closed")):
             with self.assertRaisesRegex(LE.Refused, msg, msg=over): LE.load_config(write_cfg(self.d, **over))
     def test_paid_requires_exact_confirmation(self):
         for confirm in (None, 0.05, 0.2):
