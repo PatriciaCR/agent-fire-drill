@@ -1,0 +1,22 @@
+{
+ "gate_only": {
+  "pass": false,
+  "violations": [
+   "proxy-agent-side:8080",
+   "proxy-alias:8080",
+   "afd-proxy"
+  ],
+  "exit_code": 42
+ },
+ "evidence_only_worker": {
+  "error": "isolation gate failed: worker not started",
+  "worker_ran": false,
+  "violations": [
+   "proxy-agent-side:8080",
+   "proxy-alias:8080",
+   "afd-proxy"
+  ],
+  "exit_code": 42
+ },
+ "teardown_leftovers": []
+}

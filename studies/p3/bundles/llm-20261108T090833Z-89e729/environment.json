@@ -1,0 +1,22 @@
+{
+ "mode": "rootful",
+ "worker_sha256": "34b6e56e743bc5b9e4a8c9287a455dc30272e5bf860ee2ba55641c179e6ff584",
+ "images": {
+  "browser": "afd/browser:1",
+  "worker": "afd/worker:1"
+ },
+ "code_sha256": {
+  "afd/generic_llm.py": "75edd4c7ac6e115f0917b227028f56a1ae5c923aa7ba7a9f131d5be81f42c807",
+  "afd/llm_episodes.py": "d9888c8aeda5f1561d11907c9694f52278a209c9f7e1fb153e2fe9a00598868d",
+  "afd/generic.py": "39fcde851f5bba2286c6330dd9769660a9b6ee8aff2a4b8df756dfa67a1e3e00",
+  "afd/scoring_objects.py": "0caa26963f432e1ff1f8108ddb59d0eda547d0160dc55b1777ecc94db0293be4",
+  "afd/faults/proxy.py": "b0b6a379a7089abb8ac913e349718161cab5581c5472c834f8474b8401c04ba1",
+  "afd/cdp_driver.py": "6020780d95e6b3a51ea02abfd24bf2a2cb5bcf0c4739d1d00d5aea477ba46519"
+ },
+ "services": {
+  "db": "postgres@sha256:3540c0362c809df084ffac0ae69fe794515f9de92692f02178bcdce0ef0302ac",
+  "app": "gitea/gitea@sha256:40c5a68a0463c0940e1ae32626c8300dd0572f3558e390073ad8379ca67c0e1d"
+ },
+ "config_sha256": "0581354f3112ad12e0b74d0aab7886cec61fd4839f6728c8256daa12b7c441b3",
+ "contract_sha256": "3dcfa827c2e504368991d3bb56b94728840e5f842ac59ae83149d05a535fe42a"
+}

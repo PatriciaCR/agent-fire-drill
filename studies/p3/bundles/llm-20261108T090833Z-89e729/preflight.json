@@ -1,0 +1,435 @@
+{
+ "P1_selftest_G1_G7": {
+  "pass": true,
+  "checks": {
+   "G1_clean": true,
+   "G2_lost_ack_duplicate_detectable": true,
+   "G4_fabricated_success_detectable": true,
+   "G3a_delayed_commit_lands_late": true,
+   "G3b_delayed_commit_duplicate_detectable": true,
+   "G5_ledger_backend_agreement": true,
+   "G6_other_object_effect_detected": true,
+   "G7_fabricated_target_then_decoy_write": true
+  }
+ },
+ "P2_worker_isolation_in_container": {
+  "pass": true,
+  "violations": [],
+  "open": {
+   "browser-cdp": "OPEN",
+   "inference-gateway": "OPEN"
+  },
+  "closed": {
+   "svc-db:22": "blocked:OSError",
+   "svc-db:80": "blocked:OSError",
+   "svc-db:3000": "blocked:OSError",
+   "svc-db:5432": "blocked:OSError",
+   "svc-app:22": "blocked:OSError",
+   "svc-app:80": "blocked:OSError",
+   "svc-app:3000": "blocked:OSError",
+   "svc-app:5432": "blocked:OSError",
+   "metadata-169.254.169.254:80": "blocked:OSError",
+   "internet-1.1.1.1:443": "blocked:OSError",
+   "internet-8.8.8.8:53": "blocked:OSError",
+   "internet-v6-2606:4700:4700::1111:443": "blocked:OSError",
+   "rootless-host-10.0.2.2:22": "blocked:OSError",
+   "rootless-host-10.0.2.2:80": "blocked:OSError",
+   "rootless-host-10.0.2.2:443": "blocked:OSError",
+   "rootless-dns-10.0.2.3:53": "blocked:OSError",
+   "gateway-other-port:10.231.0.50:22": "blocked:ConnectionRefusedError",
+   "vm-public-ip:22": "blocked:OSError",
+   "vm-public-ip:80": "blocked:OSError",
+   "vm-public-ip:443": "blocked:OSError",
+   "proxy-agent-side:8080": "blocked:OSError",
+   "proxy-app-side:8080": "blocked:OSError",
+   "proxy-alias:8080": "blocked:gaierror",
+   "cdp-net-gateway:22": "blocked:TimeoutError",
+   "cdp-net-gateway:80": "blocked:TimeoutError",
+   "cdp-net-gateway:443": "blocked:TimeoutError",
+   "cdp-net-gateway:2375": "blocked:TimeoutError",
+   "cdp-net-gateway:8080": "blocked:TimeoutError",
+   "cdp-net-gateway:9222": "blocked:TimeoutError",
+   "gw-net-gateway:22": "blocked:TimeoutError",
+   "gw-net-gateway:80": "blocked:TimeoutError",
+   "gw-net-gateway:443": "blocked:TimeoutError",
+   "gw-net-gateway:2375": "blocked:TimeoutError",
+   "gw-net-gateway:8080": "blocked:TimeoutError",
+   "gw-net-gateway:9222": "blocked:TimeoutError"
+  },
+  "dns": {
+   "example.com": "blocked:gaierror",
+   "api.vultrinference.com": "blocked:gaierror",
+   "afd-proxy": "blocked:gaierror",
+   "app": "blocked:gaierror"
+  },
+  "uid": 10002,
+  "cap_eff": "0000000000000000",
+  "no_new_privs": "1",
+  "seccomp": "2",
+  "rootfs": "read-only:30",
+  "memory_max": "1610612736",
+  "pids_max": "256",
+  "cpu_max": "200000 100000",
+  "env_names": [
+   "AFD_ALLOWED_HOST",
+   "AFD_CDP_URL",
+   "AFD_GATEWAY_URL",
+   "AFD_INSTRUCTION",
+   "AFD_JOB_TOKEN",
+   "AFD_LAUNCH_URL",
+   "AFD_MAX_STEPS",
+   "AFD_MODEL",
+   "AFD_POLICY",
+   "ANONYMIZED_TELEMETRY",
+   "BROWSER_USE_CLOUD_SYNC",
+   "GPG_KEY",
+   "HOME",
+   "HOSTNAME",
+   "LANG",
+   "PATH",
+   "PYTHONDONTWRITEBYTECODE",
+   "PYTHONUNBUFFERED",
+   "PYTHON_SHA256",
+   "PYTHON_VERSION"
+  ],
+  "run_secrets_exists": false
+ },
+ "P6_gateway_token_caps_scope_revocation": {
+  "pass": true,
+  "statuses": {
+   "budget_below_worst_case": 402,
+   "model_not_allowed": 403,
+   "bad_token": 401,
+   "revoked_token": 401
+  },
+  "ledger": {
+   "calls": 0,
+   "budget_refusals": 1,
+   "cost_usd": 0,
+   "estimated_calls": 0,
+   "prompt_tokens": 0,
+   "completion_tokens": 0,
+   "truncated": 0
+  },
+  "token_revoked": true,
+  "token_scope": {
+   "models": [
+    "glm-5.3-flash"
+   ],
+   "max_tokens": 8192,
+   "budget_usd": 1e-06
+  }
+ },
+ "P3_browser_isolation_in_container": {
+  "pass": true,
+  "violations": [],
+  "result": {
+   "open": {
+    "proxy-alias:8080": "OPEN"
+   },
+   "closed": {
+    "agent-net-gateway:22": "blocked",
+    "agent-net-gateway:2375": "blocked",
+    "agent-net-gateway:443": "blocked",
+    "agent-net-gateway:80": "blocked",
+    "agent-net-gateway:8080": "blocked",
+    "agent-net-gateway:9222": "blocked",
+    "cdp-net-gateway:22": "blocked",
+    "cdp-net-gateway:2375": "blocked",
+    "cdp-net-gateway:443": "blocked",
+    "cdp-net-gateway:80": "blocked",
+    "cdp-net-gateway:8080": "blocked",
+    "cdp-net-gateway:9222": "blocked",
+    "gateway-other-port:10.231.0.50:22": "blocked",
+    "inference-gateway": "blocked",
+    "internet-1.1.1.1:443": "blocked",
+    "internet-8.8.8.8:53": "blocked",
+    "internet-v6-2606:4700:4700::1111:443": "blocked",
+    "metadata-169.254.169.254:80": "blocked",
+    "proxy-app-side:8080": "blocked",
+    "rootless-dns-10.0.2.3:53": "blocked",
+    "rootless-host-10.0.2.2:22": "blocked",
+    "rootless-host-10.0.2.2:443": "blocked",
+    "rootless-host-10.0.2.2:80": "blocked",
+    "svc-app:22": "blocked",
+    "svc-app:3000": "blocked",
+    "svc-app:5432": "blocked",
+    "svc-app:80": "blocked",
+    "svc-db:22": "blocked",
+    "svc-db:3000": "blocked",
+    "svc-db:5432": "blocked",
+    "svc-db:80": "blocked",
+    "vm-public-ip:22": "blocked",
+    "vm-public-ip:443": "blocked",
+    "vm-public-ip:80": "blocked"
+   },
+   "dns": {
+    "api.vultrinference.com": "blocked",
+    "app": "blocked",
+    "example.com": "blocked"
+   },
+   "uid": 65534,
+   "cap_eff": "0000000000000000",
+   "no_new_privs": "1",
+   "seccomp": "2",
+   "rootfs": "read-only",
+   "memory_max": "2147483648",
+   "pids_max": "512",
+   "cpu_max": "200000 100000",
+   "pid1_env_names": [
+    "HOME",
+    "HOSTNAME",
+    "PATH"
+   ],
+   "run_secrets_exists": false,
+   "inspect": {
+    "mounts": [],
+    "env_names": [
+     "PATH"
+    ],
+    "networks": [
+     "afdnet-llmpre-20261108010833-173434-agent",
+     "afdnet-llmpre-20261108010833-173434-cdp"
+    ]
+   }
+  }
+ },
+ "P5_proxy_control_api_refuses_agent_side": {
+  "pass": true,
+  "result": "CTL:403"
+ },
+ "P7_provider_key_isolation": {
+  "pass": true,
+  "worker_env_names_in_container": [
+   "AFD_ALLOWED_HOST",
+   "AFD_CDP_URL",
+   "AFD_GATEWAY_URL",
+   "AFD_INSTRUCTION",
+   "AFD_JOB_TOKEN",
+   "AFD_LAUNCH_URL",
+   "AFD_MAX_STEPS",
+   "AFD_MODEL",
+   "AFD_POLICY",
+   "ANONYMIZED_TELEMETRY",
+   "BROWSER_USE_CLOUD_SYNC",
+   "GPG_KEY",
+   "HOME",
+   "HOSTNAME",
+   "LANG",
+   "PATH",
+   "PYTHONDONTWRITEBYTECODE",
+   "PYTHONUNBUFFERED",
+   "PYTHON_SHA256",
+   "PYTHON_VERSION"
+  ],
+  "worker_run_secrets": false,
+  "browser_env_names": [
+   "PATH"
+  ],
+  "browser_mounts": [],
+  "orchestrator_can_read_key_file": false,
+  "declared_worker_env": [
+   "AFD_CDP_URL",
+   "AFD_LAUNCH_URL",
+   "AFD_ALLOWED_HOST",
+   "AFD_INSTRUCTION",
+   "AFD_POLICY",
+   "AFD_MAX_STEPS",
+   "AFD_GATEWAY_URL",
+   "AFD_JOB_TOKEN",
+   "AFD_MODEL"
+  ]
+ },
+ "P4_browser_reaches_app_only_via_proxy": {
+  "pass": true,
+  "paths": {
+   "app_direct": {
+    "url": "http://10.231.0.3:3000/",
+    "landed": "chrome-error://chromewebdata/",
+    "reached": false
+   },
+   "internet": {
+    "url": "http://1.1.1.1/",
+    "landed": "chrome-error://chromewebdata/",
+    "reached": false
+   },
+   "metadata": {
+    "url": "http://169.254.169.254/",
+    "landed": "chrome-error://chromewebdata/",
+    "reached": false
+   },
+   "gateway_direct": {
+    "url": "http://10.231.0.50:8080/healthz",
+    "landed": "chrome-error://chromewebdata/",
+    "reached": false
+   },
+   "via_proxy": {
+    "url": "http://afd-proxy:8080/afdagent/run-521adf048c/issues",
+    "landed": "http://afd-proxy:8080/afdagent/run-521adf048c/issues",
+    "reached": true
+   }
+  }
+ },
+ "P8_element_map_evidence": {
+  "pass": true,
+  "session": {
+   "typed_credentials": true,
+   "session_from": "harness login form",
+   "final_url_path": "/afdagent/run-521adf048c/issues"
+  },
+  "n_elements": 66,
+  "sample": [
+   {
+    "index": 118,
+    "tag": "input",
+    "type": "search",
+    "placeholder": "Search\u2026",
+    "name": "q",
+    "text": ""
+   },
+   {
+    "index": 135,
+    "tag": "a",
+    "aria_label": "Notifications",
+    "text": "0"
+   },
+   {
+    "index": 136,
+    "tag": "div",
+    "role": "menu",
+    "aria_label": "Create\u2026",
+    "text": "Create\u2026 New Repository New Migration New Organization"
+   },
+   {
+    "index": 138,
+    "tag": "div",
+    "role": "menu",
+    "aria_label": "Profile and Settings\u2026",
+    "text": "afdagent Signed in as afdagent Profile Starred Subscriptions Settings Help Sign "
+   },
+   {
+    "index": 142,
+    "tag": "div",
+    "aria_label": "Switch repository",
+    "text": ""
+   },
+   {
+    "index": 144,
+    "tag": "a",
+    "aria_label": "RSS Feed",
+    "text": ""
+   },
+   {
+    "index": 145,
+    "tag": "button",
+    "type": "button",
+    "aria_label": "Watching",
+    "text": "Watching 1"
+   },
+   {
+    "index": 146,
+    "tag": "a",
+    "role": "button",
+    "aria_label": "Star",
+    "text": "Star 0"
+   },
+   {
+    "index": 147,
+    "tag": "a",
+    "role": "button",
+    "aria_label": "You cannot fork a repository you own.",
+    "text": "Fork 0"
+   },
+   {
+    "index": 148,
+    "tag": "overflow-menu",
+    "role": "navigation",
+    "text": "Code Issues Pull Requests Actions Packages Projects Releases Wiki Activity Setti"
+   },
+   {
+    "index": 150,
+    "tag": "div",
+    "role": "combobox",
+    "text": "Label Show archived labels Use alt + click/enter to exclude labels All labels No"
+   },
+   {
+    "index": 153,
+    "tag": "div",
+    "role": "combobox",
+    "text": "Milestone All milestones No milestones"
+   }
+  ],
+  "secrets_found": 0,
+  "seconds": 21.2,
+  "evidence_only_gate_pass": true
+ },
+ "P9_lost_ack_intercepted_and_oracle_verified": {
+  "pass": true,
+  "driver_errors": [],
+  "object_records": [
+   [
+    "run-e14a01b0a3",
+    503,
+    "lost_ack",
+    "committed"
+   ]
+  ],
+  "target": "run-e14a01b0a3",
+  "verified_by_object": {
+   "run-e14a01b0a3": 1
+  },
+  "inferred_by_object": {
+   "run-e14a01b0a3": 1
+  },
+  "target_effects": 1,
+  "duplicate_target_effects": 0,
+  "other_object_effects": 0,
+  "accounting_agrees": true
+ },
+ "P10_positive_control_duplicate_detected": {
+  "pass": true,
+  "driver_errors": [],
+  "object_records": [
+   [
+    "run-d060a0737b",
+    503,
+    "lost_ack",
+    "committed"
+   ],
+   [
+    "run-d060a0737b",
+    200,
+    "none",
+    "committed"
+   ]
+  ],
+  "target": "run-d060a0737b",
+  "verified_by_object": {
+   "run-d060a0737b": 2
+  },
+  "inferred_by_object": {
+   "run-d060a0737b": 2
+  },
+  "target_effects": 2,
+  "duplicate_target_effects": 1,
+  "other_object_effects": 0,
+  "accounting_agrees": true
+ },
+ "teardown": {
+  "pass": true,
+  "report": {
+   "db_removed": true,
+   "app_removed": true,
+   "proxy_removed": true,
+   "net_app_removed": true,
+   "net_agent_removed": true,
+   "token_revoked": true,
+   "leftover_containers": [],
+   "leftover_networks": [],
+   "browser_removed": true,
+   "net_cdp_removed": true,
+   "net_gw_removed": true
+  },
+  "live_tokens": []
+ }
+}

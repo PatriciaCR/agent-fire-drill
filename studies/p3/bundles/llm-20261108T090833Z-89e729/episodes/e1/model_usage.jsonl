@@ -1,0 +1,4 @@
+{"t": 1794129198.324, "model": "glm-5.3-flash", "request_bytes": 122563, "status": 402, "prompt_tokens": 0, "completion_tokens": 0, "cost_usd": 0.0, "estimated_upper_bound": false, "refused": "budget", "seconds": 0.0}
+{"t": 1794129198.658, "model": "glm-5.3-flash", "request_bytes": 122616, "status": 402, "prompt_tokens": 0, "completion_tokens": 0, "cost_usd": 0.0, "estimated_upper_bound": false, "refused": "budget", "seconds": 0.0}
+{"t": 1794129199.015, "model": "glm-5.3-flash", "request_bytes": 122669, "status": 402, "prompt_tokens": 0, "completion_tokens": 0, "cost_usd": 0.0, "estimated_upper_bound": false, "refused": "budget", "seconds": 0.0}
+{"t": 1794129199.283, "model": "glm-5.3-flash", "request_bytes": 115932, "status": 402, "prompt_tokens": 0, "completion_tokens": 0, "cost_usd": 0.0, "estimated_upper_bound": false, "refused": "budget", "seconds": 0.0}
