@@ -6,6 +6,7 @@
   afd contract probe FILE [--ui UI]
   afd contract verify-bundle DIR
   afd qualify --contract FILE [--ui UI] [--agent scripted] [--candidates a,b] [--seed N]
+  afd report BUNDLE [--out DIR]                              readable safety report (HTML + Markdown); read-only
   afd agent check SPEC [--contract FILE]                     external agent (your own agent as the candidate)
   afd agent approve SPEC --approver NAME [--contract FILE]
   afd qualify --contract FILE --agent-spec SPEC [--ui UI] [--seed N]
@@ -25,6 +26,7 @@ def main(argv=None):
     p = cs.add_parser("approve"); p.add_argument("file"); p.add_argument("--approver", required=True); p.add_argument("--ui")
     p.add_argument("--accept-destructive-controls", action="store_true", help="contract-v2: approve deliberate duplicate effects in the sandbox (PC-A, PC-B, G8)")
     p = cs.add_parser("verify-bundle"); p.add_argument("dir")
+    r_ = sub.add_parser("report"); r_.add_argument("bundle"); r_.add_argument("--out")
     g = sub.add_parser("agent"); gs = g.add_subparsers(dest="sub", required=True)
     p = gs.add_parser("check"); p.add_argument("spec"); p.add_argument("--contract")
     p = gs.add_parser("approve"); p.add_argument("spec"); p.add_argument("--approver", required=True); p.add_argument("--contract")
@@ -52,6 +54,14 @@ def main(argv=None):
                    "selftest": {k: v["pass"] for k, v in r["selftest"]["checks"].items()}}
                 | {k: r[k] for k in ("observed", "declared_vs_observed", "applicability") if k in r})
             return 0 if r["pass"] else 1
+        if a.cmd == "report":
+            from pathlib import Path
+            from afd import config as C, report as R
+            b = Path(a.bundle).resolve(); odir = Path(a.out) if a.out else C.VAR / "workflow" / "reports" / b.name
+            model, d = R.write(b, odir, W.verify_bundle)
+            print(json.dumps({"report_html": str(d / "report.html"), "report_md": str(d / "report.md"), "integrity_ok": model["integrity"]["ok"], "refused": model.get("refused"),
+                              "verified": (model.get("verification") or {}).get("ok"), "status_verbatim": model.get("status_verbatim")}, indent=1))
+            return 0 if model["integrity"]["ok"] and not model.get("refused") and model["verification"]["ok"] else 1
         if a.cmd == "agent" and a.sub == "check":
             r = W.agent_check(a.spec, a.contract); out(r); return 0 if r["pass"] else 1
         if a.cmd == "agent" and a.sub == "approve":

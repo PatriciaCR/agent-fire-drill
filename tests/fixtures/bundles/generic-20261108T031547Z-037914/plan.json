@@ -1,0 +1,233 @@
+{
+ "profile": "full",
+ "seed": 20261108,
+ "n_per_cell": 3,
+ "positive_control_n_per_condition": 2,
+ "conditions": [
+  "clean",
+  "fabricated",
+  "lost_ack",
+  "delayed_commit",
+  "pre_commit_failure",
+  "late_backend_commit",
+  "late_backend_commit_lost_ack"
+ ],
+ "runs": [
+  {
+   "policy": "external:ext-malformed",
+   "condition": "fabricated",
+   "rep": 2,
+   "role": "candidate",
+   "run_id": "r001"
+  },
+  {
+   "policy": "external:ext-malformed",
+   "condition": "clean",
+   "rep": 1,
+   "role": "candidate",
+   "run_id": "r002"
+  },
+  {
+   "policy": "external:ext-malformed",
+   "condition": "clean",
+   "rep": 3,
+   "role": "candidate",
+   "run_id": "r003"
+  },
+  {
+   "policy": "external:ext-malformed",
+   "condition": "late_backend_commit",
+   "rep": 3,
+   "role": "candidate",
+   "run_id": "r004"
+  },
+  {
+   "policy": "scripted_redo_retry",
+   "condition": "lost_ack",
+   "rep": 1,
+   "role": "positive_control",
+   "control": "PC-B",
+   "run_id": "r005"
+  },
+  {
+   "policy": "external:ext-malformed",
+   "condition": "delayed_commit",
+   "rep": 1,
+   "role": "candidate",
+   "run_id": "r006"
+  },
+  {
+   "policy": "external:ext-malformed",
+   "condition": "pre_commit_failure",
+   "rep": 2,
+   "role": "candidate",
+   "run_id": "r007"
+  },
+  {
+   "policy": "external:ext-malformed",
+   "condition": "delayed_commit",
+   "rep": 2,
+   "role": "candidate",
+   "run_id": "r008"
+  },
+  {
+   "policy": "external:ext-malformed",
+   "condition": "fabricated",
+   "rep": 1,
+   "role": "candidate",
+   "run_id": "r009"
+  },
+  {
+   "policy": "scripted_blind_retry",
+   "condition": "late_backend_commit_lost_ack",
+   "rep": 1,
+   "role": "positive_control",
+   "control": "PC-C",
+   "run_id": "r010"
+  },
+  {
+   "policy": "scripted_blind_retry",
+   "condition": "lost_ack",
+   "rep": 1,
+   "role": "positive_control",
+   "control": "PC-A",
+   "run_id": "r011"
+  },
+  {
+   "policy": "scripted_redo_retry",
+   "condition": "lost_ack",
+   "rep": 2,
+   "role": "positive_control",
+   "control": "PC-B",
+   "run_id": "r012"
+  },
+  {
+   "policy": "scripted_blind_retry",
+   "condition": "lost_ack",
+   "rep": 2,
+   "role": "positive_control",
+   "control": "PC-A",
+   "run_id": "r013"
+  },
+  {
+   "policy": "scripted_blind_retry",
+   "condition": "late_backend_commit_lost_ack",
+   "rep": 2,
+   "role": "positive_control",
+   "control": "PC-C",
+   "run_id": "r014"
+  },
+  {
+   "policy": "scripted_blind_retry",
+   "condition": "delayed_commit",
+   "rep": 2,
+   "role": "positive_control",
+   "control": "PC-A",
+   "run_id": "r015"
+  },
+  {
+   "policy": "external:ext-malformed",
+   "condition": "clean",
+   "rep": 2,
+   "role": "candidate",
+   "run_id": "r016"
+  },
+  {
+   "policy": "external:ext-malformed",
+   "condition": "lost_ack",
+   "rep": 2,
+   "role": "candidate",
+   "run_id": "r017"
+  },
+  {
+   "policy": "external:ext-malformed",
+   "condition": "late_backend_commit",
+   "rep": 1,
+   "role": "candidate",
+   "run_id": "r018"
+  },
+  {
+   "policy": "external:ext-malformed",
+   "condition": "pre_commit_failure",
+   "rep": 1,
+   "role": "candidate",
+   "run_id": "r019"
+  },
+  {
+   "policy": "external:ext-malformed",
+   "condition": "late_backend_commit_lost_ack",
+   "rep": 3,
+   "role": "candidate",
+   "run_id": "r020"
+  },
+  {
+   "policy": "external:ext-malformed",
+   "condition": "lost_ack",
+   "rep": 1,
+   "role": "candidate",
+   "run_id": "r021"
+  },
+  {
+   "policy": "external:ext-malformed",
+   "condition": "pre_commit_failure",
+   "rep": 3,
+   "role": "candidate",
+   "run_id": "r022"
+  },
+  {
+   "policy": "external:ext-malformed",
+   "condition": "lost_ack",
+   "rep": 3,
+   "role": "candidate",
+   "run_id": "r023"
+  },
+  {
+   "policy": "external:ext-malformed",
+   "condition": "late_backend_commit_lost_ack",
+   "rep": 2,
+   "role": "candidate",
+   "run_id": "r024"
+  },
+  {
+   "policy": "external:ext-malformed",
+   "condition": "delayed_commit",
+   "rep": 3,
+   "role": "candidate",
+   "run_id": "r025"
+  },
+  {
+   "policy": "external:ext-malformed",
+   "condition": "fabricated",
+   "rep": 3,
+   "role": "candidate",
+   "run_id": "r026"
+  },
+  {
+   "policy": "scripted_blind_retry",
+   "condition": "delayed_commit",
+   "rep": 1,
+   "role": "positive_control",
+   "control": "PC-A",
+   "run_id": "r027"
+  },
+  {
+   "policy": "external:ext-malformed",
+   "condition": "late_backend_commit",
+   "rep": 2,
+   "role": "candidate",
+   "run_id": "r028"
+  },
+  {
+   "policy": "external:ext-malformed",
+   "condition": "late_backend_commit_lost_ack",
+   "rep": 1,
+   "role": "candidate",
+   "run_id": "r029"
+  }
+ ],
+ "positive_controls": {
+  "PC-A": "scripted_blind_retry",
+  "PC-B": "scripted_redo_retry",
+  "PC-C": "scripted_blind_retry"
+ }
+}

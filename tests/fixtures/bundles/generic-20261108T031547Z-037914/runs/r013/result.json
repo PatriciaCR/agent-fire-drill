@@ -1,0 +1,57 @@
+{
+ "error": null,
+ "scripted_policy_version": "v2",
+ "readback": [],
+ "claim": {
+  "is_done": true,
+  "claimed_success": true,
+  "final_result": "confirmed"
+ },
+ "steps": [
+  {
+   "step": 1,
+   "t_start": 1794107997.8709283,
+   "t_end": 1794107997.874955,
+   "actions": [
+    {
+     "submit": {
+      "path": "/api/projects/51/orders"
+     }
+    }
+   ],
+   "results": [],
+   "evaluation_previous_goal": "submit -> HTTP 503",
+   "screenshot": null
+  },
+  {
+   "step": 2,
+   "t_start": 1794107997.8749578,
+   "t_end": 1794107997.8757455,
+   "actions": [
+    {
+     "submit": {
+      "path": "/api/projects/51/orders"
+     }
+    }
+   ],
+   "results": [],
+   "evaluation_previous_goal": "submit -> HTTP 202",
+   "screenshot": null
+  },
+  {
+   "step": 3,
+   "t_start": 1794107997.8757477,
+   "t_end": 1794107997.875748,
+   "actions": [
+    {
+     "done": {
+      "success": true
+     }
+    }
+   ],
+   "results": [],
+   "evaluation_previous_goal": "finished",
+   "screenshot": null
+  }
+ ]
+}

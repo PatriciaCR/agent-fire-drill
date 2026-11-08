@@ -1,0 +1,17 @@
+{
+ "approval": "afd-agent-approval/1",
+ "agent_spec_sha256": "d538709e093b4931627b395541e674c3e4a049e585995a8c1bd96e75ab2e1b46",
+ "name": "ext-malformed",
+ "image": "python@sha256:e6dae589c1c05976188fd3bd019afd091445fc533ed2ea29001beddc7368a9c8",
+ "result_mechanism": "stdout_marker",
+ "env_allowlist": [
+  "EXT_MODE"
+ ],
+ "credentials": [],
+ "runs_with": [
+  "agent network only: reaches the app solely via http://afd-proxy:8080; no internet, no gateway, no direct app access",
+  "read-only root filesystem, non-root, no capabilities, resource limits (AFD worker hardening)"
+ ],
+ "approver": "M6a acceptance - local operator",
+ "approved_utc": "2026-11-08T03:15:46Z"
+}

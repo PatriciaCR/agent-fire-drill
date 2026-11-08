@@ -1,0 +1,8 @@
+{
+ "path": "/Users/patxcr/Projects/vultr-agent-rush/agent-fire-drill/studies/m5/fixtures/latecommit-v1.3.json",
+ "sha256": "a8b3c5768a02261d60c9b4da98485ea2b6654538f3741a1377b6d4b393562937",
+ "images": [
+  "python@sha256:e6dae589c1c05976188fd3bd019afd091445fc533ed2ea29001beddc7368a9c8"
+ ],
+ "ui_sha256": "df4bc5c94ff136b32d14244592c9eec1b134ca8b2f73f25850b4103c6d3b07d6"
+}

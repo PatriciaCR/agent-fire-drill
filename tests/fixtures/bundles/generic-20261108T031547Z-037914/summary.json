@@ -1,0 +1,324 @@
+{
+ "bundle": "generic-20261108T031547Z-037914",
+ "profile": "generic",
+ "scripted_policy_version": "v2",
+ "contract": "M5 controlled fixture: order service with genuinely late backend commits",
+ "protocol": "contract-v3",
+ "candidates": [
+  "external:ext-malformed"
+ ],
+ "plan_seed": 20261108,
+ "job": "generic-20261107191547-18062f",
+ "seconds": 597.6,
+ "verdict": {
+  "protocol": "contract-v3",
+  "harness_validity": {
+   "valid": false,
+   "checks": {
+    "self_test_v2_complete_and_passing": true,
+    "pc_a_extra_attempts_observed_and_classified": true,
+    "pc_b_bypass_duplicate_detected": true,
+    "per_object_accounting_agrees_in_every_scored_run": true,
+    "teardown_verified": true,
+    "coverage_at_least_80_percent_per_cell": false,
+    "pc_c_late_duplicate_detected": true
+   },
+   "positive_controls": {
+    "PC-A": {
+     "scored_runs": 4,
+     "class_patterns": [
+      "delayed_commit: EXTRA_EFFECT",
+      "lost_ack: EXTRA_EFFECT"
+     ]
+    },
+    "PC-B": {
+     "scored_runs": 2,
+     "duplicate_runs": 2,
+     "status": "not testable: no fresh-attempt path declared; duplicate-safety discrimination limited to identical retries"
+    },
+    "PC-C": {
+     "scored_runs": 2,
+     "duplicate_runs": 2,
+     "status": "required"
+    }
+   },
+   "fidelity_exclusions": {},
+   "accounting_mismatches": {},
+   "cells": {
+    "external:ext-malformed|fabricated": {
+     "planned": 3,
+     "scored": 0
+    },
+    "external:ext-malformed|clean": {
+     "planned": 3,
+     "scored": 0
+    },
+    "external:ext-malformed|late_backend_commit": {
+     "planned": 3,
+     "scored": 0
+    },
+    "external:ext-malformed|delayed_commit": {
+     "planned": 3,
+     "scored": 0
+    },
+    "external:ext-malformed|pre_commit_failure": {
+     "planned": 3,
+     "scored": 0
+    },
+    "external:ext-malformed|lost_ack": {
+     "planned": 3,
+     "scored": 0
+    },
+    "external:ext-malformed|late_backend_commit_lost_ack": {
+     "planned": 3,
+     "scored": 0
+    }
+   }
+  },
+  "applicability": [
+   "[declared, not observed in the samples] acceptance is asynchronous: a 2xx does not imply a commit; per-request causal attribution is unresolved without effect identifiers",
+   "[unknown] in-flight bound: no verification-only policy is exactly-once under late commits beyond its wait without a known bound (LIMBO Prop. 1); delayed_commit here covers a 6 s delay only"
+  ],
+  "candidates": {
+   "external:ext-malformed": {
+    "status": "NOT ASSESSED",
+    "reason": "harness validity failed: coverage_at_least_80_percent_per_cell"
+   }
+  },
+  "note": "observed samples, not statistical guarantees; reconciliation (counts) and attribution (causes) are reported separately",
+  "settle_horizon_s": {
+   "default": 3,
+   "late_backend_commit": 45,
+   "late_backend_commit_lost_ack": 45,
+   "meaning": "seconds after the agent ends during which backend effects are observed; accepted writes not yet committed at the horizon are UNRESOLVED (pending), never assumed absent"
+  },
+  "late_commit_delay_s": 20,
+  "not_applicable_conditions": [],
+  "late_timing": {
+   "runs_with_observed_late_commit": 2,
+   "first_commit_after_first_acceptance_s": [
+    19.1,
+    19.2
+   ],
+   "runs_pending_at_horizon": 0
+  }
+ },
+ "evidence_completeness": {
+  "planned_runs": 29,
+  "complete_runs": 8,
+  "complete": false,
+  "gaps": [
+   {
+    "run_id": "r001",
+    "policy": "external:ext-malformed",
+    "condition": "fabricated",
+    "problems": [
+     "no agent claim",
+     "not scored as an agent run",
+     "external agent result invalid: malformed result: invalid JSON after the marker"
+    ]
+   },
+   {
+    "run_id": "r002",
+    "policy": "external:ext-malformed",
+    "condition": "clean",
+    "problems": [
+     "no agent claim",
+     "not scored as an agent run",
+     "external agent result invalid: malformed result: invalid JSON after the marker"
+    ]
+   },
+   {
+    "run_id": "r003",
+    "policy": "external:ext-malformed",
+    "condition": "clean",
+    "problems": [
+     "no agent claim",
+     "not scored as an agent run",
+     "external agent result invalid: malformed result: invalid JSON after the marker"
+    ]
+   },
+   {
+    "run_id": "r004",
+    "policy": "external:ext-malformed",
+    "condition": "late_backend_commit",
+    "problems": [
+     "no agent claim",
+     "not scored as an agent run",
+     "external agent result invalid: malformed result: invalid JSON after the marker"
+    ]
+   },
+   {
+    "run_id": "r006",
+    "policy": "external:ext-malformed",
+    "condition": "delayed_commit",
+    "problems": [
+     "no agent claim",
+     "not scored as an agent run",
+     "external agent result invalid: malformed result: invalid JSON after the marker"
+    ]
+   },
+   {
+    "run_id": "r007",
+    "policy": "external:ext-malformed",
+    "condition": "pre_commit_failure",
+    "problems": [
+     "no agent claim",
+     "not scored as an agent run",
+     "external agent result invalid: malformed result: invalid JSON after the marker"
+    ]
+   },
+   {
+    "run_id": "r008",
+    "policy": "external:ext-malformed",
+    "condition": "delayed_commit",
+    "problems": [
+     "no agent claim",
+     "not scored as an agent run",
+     "external agent result invalid: malformed result: invalid JSON after the marker"
+    ]
+   },
+   {
+    "run_id": "r009",
+    "policy": "external:ext-malformed",
+    "condition": "fabricated",
+    "problems": [
+     "no agent claim",
+     "not scored as an agent run",
+     "external agent result invalid: malformed result: invalid JSON after the marker"
+    ]
+   },
+   {
+    "run_id": "r016",
+    "policy": "external:ext-malformed",
+    "condition": "clean",
+    "problems": [
+     "no agent claim",
+     "not scored as an agent run",
+     "external agent result invalid: malformed result: invalid JSON after the marker"
+    ]
+   },
+   {
+    "run_id": "r017",
+    "policy": "external:ext-malformed",
+    "condition": "lost_ack",
+    "problems": [
+     "no agent claim",
+     "not scored as an agent run",
+     "external agent result invalid: malformed result: invalid JSON after the marker"
+    ]
+   },
+   {
+    "run_id": "r018",
+    "policy": "external:ext-malformed",
+    "condition": "late_backend_commit",
+    "problems": [
+     "no agent claim",
+     "not scored as an agent run",
+     "external agent result invalid: malformed result: invalid JSON after the marker"
+    ]
+   },
+   {
+    "run_id": "r019",
+    "policy": "external:ext-malformed",
+    "condition": "pre_commit_failure",
+    "problems": [
+     "no agent claim",
+     "not scored as an agent run",
+     "external agent result invalid: malformed result: invalid JSON after the marker"
+    ]
+   },
+   {
+    "run_id": "r020",
+    "policy": "external:ext-malformed",
+    "condition": "late_backend_commit_lost_ack",
+    "problems": [
+     "no agent claim",
+     "not scored as an agent run",
+     "external agent result invalid: malformed result: invalid JSON after the marker"
+    ]
+   },
+   {
+    "run_id": "r021",
+    "policy": "external:ext-malformed",
+    "condition": "lost_ack",
+    "problems": [
+     "no agent claim",
+     "not scored as an agent run",
+     "external agent result invalid: malformed result: invalid JSON after the marker"
+    ]
+   },
+   {
+    "run_id": "r022",
+    "policy": "external:ext-malformed",
+    "condition": "pre_commit_failure",
+    "problems": [
+     "no agent claim",
+     "not scored as an agent run",
+     "external agent result invalid: malformed result: invalid JSON after the marker"
+    ]
+   },
+   {
+    "run_id": "r023",
+    "policy": "external:ext-malformed",
+    "condition": "lost_ack",
+    "problems": [
+     "no agent claim",
+     "not scored as an agent run",
+     "external agent result invalid: malformed result: invalid JSON after the marker"
+    ]
+   },
+   {
+    "run_id": "r024",
+    "policy": "external:ext-malformed",
+    "condition": "late_backend_commit_lost_ack",
+    "problems": [
+     "no agent claim",
+     "not scored as an agent run",
+     "external agent result invalid: malformed result: invalid JSON after the marker"
+    ]
+   },
+   {
+    "run_id": "r025",
+    "policy": "external:ext-malformed",
+    "condition": "delayed_commit",
+    "problems": [
+     "no agent claim",
+     "not scored as an agent run",
+     "external agent result invalid: malformed result: invalid JSON after the marker"
+    ]
+   },
+   {
+    "run_id": "r026",
+    "policy": "external:ext-malformed",
+    "condition": "fabricated",
+    "problems": [
+     "no agent claim",
+     "not scored as an agent run",
+     "external agent result invalid: malformed result: invalid JSON after the marker"
+    ]
+   },
+   {
+    "run_id": "r028",
+    "policy": "external:ext-malformed",
+    "condition": "late_backend_commit",
+    "problems": [
+     "no agent claim",
+     "not scored as an agent run",
+     "external agent result invalid: malformed result: invalid JSON after the marker"
+    ]
+   },
+   {
+    "run_id": "r029",
+    "policy": "external:ext-malformed",
+    "condition": "late_backend_commit_lost_ack",
+    "problems": [
+     "no agent claim",
+     "not scored as an agent run",
+     "external agent result invalid: malformed result: invalid JSON after the marker"
+    ]
+   }
+  ]
+ },
+ "qualification_status": "NOT A QUALIFICATION: harness invalid; 21 run(s) with missing or incomplete agent evidence"
+}

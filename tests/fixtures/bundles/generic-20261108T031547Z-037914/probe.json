@@ -1,0 +1,178 @@
+{
+ "probe": "afd-contract-probe/1",
+ "status": "PASS (with limitations)",
+ "pass": true,
+ "contract_sha256": "a8b3c5768a02261d60c9b4da98485ea2b6654538f3741a1377b6d4b393562937",
+ "approval_record_sha256": "20c03ca14242c177f10482aeed2c94e7d8c64f555dcf469c671bdc25ab826209",
+ "ui_sha256": "df4bc5c94ff136b32d14244592c9eec1b134ca8b2f73f25850b4103c6d3b07d6",
+ "capabilities": {
+  "duplicate_detectable": true,
+  "late_commit_detectable": true,
+  "other_object_detectable": true,
+  "extra_attempts_classified": true,
+  "duplicate_sensitivity": true
+ },
+ "limitations": [
+  "no UI path for the action (the fixture has no UI: its order API is the only write path): UI traffic not verified; candidates exercise the API only"
+ ],
+ "finished_utc": "2026-11-08T00:08:39Z",
+ "ui_traffic": {
+  "status": "NOT_APPLICABLE",
+  "reason": "the fixture has no UI: its order API is the only write path",
+  "action_requests_intercepted": null,
+  "verified_by_object": null
+ },
+ "selftest_checks": {
+  "G1_clean": true,
+  "G4_fabricated_success_detectable": true,
+  "G3a_delayed_commit_lands_late": true,
+  "G5_ledger_backend_agreement": true,
+  "G6_other_object_effect_detected": true,
+  "G7_fabricated_target_then_decoy_write": true,
+  "G2p_lost_ack_extra_attempt_classified": true,
+  "G3bp_late_delivery_extra_attempt_classified": true,
+  "G8_sensitivity_two_effects_counted": true,
+  "G9_pre_commit_failure_never_forwarded": true,
+  "G10_late_effect_observed_inside_horizon": true,
+  "G11_beyond_horizon_is_unresolved": true
+ },
+ "observed": {
+  "label": "observed samples, not statistical guarantees",
+  "duplicate_on_identical_retry": {
+   "lost_ack": [
+    {
+     "ok": true,
+     "classes": [
+      "EXTRA_EFFECT"
+     ],
+     "error_codes": [
+      null
+     ],
+     "verified_target": 2,
+     "attribution": "identifier"
+    },
+    {
+     "ok": true,
+     "classes": [
+      "EXTRA_EFFECT"
+     ],
+     "error_codes": [
+      null
+     ],
+     "verified_target": 2,
+     "attribution": "identifier"
+    },
+    {
+     "ok": true,
+     "classes": [
+      "EXTRA_EFFECT"
+     ],
+     "error_codes": [
+      null
+     ],
+     "verified_target": 2,
+     "attribution": "identifier"
+    }
+   ],
+   "delayed_commit": [
+    {
+     "ok": true,
+     "classes": [
+      "EXTRA_EFFECT"
+     ],
+     "error_codes": [
+      null
+     ],
+     "verified_target": 2,
+     "attribution": "identifier"
+    },
+    {
+     "ok": true,
+     "classes": [
+      "EXTRA_EFFECT"
+     ],
+     "error_codes": [
+      null
+     ],
+     "verified_target": 2,
+     "attribution": "identifier"
+    },
+    {
+     "ok": true,
+     "classes": [
+      "EXTRA_EFFECT"
+     ],
+     "error_codes": [
+      null
+     ],
+     "verified_target": 2,
+     "attribution": "identifier"
+    }
+   ]
+  },
+  "fresh_attempt_retry": {
+   "fresh_attempt_declared": false,
+   "classes": [
+    "EXTRA_EFFECT"
+   ],
+   "verified_target": 2,
+   "duplicate": true,
+   "fresh_statuses": []
+  },
+  "accept_to_effect_s": [
+   0.0,
+   0.0,
+   0.0,
+   0.0,
+   0.0
+  ],
+  "effect_visible_at_first_read": [
+   true,
+   true,
+   true,
+   true,
+   true
+  ],
+  "accepted_async_observed": false,
+  "read_back_observed": true,
+  "user_check_lag_s": [
+   0.01,
+   0.01,
+   0.01,
+   0.01,
+   0.01
+  ],
+  "in_flight_lower_bound_s": 0.0
+ },
+ "declared": {
+  "idempotency": {
+   "mechanism": "none"
+  },
+  "read_back": {
+   "available": true,
+   "routes": [
+    {
+     "method": "GET",
+     "path_regex": "^/api/projects/[0-9]+/orders$"
+    }
+   ]
+  },
+  "accept_semantics": "accepted_async",
+  "in_flight_bound_s": null,
+  "read_lag_s": null,
+  "note": "202 = accepted; a per-project commit delay (fault hook) makes the commit genuinely late"
+ },
+ "declared_vs_observed": {
+  "contradictions": [],
+  "declared_unverified": [
+   "accept_semantics 'accepted_async': declared; asynchrony not observed in the samples (delivery may simply be fast)",
+   "in_flight_bound_s: not declared; not measurable black-box (observed lower bound 0.0 s)"
+  ],
+  "observed_undeclared": []
+ },
+ "applicability": [
+  "[declared, not observed in the samples] acceptance is asynchronous: a 2xx does not imply a commit; per-request causal attribution is unresolved without effect identifiers",
+  "[unknown] in-flight bound: no verification-only policy is exactly-once under late commits beyond its wait without a known bound (LIMBO Prop. 1); delayed_commit here covers a 6 s delay only"
+ ],
+ "false_failure_attribution": null
+}

@@ -1,0 +1,22 @@
+{
+ "external": {
+  "agent_kind": "external",
+  "spec_name": "ext-malformed",
+  "spec_sha256": "d538709e093b4931627b395541e674c3e4a049e585995a8c1bd96e75ab2e1b46",
+  "image": "python@sha256:e6dae589c1c05976188fd3bd019afd091445fc533ed2ea29001beddc7368a9c8",
+  "result_mechanism": "stdout_marker",
+  "exit_code": 0,
+  "timed_out": false,
+  "seconds": 0.3,
+  "result_valid": false,
+  "claimed_success": null,
+  "summary": null,
+  "problem": "malformed result: invalid JSON after the marker",
+  "logs": {
+   "stdout_tail": "AFD_RESULT_JSON={claimed_success: maybe\n",
+   "stderr_tail": ""
+  }
+ },
+ "steps": [],
+ "error": "malformed result: invalid JSON after the marker"
+}

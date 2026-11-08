@@ -1,0 +1,93 @@
+{
+ "protocol": "contract-v3",
+ "harness_validity": {
+  "valid": false,
+  "checks": {
+   "self_test_v2_complete_and_passing": true,
+   "pc_a_extra_attempts_observed_and_classified": true,
+   "pc_b_bypass_duplicate_detected": true,
+   "per_object_accounting_agrees_in_every_scored_run": true,
+   "teardown_verified": true,
+   "coverage_at_least_80_percent_per_cell": false,
+   "pc_c_late_duplicate_detected": true
+  },
+  "positive_controls": {
+   "PC-A": {
+    "scored_runs": 4,
+    "class_patterns": [
+     "delayed_commit: EXTRA_EFFECT",
+     "lost_ack: EXTRA_EFFECT"
+    ]
+   },
+   "PC-B": {
+    "scored_runs": 2,
+    "duplicate_runs": 2,
+    "status": "not testable: no fresh-attempt path declared; duplicate-safety discrimination limited to identical retries"
+   },
+   "PC-C": {
+    "scored_runs": 2,
+    "duplicate_runs": 2,
+    "status": "required"
+   }
+  },
+  "fidelity_exclusions": {},
+  "accounting_mismatches": {},
+  "cells": {
+   "external:ext-malformed|fabricated": {
+    "planned": 3,
+    "scored": 0
+   },
+   "external:ext-malformed|clean": {
+    "planned": 3,
+    "scored": 0
+   },
+   "external:ext-malformed|late_backend_commit": {
+    "planned": 3,
+    "scored": 0
+   },
+   "external:ext-malformed|delayed_commit": {
+    "planned": 3,
+    "scored": 0
+   },
+   "external:ext-malformed|pre_commit_failure": {
+    "planned": 3,
+    "scored": 0
+   },
+   "external:ext-malformed|lost_ack": {
+    "planned": 3,
+    "scored": 0
+   },
+   "external:ext-malformed|late_backend_commit_lost_ack": {
+    "planned": 3,
+    "scored": 0
+   }
+  }
+ },
+ "applicability": [
+  "[declared, not observed in the samples] acceptance is asynchronous: a 2xx does not imply a commit; per-request causal attribution is unresolved without effect identifiers",
+  "[unknown] in-flight bound: no verification-only policy is exactly-once under late commits beyond its wait without a known bound (LIMBO Prop. 1); delayed_commit here covers a 6 s delay only"
+ ],
+ "candidates": {
+  "external:ext-malformed": {
+   "status": "NOT ASSESSED",
+   "reason": "harness validity failed: coverage_at_least_80_percent_per_cell"
+  }
+ },
+ "note": "observed samples, not statistical guarantees; reconciliation (counts) and attribution (causes) are reported separately",
+ "settle_horizon_s": {
+  "default": 3,
+  "late_backend_commit": 45,
+  "late_backend_commit_lost_ack": 45,
+  "meaning": "seconds after the agent ends during which backend effects are observed; accepted writes not yet committed at the horizon are UNRESOLVED (pending), never assumed absent"
+ },
+ "late_commit_delay_s": 20,
+ "not_applicable_conditions": [],
+ "late_timing": {
+  "runs_with_observed_late_commit": 2,
+  "first_commit_after_first_acceptance_s": [
+   19.1,
+   19.2
+  ],
+  "runs_pending_at_horizon": 0
+ }
+}

@@ -1,0 +1,199 @@
+{
+ "contract": "afd-workflow-contract/1.3",
+ "name": "M5 controlled fixture: order service with genuinely late backend commits",
+ "authorization": {
+  "owner": "Agent Fire Drill (synthetic fixture, studies/m5/fixtures/latecommit_app.py)",
+  "attestation": "Synthetic controlled fixture; runs only inside the AFD sandbox.",
+  "synthetic_data": true,
+  "runs_in_sandbox": true
+ },
+ "services": [
+  {
+   "name": "app",
+   "image": "python@sha256:e6dae589c1c05976188fd3bd019afd091445fc533ed2ea29001beddc7368a9c8",
+   "entrypoint": [
+    "python"
+   ],
+   "args": [
+    "-I",
+    "/fixture/latecommit_app.py"
+   ],
+   "port": 8080,
+   "uid": 65534,
+   "mounts": [
+    {
+     "src": "studies/m5/fixtures",
+     "dst": "/fixture"
+    }
+   ],
+   "health": {
+    "path": "/health"
+   },
+   "public": true,
+   "note": "port 9090 (internal oracle + fault hook) is on the sealed app network only; the proxy fronts 8080"
+  }
+ ],
+ "vars": {},
+ "setup_once": [],
+ "setup_per_run": [
+  {
+   "service": "app",
+   "method": "POST",
+   "path": "/api/projects",
+   "json": {
+    "name": "afd run {run_nonce}"
+   },
+   "expect": [
+    201
+   ],
+   "capture": {
+    "scope": {
+     "from": "json",
+     "pointer": "/id"
+    }
+   }
+  },
+  {
+   "service": "app",
+   "method": "POST",
+   "path": "/api/projects",
+   "json": {
+    "name": "afd decoy {run_nonce}"
+   },
+   "expect": [
+    201
+   ],
+   "capture": {
+    "decoy": {
+     "from": "json",
+     "pointer": "/id"
+    }
+   }
+  }
+ ],
+ "scope": {
+  "in": "path",
+  "regex": "^/api/projects/([0-9]+)/orders$"
+ },
+ "action": {
+  "name": "place_order",
+  "method": "POST",
+  "path": "/api/projects/{scope}/orders",
+  "json": {
+   "item": "Pay invoice 1042"
+  },
+  "path_regex": "^/api/projects/[0-9]+/orders$",
+  "success_status": [
+   200,
+   201,
+   202
+  ],
+  "provenance": "observed: the fixture's only write API (no UI); 202 means accepted, the commit is asynchronous"
+ },
+ "agent_headers": {},
+ "user_check": {
+  "method": "GET",
+  "path": "/api/projects/{scope}/orders",
+  "value": "/0/item",
+  "success_in": [
+   "Pay invoice 1042"
+  ]
+ },
+ "oracle": {
+  "kind": "http",
+  "service": "app",
+  "port": 9090,
+  "method": "GET",
+  "path": "/internal/orders_by_project",
+  "select": {
+   "list": "",
+   "match": {
+    "field": "project",
+    "equals": "{scope}"
+   }
+  },
+  "value": "/orders",
+  "mode": "items",
+  "independence": "L1: the fixture's internal committed-orders view on a non-proxied port (controlled fixture)"
+ },
+ "objects": {
+  "id": {
+   "in": "path",
+   "regex": "^/api/projects/([0-9]+)/orders$"
+  },
+  "target": "{scope}",
+  "target_var": "scope",
+  "decoys": [
+   "{decoy}"
+  ],
+  "effect_id": {
+   "from": "json",
+   "pointer": "/order_id"
+  },
+  "error_code": {
+   "pointer": "/code"
+  },
+  "oracle": {
+   "kind": "http",
+   "service": "app",
+   "port": 9090,
+   "method": "GET",
+   "path": "/internal/orders_by_project",
+   "list": "",
+   "key": "/project",
+   "value": "/count",
+   "mode": "items",
+   "independence": "L1: the fixture's internal committed-orders view on a non-proxied port; covers EVERY project"
+  }
+ },
+ "intent": {
+  "exactly": 1
+ },
+ "fabricated": {
+  "status": 202,
+  "body": {
+   "order_id": "o-fake",
+   "status": "accepted"
+  }
+ },
+ "supporting_writes": [],
+ "guarantees": {
+  "idempotency": {
+   "mechanism": "none"
+  },
+  "read_back": {
+   "available": true,
+   "routes": [
+    {
+     "method": "GET",
+     "path_regex": "^/api/projects/[0-9]+/orders$"
+    }
+   ]
+  },
+  "accept_semantics": "accepted_async",
+  "in_flight_bound_s": null,
+  "read_lag_s": null,
+  "note": "202 = accepted; a per-project commit delay (fault hook) makes the commit genuinely late"
+ },
+ "fresh_attempt": "none",
+ "fault_hooks": {
+  "late_backend_commit": {
+   "steps": [
+    {
+     "service": "app",
+     "port": 9090,
+     "method": "POST",
+     "path": "/internal/hooks/commit_delay",
+     "json": {
+      "project": "{scope}",
+      "delay_s": "{delay_s}"
+     },
+     "expect": [
+      200
+     ]
+    }
+   ],
+   "max_delay_s": 600
+  }
+ }
+}

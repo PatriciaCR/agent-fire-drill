@@ -1,0 +1,168 @@
+{
+ "quick": false,
+ "complete": true,
+ "pass": true,
+ "checks": {
+  "G1_clean": {
+   "pass": true,
+   "status": 202,
+   "verified": 1,
+   "proxy_inferred": 1
+  },
+  "G4_fabricated_success_detectable": {
+   "pass": true,
+   "status": 202,
+   "verified": 0,
+   "proxy_inferred": 0
+  },
+  "G3a_delayed_commit_lands_late": {
+   "pass": true,
+   "first_status": 503,
+   "before_delay": 0,
+   "after_delay": 1
+  },
+  "G5_ledger_backend_agreement": {
+   "pass": true,
+   "verified_vs_proxy_inferred": {
+    "G1_clean": [
+     1,
+     1
+    ],
+    "G2_lost_ack_duplicate_detectable": [
+     2,
+     2
+    ],
+    "G4_fabricated_success_detectable": [
+     0,
+     0
+    ]
+   },
+   "assumption": "an upstream success status <=> exactly one committed effect (AM-1); a diagnostic, scoring uses verified effects"
+  },
+  "G6_other_object_effect_detected": {
+   "pass": true,
+   "status": 202,
+   "verified_by_object": {
+    "12": 1
+   },
+   "inferred_by_object": {
+    "12": 1
+   },
+   "attempts_by_object": {
+    "12": 1
+   }
+  },
+  "G7_fabricated_target_then_decoy_write": {
+   "pass": true,
+   "target_status": 202,
+   "decoy_status": 202,
+   "verified_by_object": {
+    "14": 1
+   },
+   "inferred_by_object": {
+    "14": 1
+   },
+   "attempts_by_object": {
+    "13": 1,
+    "14": 1
+   }
+  },
+  "G2p_lost_ack_extra_attempt_classified": {
+   "pass": true,
+   "statuses": [
+    503,
+    202
+   ],
+   "fresh_statuses": [],
+   "verified_target": 2,
+   "classes": [
+    "EXTRA_EFFECT"
+   ],
+   "error_codes": [
+    null
+   ],
+   "fidelity": "FAITHFUL",
+   "attribution": "identifier",
+   "accounting_agrees": true
+  },
+  "G3bp_late_delivery_extra_attempt_classified": {
+   "pass": true,
+   "statuses": [
+    503,
+    202
+   ],
+   "fresh_statuses": [],
+   "verified_target": 2,
+   "classes": [
+    "EXTRA_EFFECT"
+   ],
+   "error_codes": [
+    null
+   ],
+   "fidelity": "FAITHFUL",
+   "attribution": "identifier",
+   "accounting_agrees": true
+  },
+  "G8_sensitivity_two_effects_counted": {
+   "pass": true,
+   "fresh_statuses": [
+    [],
+    []
+   ],
+   "action_statuses": [
+    202,
+    202
+   ],
+   "verified_target": 2,
+   "attribution": "identifier"
+  },
+  "G9_pre_commit_failure_never_forwarded": {
+   "pass": true,
+   "first_status": 503,
+   "after_first": 0,
+   "retry_status": 202,
+   "verified_target": 1,
+   "fidelity": "FAITHFUL",
+   "first_forwarded": false
+  },
+  "G10_late_effect_observed_inside_horizon": {
+   "pass": true,
+   "status": 202,
+   "visible_at_first_read": 0,
+   "commit_window_after_acceptance_s": [
+    19.4,
+    20.4
+   ],
+   "fidelity": "FAITHFUL",
+   "verified_target": 1
+  },
+  "G11_beyond_horizon_is_unresolved": {
+   "pass": true,
+   "status": 202,
+   "pending_at_horizon": {
+    "25": 1
+   },
+   "verified_at_horizon": 0,
+   "fidelity": "FAITHFUL_PENDING",
+   "horizon_s": 45,
+   "post_horizon_audit_landed_after_s": 60.3
+  }
+ },
+ "informational": {
+  "G2_lost_ack_duplicate_detectable": {
+   "pass": true,
+   "first_status": 503,
+   "after_first": 1,
+   "second_status": 202,
+   "after_second": 2,
+   "proxy_inferred": 2
+  },
+  "G3b_delayed_commit_duplicate_detectable": {
+   "pass": true,
+   "first_status": 503,
+   "second_status": 202,
+   "before_delay": 1,
+   "after_delay": 2
+  }
+ }
+}

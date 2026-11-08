@@ -1,0 +1,23 @@
+{
+ "approval": "afd-contract-approval/1",
+ "contract": "studies/m5/fixtures/latecommit-v1.3.json",
+ "contract_name": "M5 controlled fixture: order service with genuinely late backend commits",
+ "contract_sha256": "a8b3c5768a02261d60c9b4da98485ea2b6654538f3741a1377b6d4b393562937",
+ "images": [
+  "python@sha256:e6dae589c1c05976188fd3bd019afd091445fc533ed2ea29001beddc7368a9c8"
+ ],
+ "ui_sha256": "df4bc5c94ff136b32d14244592c9eec1b134ca8b2f73f25850b4103c6d3b07d6",
+ "protocol": "contract-v3",
+ "check_report_sha256": "9409efd562652b6733b3786fc53411703777335db9198b138c7537b8bb682919",
+ "approver": "M5 acceptance - local operator",
+ "approved_utc": "2026-11-08T00:06:12Z",
+ "destructive_controls_accepted": [
+  "PC-A scripted_blind_retry: identical resubmissions after lost_ack / delayed_commit; may commit DUPLICATE effects",
+  "PC-B scripted_redo_retry: re-establishes preconditions (fresh_attempt) and acts again; is EXPECTED to commit DUPLICATE effects",
+  "self-test G8 and probe observations: deliberate extra effects on synthetic objects",
+  "PC-C scripted_blind_retry under late_backend_commit_lost_ack: a retry of a write that commits late; is EXPECTED to commit DUPLICATE effects",
+  "self-test G9-G11: a pre-commit failure plus retry, and accepted writes whose commit the fault hook delays (beyond the settle horizon for G11)",
+  "only against the contract's own containerised services inside the AFD sandbox (remote URLs are refused by check)"
+ ],
+ "sandbox_only": true
+}

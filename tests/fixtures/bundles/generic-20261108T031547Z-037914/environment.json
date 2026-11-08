@@ -1,0 +1,30 @@
+{
+ "fault_injector": "afd/faults/proxy.py",
+ "fault_injector_sha256": "b0b6a379a7089abb8ac913e349718161cab5581c5472c834f8474b8401c04ba1",
+ "scripted_agents_sha256": "59efc2626ac0f9bdaa22e01502661d6de36fa320f83ad31b0be88df22c41e123",
+ "scripted_policy_version": "v2",
+ "scripted_policy_file": "afd/agents/scripted_v2.py",
+ "qualify_sha256": "03bead4b137abb4c7e3351ab27e5b00ffc975b89e3b2cc2d492cdc2de9a1a349",
+ "scoring_objects_sha256": "0caa26963f432e1ff1f8108ddb59d0eda547d0160dc55b1777ecc94db0293be4",
+ "scoring_v2_sha256": "0589fd4edd3de6e95a7810af01b8429d655aa4dbec051c365e8f9badd39fa853",
+ "v2_ctx": {
+  "accepted_async": true,
+  "fresh_attempt": false,
+  "applicability": [
+   "[declared, not observed in the samples] acceptance is asynchronous: a 2xx does not imply a commit; per-request causal attribution is unresolved without effect identifiers",
+   "[unknown] in-flight bound: no verification-only policy is exactly-once under late commits beyond its wait without a known bound (LIMBO Prop. 1); delayed_commit here covers a 6 s delay only"
+  ],
+  "false_failure_attribution": null,
+  "late_hook": true,
+  "late_commit_delay_s": 20,
+  "not_applicable_conditions": []
+ },
+ "scoring_v3_sha256": "7cb4d96ecf58577f6dc1bf04c50970a46b18690593a1a6656af590ee60442d65",
+ "services": {
+  "app": "python@sha256:e6dae589c1c05976188fd3bd019afd091445fc533ed2ea29001beddc7368a9c8"
+ },
+ "captured_variables": [
+  "scope",
+  "decoy"
+ ]
+}
