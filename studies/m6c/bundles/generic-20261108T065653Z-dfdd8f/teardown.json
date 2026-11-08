@@ -1,0 +1,10 @@
+{
+ "db_removed": true,
+ "app_removed": true,
+ "proxy_removed": true,
+ "net_app_removed": true,
+ "net_agent_removed": true,
+ "token_revoked": true,
+ "leftover_containers": [],
+ "leftover_networks": []
+}

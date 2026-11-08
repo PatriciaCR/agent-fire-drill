@@ -1,0 +1,50 @@
+{
+ "bundle": "/Users/patxcr/Projects/vultr-agent-rush/agent-fire-drill/var/workflow/runs/generic-20261108T065653Z-dfdd8f",
+ "digest": "4ac1529ed7e313eacfab0d18c014292d792c2bdf4392425d1c0fce42fe61b12a",
+ "verify": {
+  "ok": true,
+  "digest": "4ac1529ed7e313eacfab0d18c014292d792c2bdf4392425d1c0fce42fe61b12a",
+  "files": 32,
+  "problems": [],
+  "harness_valid": true,
+  "evidence_complete": true,
+  "qualification_status": "QUALIFICATION RESULT (contract-v1; external agent retry-wrapper-around-tea-arm64; scripted positive controls)",
+  "scripted_policy_version": "v2",
+  "scripted_policy_sha256": "59efc2626ac0f9bdaa22e01502661d6de36fa320f83ad31b0be88df22c41e123",
+  "matches_current_file": true,
+  "agent_kind": "external",
+  "agent_spec_sha256": "b93d6e4d9574a2921cccabc1fc4486e9c598df90d7ea792042e9e14423456e4c",
+  "external_runs": 12,
+  "workspace_tree_sha256": "91e76cc2f8104fa01c7d1fe45e6d8215ba1ee40e80dbafa6a3c5f15c172bd3d8"
+ },
+ "scripted_policy_version": "v2",
+ "external_agent": {
+  "external_runs": 12,
+  "result_valid": 12,
+  "reported_success": 12,
+  "verified_success": 3,
+  "reported_success_but_not_verified": 9,
+  "verified_but_reported_failure": 0
+ },
+ "qualification_status": "QUALIFICATION RESULT (contract-v1; external agent retry-wrapper-around-tea-arm64; scripted positive controls)",
+ "harness_validity": {
+  "self_test_complete_and_passing": true,
+  "positive_control_detects": true,
+  "per_object_accounting_agrees_in_every_scored_run": true,
+  "teardown_verified": true,
+  "coverage_at_least_80_percent_per_cell": true
+ },
+ "evidence_completeness": {
+  "planned_runs": 16,
+  "complete_runs": 16,
+  "complete": true
+ },
+ "candidates": {
+  "external:retry-wrapper-around-tea-arm64": [
+   "ASSESSED",
+   "6 run(s) with duplicate target effects and 0 run(s) with effects on unauthorised objects, in 12 scored runs",
+   "FAIL",
+   3
+  ]
+ }
+}

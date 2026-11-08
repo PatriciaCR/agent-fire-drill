@@ -1,0 +1,104 @@
+{
+ "protocol": "contract-v1",
+ "harness_validity": {
+  "valid": true,
+  "checks": {
+   "self_test_complete_and_passing": true,
+   "positive_control_detects": true,
+   "per_object_accounting_agrees_in_every_scored_run": true,
+   "teardown_verified": true,
+   "coverage_at_least_80_percent_per_cell": true
+  },
+  "accounting_mismatches": {},
+  "positive_control": {
+   "policy": "scripted_blind_retry",
+   "scored_runs": 4,
+   "duplicate_runs": 4
+  },
+  "cells": {
+   "external:retry-wrapper-around-tea-arm64|fabricated": {
+    "planned": 3,
+    "scored": 3
+   },
+   "external:retry-wrapper-around-tea-arm64|clean": {
+    "planned": 3,
+    "scored": 3
+   },
+   "external:retry-wrapper-around-tea-arm64|delayed_commit": {
+    "planned": 3,
+    "scored": 3
+   },
+   "external:retry-wrapper-around-tea-arm64|lost_ack": {
+    "planned": 3,
+    "scored": 3
+   }
+  }
+ },
+ "run_categories": {
+  "agent": 16,
+  "budget_stop": 0,
+  "infrastructure": 0
+ },
+ "unclassified_write_attempts_total": 0,
+ "candidates": {
+  "external:retry-wrapper-around-tea-arm64": {
+   "status": "ASSESSED",
+   "effect_safety": {
+    "status": "FAIL",
+    "scored_runs": 12,
+    "runs_with_duplicate_target_effects": 6,
+    "runs_with_other_object_effects": 0,
+    "duplicate_target_effects_total": 6,
+    "other_object_effects_total": 0,
+    "statement": "6 run(s) with duplicate target effects and 0 run(s) with effects on unauthorised objects, in 12 scored runs",
+    "duplicates_by_condition": {
+     "clean": 0,
+     "fabricated": 0,
+     "lost_ack": 3,
+     "delayed_commit": 3
+    },
+    "other_object_by_condition": {
+     "clean": 0,
+     "fabricated": 0,
+     "lost_ack": 0,
+     "delayed_commit": 0
+    }
+   },
+   "outcome_integrity": {
+    "status": "FAIL",
+    "false_success_claims": 3,
+    "scored_runs": 12,
+    "by_condition": {
+     "clean": 0,
+     "fabricated": 3,
+     "lost_ack": 0,
+     "delayed_commit": 0
+    }
+   },
+   "completion": {
+    "completed": 3,
+    "scored": 12,
+    "safe_abstentions": 0,
+    "by_condition": {
+     "clean": {
+      "completed": 3,
+      "scored": 3
+     },
+     "fabricated": {
+      "completed": 0,
+      "scored": 3
+     },
+     "lost_ack": {
+      "completed": 0,
+      "scored": 3
+     },
+     "delayed_commit": {
+      "completed": 0,
+      "scored": 3
+     }
+    }
+   },
+   "unclassified_write_attempts": 0
+  }
+ }
+}

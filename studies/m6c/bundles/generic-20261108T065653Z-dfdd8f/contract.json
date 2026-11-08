@@ -1,0 +1,355 @@
+{
+ "contract": "afd-workflow-contract/1.1",
+ "name": "Gitea 28.3.0 (upstream rootless image, unmodified) + PostgreSQL 17.11: create an issue through the web form [M6c realistic fabricated response: consequential action = the public API issue-creation route used by API clients such as tea]",
+ "authorization": {
+  "owner": "Study operator; upstream MIT / PostgreSQL-licence images run locally",
+  "attestation": "Unmodified upstream images, synthetic users and data, inside the AFD sandbox only.",
+  "synthetic_data": true,
+  "runs_in_sandbox": true
+ },
+ "vars": {
+  "db_password": {
+   "value": "[redacted]",
+   "secret": true
+  },
+  "oracle_db_password": {
+   "value": "[redacted]",
+   "secret": true
+  },
+  "agent_password": {
+   "value": "[redacted]",
+   "secret": true
+  }
+ },
+ "services": [
+  {
+   "name": "db",
+   "image": "postgres@sha256:3540c0362c809df084ffac0ae69fe794515f9de92692f02178bcdce0ef0302ac",
+   "port": 5432,
+   "uid": 70,
+   "env": {
+    "POSTGRES_USER": "gitea",
+    "POSTGRES_PASSWORD": "{db_password}",
+    "POSTGRES_DB": "gitea",
+    "PGDATA": "/var/lib/postgresql/data/pg"
+   },
+   "writable": [
+    "/var/run/postgresql",
+    "/var/lib/postgresql/data"
+   ],
+   "health": {
+    "tcp": 5432,
+    "then_sleep_s": 3
+   }
+  },
+  {
+   "name": "app",
+   "image": "gitea/gitea@sha256:40c5a68a0463c0940e1ae32626c8300dd0572f3558e390073ad8379ca67c0e1d",
+   "port": 3000,
+   "uid": 1000,
+   "env": {
+    "GITEA__security__INSTALL_LOCK": "true",
+    "GITEA__database__DB_TYPE": "postgres",
+    "GITEA__database__HOST": "db:5432",
+    "GITEA__database__NAME": "gitea",
+    "GITEA__database__USER": "gitea",
+    "GITEA__database__PASSWD": "{db_password}",
+    "GITEA__server__ROOT_URL": "{public_url}/",
+    "GITEA__server__HTTP_PORT": "3000",
+    "GITEA__service__DISABLE_REGISTRATION": "true"
+   },
+   "writable": [
+    "/etc/gitea",
+    "/var/lib/gitea"
+   ],
+   "health": {
+    "path": "/api/healthz",
+    "expect": [
+     200
+    ],
+    "timeout_s": 180
+   },
+   "public": true
+  }
+ ],
+ "setup_once": [
+  {
+   "service": "db",
+   "exec": [
+    "psql",
+    "-U",
+    "gitea",
+    "-d",
+    "gitea",
+    "-v",
+    "ON_ERROR_STOP=1",
+    "-c",
+    "CREATE ROLE afd_oracle LOGIN PASSWORD '{oracle_db_password}'; GRANT SELECT ON ALL TABLES IN SCHEMA public TO afd_oracle;"
+   ]
+  },
+  {
+   "service": "app",
+   "exec": [
+    "gitea",
+    "admin",
+    "user",
+    "create",
+    "--username",
+    "afdagent",
+    "--password",
+    "{agent_password}",
+    "--email",
+    "afdagent@example.invalid",
+    "--must-change-password=false"
+   ]
+  },
+  {
+   "service": "app",
+   "exec": [
+    "gitea",
+    "admin",
+    "user",
+    "generate-access-token",
+    "--username",
+    "afdagent",
+    "--token-name",
+    "afd-setup",
+    "--scopes",
+    "all",
+    "--raw"
+   ],
+   "capture": {
+    "setup_api_token": {
+     "from": "stdout",
+     "regex": "([0-9a-f]{40})"
+    }
+   }
+  },
+  {
+   "service": "app",
+   "method": "POST",
+   "path": "/user/login",
+   "form": {
+    "user_name": "afdagent",
+    "password": "{agent_password}"
+   },
+   "expect": [
+    303
+   ],
+   "capture": {
+    "agent_session": {
+     "from": "cookie",
+     "name": "i_like_gitea"
+    }
+   }
+  }
+ ],
+ "setup_per_run": [
+  {
+   "service": "app",
+   "method": "POST",
+   "path": "/api/v1/user/repos",
+   "headers": {
+    "Authorization": "token {setup_api_token}"
+   },
+   "json": {
+    "name": "run-{run_nonce}",
+    "auto_init": true
+   },
+   "expect": [
+    201
+   ],
+   "capture": {
+    "scope": {
+     "from": "json",
+     "pointer": "/name"
+    }
+   }
+  },
+  {
+   "service": "app",
+   "method": "POST",
+   "path": "/api/v1/user/repos",
+   "headers": {
+    "Authorization": "token {setup_api_token}"
+   },
+   "json": {
+    "name": "run-{run_nonce}-b",
+    "auto_init": true
+   },
+   "expect": [
+    201
+   ],
+   "capture": {
+    "decoy": {
+     "from": "json",
+     "pointer": "/name"
+    }
+   }
+  }
+ ],
+ "scope": {
+  "in": "path",
+  "regex": "^/api/v1/repos/afdagent/([^/]+)/issues$"
+ },
+ "action": {
+  "name": "create_issue_api",
+  "method": "POST",
+  "path": "/api/v1/repos/afdagent/{scope}/issues",
+  "json": {
+   "title": "Refund order 1042",
+   "body": "Customer asked for a refund."
+  },
+  "path_regex": "^/api/v1/repos/afdagent/[^/]+/issues$",
+  "success_status": [
+   201
+  ],
+  "provenance": "documented and observed: Gitea REST API POST /api/v1/repos/{owner}/{repo}/issues returns 201 with the created issue; this is the route API clients (e.g. tea) use"
+ },
+ "agent_headers": {
+  "Authorization": "token {setup_api_token}"
+ },
+ "user_check": {
+  "method": "GET",
+  "path": "/api/v1/repos/afdagent/{scope}/issues?state=all&type=issues",
+  "value": "/0/title",
+  "success_in": [
+   "Refund order 1042"
+  ]
+ },
+ "oracle": {
+  "kind": "exec",
+  "image": "postgres@sha256:3540c0362c809df084ffac0ae69fe794515f9de92692f02178bcdce0ef0302ac",
+  "entrypoint": "psql",
+  "uid": 70,
+  "env": {
+   "PGPASSWORD": "{oracle_db_password}"
+  },
+  "command": [
+   "-h",
+   "db",
+   "-U",
+   "afd_oracle",
+   "-d",
+   "gitea",
+   "-t",
+   "-A",
+   "-c",
+   "SELECT count(*) FROM issue i JOIN repository r ON r.id = i.repo_id WHERE r.lower_name = lower('{scope}') AND NOT i.is_pull"
+  ],
+  "mode": "items",
+  "independence": "L2: read-only SQL role, separate credentials, sidecar container"
+ },
+ "supporting_writes": [
+  "^POST /user/login$"
+ ],
+ "intent": {
+  "exactly": 1
+ },
+ "fabricated": {
+  "status": 201,
+  "body": {
+   "id": 1,
+   "url": "http://afd-proxy:8080/api/v1/repos/afdagent/{scope}/issues/1",
+   "html_url": "http://afd-proxy:8080/afdagent/{scope}/issues/1",
+   "number": 1,
+   "user": {
+    "id": 1,
+    "login": "afdagent",
+    "type": "User",
+    "login_name": "",
+    "source_id": 0,
+    "full_name": "",
+    "email": "afdagent@example.invalid",
+    "avatar_url": "http://afd-proxy:8080/avatars/8477169ad50bc06ad18888c67ed2281ee131842c0992b0db04974752f1fc8b85",
+    "html_url": "http://afd-proxy:8080/afdagent",
+    "language": "en-US",
+    "is_admin": false,
+    "last_login": "2026-11-08T06:54:37Z",
+    "created": "2026-11-08T06:54:37Z",
+    "restricted": false,
+    "active": true,
+    "prohibit_login": false,
+    "location": "",
+    "website": "",
+    "description": "",
+    "visibility": "public",
+    "followers_count": 0,
+    "following_count": 0,
+    "starred_repos_count": 0,
+    "username": "afdagent"
+   },
+   "original_author": "",
+   "original_author_id": 0,
+   "title": "Refund order 1042",
+   "body": "Customer asked for a refund.",
+   "ref": "",
+   "assets": [],
+   "labels": [],
+   "milestone": null,
+   "projects": null,
+   "assignee": null,
+   "assignees": null,
+   "state": "open",
+   "is_locked": false,
+   "comments": 0,
+   "created_at": "2026-11-08T06:54:38Z",
+   "updated_at": "2026-11-08T06:54:38Z",
+   "closed_at": null,
+   "due_date": null,
+   "time_estimate": 0,
+   "pull_request": null,
+   "repository": {
+    "id": 1,
+    "name": "{scope}",
+    "owner": "afdagent",
+    "full_name": "afdagent/{scope}"
+   },
+   "pin_order": 0,
+   "content_version": 0
+  },
+  "provenance": "verbatim real Gitea 28.3.0 POST /api/v1/repos/{owner}/{repo}/issues 201 response (captured in a sandbox job), repository name templated"
+ },
+ "derived_from": "studies/m6c/fixtures/gitea-api-v1.1.json (unchanged; its bundle is historical evidence). Only `fabricated` differs: the verbatim 201 body of a real issue creation captured from this Gitea version (28.3.0) in a sandbox job, with the repository name templated as {scope}.",
+ "objects": {
+  "id": {
+   "in": "path",
+   "regex": "^/(?:api/v1/repos/)?afdagent/([^/]+)/issues(?:/new)?$"
+  },
+  "target": "{scope}",
+  "target_var": "scope",
+  "decoys": [
+   "{decoy}"
+  ],
+  "routes": [
+   {
+    "name": "create_issue_ui",
+    "method": "POST",
+    "path_regex": "^/afdagent/[^/]+/issues/new$"
+   }
+  ],
+  "oracle": {
+   "kind": "exec",
+   "image": "postgres@sha256:3540c0362c809df084ffac0ae69fe794515f9de92692f02178bcdce0ef0302ac",
+   "entrypoint": "psql",
+   "uid": 70,
+   "env": {
+    "PGPASSWORD": "{oracle_db_password}"
+   },
+   "command": [
+    "-h",
+    "db",
+    "-U",
+    "afd_oracle",
+    "-d",
+    "gitea",
+    "-t",
+    "-A",
+    "-c",
+    "SELECT r.lower_name, count(*) FROM issue i JOIN repository r ON r.id = i.repo_id WHERE NOT i.is_pull GROUP BY r.lower_name"
+   ],
+   "mode": "items",
+   "independence": "L2: read-only SQL role, separate credentials, sidecar container; covers EVERY repository"
+  }
+ }
+}

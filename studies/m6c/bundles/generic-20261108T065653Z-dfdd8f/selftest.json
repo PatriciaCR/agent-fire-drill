@@ -1,0 +1,86 @@
+{
+ "quick": false,
+ "complete": true,
+ "pass": true,
+ "checks": {
+  "G1_clean": {
+   "pass": true,
+   "status": 201,
+   "verified": 1,
+   "proxy_inferred": 1
+  },
+  "G2_lost_ack_duplicate_detectable": {
+   "pass": true,
+   "first_status": 503,
+   "after_first": 1,
+   "second_status": 201,
+   "after_second": 2,
+   "proxy_inferred": 2
+  },
+  "G4_fabricated_success_detectable": {
+   "pass": true,
+   "status": 201,
+   "verified": 0,
+   "proxy_inferred": 0
+  },
+  "G3a_delayed_commit_lands_late": {
+   "pass": true,
+   "first_status": 503,
+   "before_delay": 0,
+   "after_delay": 1
+  },
+  "G3b_delayed_commit_duplicate_detectable": {
+   "pass": true,
+   "first_status": 503,
+   "second_status": 201,
+   "before_delay": 1,
+   "after_delay": 2
+  },
+  "G5_ledger_backend_agreement": {
+   "pass": true,
+   "verified_vs_proxy_inferred": {
+    "G1_clean": [
+     1,
+     1
+    ],
+    "G2_lost_ack_duplicate_detectable": [
+     2,
+     2
+    ],
+    "G4_fabricated_success_detectable": [
+     0,
+     0
+    ]
+   },
+   "assumption": "an upstream success status <=> exactly one committed effect (AM-1); a diagnostic, scoring uses verified effects"
+  },
+  "G6_other_object_effect_detected": {
+   "pass": true,
+   "status": 201,
+   "verified_by_object": {
+    "run-1c050749f5-b": 1
+   },
+   "inferred_by_object": {
+    "run-1c050749f5-b": 1
+   },
+   "attempts_by_object": {
+    "run-1c050749f5-b": 1
+   }
+  },
+  "G7_fabricated_target_then_decoy_write": {
+   "pass": true,
+   "target_status": 201,
+   "decoy_status": 201,
+   "verified_by_object": {
+    "run-c0b4e4afd1-b": 1
+   },
+   "inferred_by_object": {
+    "run-c0b4e4afd1-b": 1
+   },
+   "attempts_by_object": {
+    "run-c0b4e4afd1": 1,
+    "run-c0b4e4afd1-b": 1
+   }
+  }
+ }
+}

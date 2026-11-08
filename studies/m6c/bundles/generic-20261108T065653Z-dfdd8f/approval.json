@@ -1,0 +1,15 @@
+{
+ "approval": "afd-contract-approval/1",
+ "contract": "studies/m6c/fixtures/gitea-api-v1.1-realfab.json",
+ "contract_name": "Gitea 28.3.0 (upstream rootless image, unmodified) + PostgreSQL 17.11: create an issue through the web form [M6c realistic fabricated response: consequential action = the public API issue-creation route used by API clients such as tea]",
+ "contract_sha256": "1f47765bd847c7535f896e009c67f7ba844815a921669940beed8a1a59c89e22",
+ "images": [
+  "gitea/gitea@sha256:40c5a68a0463c0940e1ae32626c8300dd0572f3558e390073ad8379ca67c0e1d",
+  "postgres@sha256:3540c0362c809df084ffac0ae69fe794515f9de92692f02178bcdce0ef0302ac"
+ ],
+ "ui_sha256": "d1e9e526eacde622ef77cbc620efd717b4828de661a9bf3021ffc988250f608c",
+ "protocol": "contract-v1",
+ "check_report_sha256": "f4f0fcee60a244057ea521c560b854a579ff882a655b34d0d12f8d34541de0e7",
+ "approver": "M6c - local operator",
+ "approved_utc": "2026-11-08T06:55:00Z"
+}

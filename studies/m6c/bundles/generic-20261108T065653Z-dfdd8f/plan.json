@@ -1,0 +1,126 @@
+{
+ "profile": "full",
+ "seed": 20261108,
+ "n_per_cell": 3,
+ "positive_control_n_per_condition": 2,
+ "conditions": [
+  "clean",
+  "fabricated",
+  "lost_ack",
+  "delayed_commit"
+ ],
+ "runs": [
+  {
+   "policy": "external:retry-wrapper-around-tea-arm64",
+   "condition": "fabricated",
+   "rep": 3,
+   "role": "candidate",
+   "run_id": "r001"
+  },
+  {
+   "policy": "external:retry-wrapper-around-tea-arm64",
+   "condition": "clean",
+   "rep": 3,
+   "role": "candidate",
+   "run_id": "r002"
+  },
+  {
+   "policy": "external:retry-wrapper-around-tea-arm64",
+   "condition": "clean",
+   "rep": 2,
+   "role": "candidate",
+   "run_id": "r003"
+  },
+  {
+   "policy": "scripted_blind_retry",
+   "condition": "lost_ack",
+   "rep": 1,
+   "role": "positive_control",
+   "run_id": "r004"
+  },
+  {
+   "policy": "scripted_blind_retry",
+   "condition": "delayed_commit",
+   "rep": 1,
+   "role": "positive_control",
+   "run_id": "r005"
+  },
+  {
+   "policy": "scripted_blind_retry",
+   "condition": "lost_ack",
+   "rep": 2,
+   "role": "positive_control",
+   "run_id": "r006"
+  },
+  {
+   "policy": "external:retry-wrapper-around-tea-arm64",
+   "condition": "delayed_commit",
+   "rep": 1,
+   "role": "candidate",
+   "run_id": "r007"
+  },
+  {
+   "policy": "external:retry-wrapper-around-tea-arm64",
+   "condition": "delayed_commit",
+   "rep": 3,
+   "role": "candidate",
+   "run_id": "r008"
+  },
+  {
+   "policy": "scripted_blind_retry",
+   "condition": "delayed_commit",
+   "rep": 2,
+   "role": "positive_control",
+   "run_id": "r009"
+  },
+  {
+   "policy": "external:retry-wrapper-around-tea-arm64",
+   "condition": "clean",
+   "rep": 1,
+   "role": "candidate",
+   "run_id": "r010"
+  },
+  {
+   "policy": "external:retry-wrapper-around-tea-arm64",
+   "condition": "lost_ack",
+   "rep": 3,
+   "role": "candidate",
+   "run_id": "r011"
+  },
+  {
+   "policy": "external:retry-wrapper-around-tea-arm64",
+   "condition": "lost_ack",
+   "rep": 1,
+   "role": "candidate",
+   "run_id": "r012"
+  },
+  {
+   "policy": "external:retry-wrapper-around-tea-arm64",
+   "condition": "fabricated",
+   "rep": 2,
+   "role": "candidate",
+   "run_id": "r013"
+  },
+  {
+   "policy": "external:retry-wrapper-around-tea-arm64",
+   "condition": "fabricated",
+   "rep": 1,
+   "role": "candidate",
+   "run_id": "r014"
+  },
+  {
+   "policy": "external:retry-wrapper-around-tea-arm64",
+   "condition": "lost_ack",
+   "rep": 2,
+   "role": "candidate",
+   "run_id": "r015"
+  },
+  {
+   "policy": "external:retry-wrapper-around-tea-arm64",
+   "condition": "delayed_commit",
+   "rep": 2,
+   "role": "candidate",
+   "run_id": "r016"
+  }
+ ]
+}

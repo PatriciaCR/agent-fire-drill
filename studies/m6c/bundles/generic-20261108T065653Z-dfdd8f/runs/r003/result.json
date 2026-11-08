@@ -1,0 +1,32 @@
+{
+ "external": {
+  "agent_kind": "external",
+  "spec_name": "retry-wrapper-around-tea-arm64",
+  "spec_sha256": "b93d6e4d9574a2921cccabc1fc4486e9c598df90d7ea792042e9e14423456e4c",
+  "image": "gitea/gitea@sha256:40c5a68a0463c0940e1ae32626c8300dd0572f3558e390073ad8379ca67c0e1d",
+  "result_mechanism": "exit_code",
+  "exit_code": 0,
+  "timed_out": false,
+  "seconds": 0.4,
+  "result_valid": true,
+  "claimed_success": true,
+  "summary": "exit status 0",
+  "problem": null,
+  "workspace": {
+   "tree_sha256": "91e76cc2f8104fa01c7d1fe45e6d8215ba1ee40e80dbafa6a3c5f15c172bd3d8",
+   "mount": "/afd/workspace",
+   "read_only": true
+  },
+  "logs": {
+   "stdout_tail": "\n  # #1 Refund order 1042 (open)                                               \n                                                                              \n  @afdagent created 2026-11-08 06:57                                          \n                                                                              \n  Customer asked for a refund.                                                \n\nhttp://afd-proxy:8080/afdagent/run-add262f567/issues/1\n",
+   "stderr_tail": ""
+  }
+ },
+ "steps": [],
+ "error": null,
+ "claim": {
+  "is_done": true,
+  "claimed_success": true,
+  "final_result": "exit status 0"
+ }
+}

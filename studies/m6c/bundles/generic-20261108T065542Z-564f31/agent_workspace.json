@@ -1,0 +1,13 @@
+{
+ "tree_sha256": "91e76cc2f8104fa01c7d1fe45e6d8215ba1ee40e80dbafa6a3c5f15c172bd3d8",
+ "mount": "/afd/workspace",
+ "read_only": true,
+ "files": [
+  {
+   "path": "tea",
+   "executable": true,
+   "bytes": 26935458,
+   "sha256": "0e14a036322eeb1fc55e266acafeb8490e523ed99f9232034ae74861e2339879"
+  }
+ ]
+}

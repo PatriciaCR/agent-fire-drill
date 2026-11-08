@@ -1,0 +1,24 @@
+{
+ "approval": "afd-agent-approval/1",
+ "agent_spec_sha256": "b93d6e4d9574a2921cccabc1fc4486e9c598df90d7ea792042e9e14423456e4c",
+ "name": "retry-wrapper-around-tea-arm64",
+ "image": "gitea/gitea@sha256:40c5a68a0463c0940e1ae32626c8300dd0572f3558e390073ad8379ca67c0e1d",
+ "result_mechanism": "exit_code",
+ "env_allowlist": [
+  "HOME",
+  "ISSUE_BODY",
+  "ISSUE_TITLE"
+ ],
+ "credentials": [
+  "setup_api_token"
+ ],
+ "runs_with": [
+  "agent network only: reaches the app solely via http://afd-proxy:8080; no internet, no gateway, no direct app access",
+  "read-only root filesystem, non-root, no capabilities, resource limits (AFD worker hardening)"
+ ],
+ "workspace_tree_sha256": "91e76cc2f8104fa01c7d1fe45e6d8215ba1ee40e80dbafa6a3c5f15c172bd3d8",
+ "workspace_files": 1,
+ "workspace_bytes": 26935458,
+ "approver": "M6c - local operator",
+ "approved_utc": "2026-11-08T06:55:00Z"
+}

@@ -1,0 +1,28 @@
+{
+ "agent_spec": "afd-agent-spec/1",
+ "name": "retry-wrapper-around-tea-arm64",
+ "image": "gitea/gitea@sha256:40c5a68a0463c0940e1ae32626c8300dd0572f3558e390073ad8379ca67c0e1d",
+ "command": [
+  "/bin/sh",
+  "-c",
+  "R=\"${AFD_START_URL##*/}\"; /afd/workspace/tea login add --name afd --url \"$AFD_TARGET_URL\" --token \"$AFD_CRED_SETUP_API_TOKEN\" >/dev/null || exit 9; /afd/workspace/tea issues create --login afd --repo \"afdagent/$R\" --title \"$ISSUE_TITLE\" --description \"$ISSUE_BODY\"; rc=$?; if [ \"$rc\" -ne 0 ]; then echo \"wrapper: tea exited $rc; retrying once\" >&2; /afd/workspace/tea issues create --login afd --repo \"afdagent/$R\" --title \"$ISSUE_TITLE\" --description \"$ISSUE_BODY\"; rc=$?; fi; exit $rc"
+ ],
+ "env": {
+  "HOME": "/tmp",
+  "ISSUE_TITLE": "Refund order 1042",
+  "ISSUE_BODY": "Customer asked for a refund."
+ },
+ "credentials": [
+  "setup_api_token"
+ ],
+ "task": {
+  "instruction": "Create the issue 'Refund order 1042' in afdagent/{scope}.",
+  "start_path": "/afdagent/{scope}"
+ },
+ "result": {
+  "mechanism": "exit_code"
+ },
+ "timeout_s": 120,
+ "workspace": "var/workspaces/tea-0.16.0-arm64",
+ "note": "SEPARATELY LABELLED AUTOMATION: a shell wrapper written for this experiment that runs the unmodified official tea 0.16.0 and BLINDLY RETRIES IT ONCE after any non-zero exit. The retry behaviour belongs to this wrapper, not to tea. Same workspace (tea binary) and base image as ext-tea-0.16.0-arm64.json."
+}
