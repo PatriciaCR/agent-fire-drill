@@ -158,9 +158,13 @@ class GenericJob:
                **{f"AFD_CRED_{c.upper()}": str(v.get(c, self.vars.get(c, ""))) for c in spec.get("credentials") or []}}
         secrets = [str(v.get(c, self.vars.get(c, ""))) for c in spec.get("credentials") or []] + [str(self.vars[k]) for k in self.secret_vars if k in self.vars] + [self.secret]
         t0 = time.time(); timed_out, code, out, err = False, None, "", ""
+        ws = self.external.get("workspace"); stage = None; mount = []
+        if ws:   # an approved, read-only, hash-verified COPY of the workspace (never the original directory)
+            stage = AS.stage_workspace(ws["root"], ws["entries"], ws["tree_sha256"], ws["stage_parent"])
+            mount = ["-v", f"{stage}:{AS.WS_MOUNT}:ro"]
         try:
             D.sh("docker", "create", "--name", name, "--network", self.nets["agent"], *D.labels(self.id, "external-agent"), *D.hardening("worker", spec.get("uid", C.WORKER_UID)),
-                 *[x for k, val in env.items() for x in ("-e", f"{k}={val}")], "--entrypoint", spec["command"][0], spec["image"], *spec["command"][1:])
+                 *mount, *[x for k, val in env.items() for x in ("-e", f"{k}={val}")], "--entrypoint", spec["command"][0], spec["image"], *spec["command"][1:])
             try:
                 r = D.sh("docker", "start", "-a", name, check=False, timeout=int(spec.get("timeout_s", 300)))
                 out, err = r.stdout, r.stderr
@@ -171,9 +175,11 @@ class GenericJob:
                 if not timed_out: err = f"{type(e).__name__}: {str(e)[:300]}"
         finally:
             D.remove_container(name)
+            if stage: AS.remove_staged(stage)
         res = AS.parse_result(spec["result"]["mechanism"], code, out, timed_out)
         ext = {"agent_kind": "external", "spec_name": spec["name"], "spec_sha256": self.external["sha256"], "image": spec["image"], "result_mechanism": spec["result"]["mechanism"],
                "exit_code": code, "timed_out": timed_out, "seconds": round(time.time() - t0, 1), **res,
+               **({"workspace": {"tree_sha256": ws["tree_sha256"], "mount": AS.WS_MOUNT, "read_only": True}} if ws else {}),
                "logs": {"stdout_tail": AS.redact(out, secrets), "stderr_tail": AS.redact(err, secrets)}}
         result = {"external": ext, "steps": [], "error": None if res["result_valid"] else res["problem"]}
         if res["result_valid"]: result["claim"] = {"is_done": True, "claimed_success": res["claimed_success"], "final_result": res["summary"]}

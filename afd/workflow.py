@@ -309,13 +309,29 @@ def probe(path, ui_path=None, delay=6):
 
 # ------------------------------------------------------------------------------------------------------------- qualify
 # ------------------------------------------------------------------------------------------------------------- external agents (M6a)
+WORKSPACE_ROOTS = (ROOT, C.VAR / "workspaces")      # where approved agent workspaces may live
+
+def agent_workspace(spec):
+    """(resolved path, manifest entries, tree hash) of the spec's workspace, or None. Raises AS.WorkspaceError."""
+    if not spec.get("workspace"): return None
+    root = AS.resolve_workspace(spec["workspace"], WORKSPACE_ROOTS, ROOT)
+    entries = AS.workspace_manifest(root)
+    return root, entries, AS.tree_hash(entries)
+
 def agent_check(spec_path, contract_path=None):
     try: spec = json.loads(Path(spec_path).read_text())
     except (OSError, ValueError) as e: return {"pass": False, "problems": [f"unreadable agent spec: {e}"]}
     contract = K.load(contract_path) if contract_path else None
     probs = AS.check(spec, contract)
+    ws = None
+    if not probs and spec.get("workspace"):
+        try:
+            root, entries, th = agent_workspace(spec)
+            ws = {"path": str(root), "tree_sha256": th, "files": len(entries), "bytes": sum(e[2] for e in entries), "mount": AS.WS_MOUNT + " (read-only copy)"}
+        except AS.WorkspaceError as e: probs.append(f"workspace refused: {e}")
     return {"pass": not probs, "problems": probs, "agent_spec_sha256": sha_file(spec_path), "name": spec.get("name"), "image": spec.get("image"),
             "result_mechanism": (spec.get("result") or {}).get("mechanism"), "env_allowlist": sorted((spec.get("env") or {})), "credentials": spec.get("credentials") or [],
+            "workspace": ws,
             "runs_with": ["agent network only: reaches the app solely via http://afd-proxy:8080; no internet, no gateway, no direct app access",
                           "read-only root filesystem, non-root, no capabilities, resource limits (AFD worker hardening)"]}
 
@@ -325,6 +341,7 @@ def agent_approve(spec_path, approver, contract_path=None):
     if not rep["pass"]: raise Refused("agent check failed; nothing approved:\n  - " + "\n  - ".join(rep["problems"]))
     rec = {"approval": "afd-agent-approval/1", "agent_spec_sha256": rep["agent_spec_sha256"], "name": rep["name"], "image": rep["image"],
            "result_mechanism": rep["result_mechanism"], "env_allowlist": rep["env_allowlist"], "credentials": rep["credentials"], "runs_with": rep["runs_with"],
+           **({"workspace_tree_sha256": rep["workspace"]["tree_sha256"], "workspace_files": rep["workspace"]["files"], "workspace_bytes": rep["workspace"]["bytes"]} if rep.get("workspace") else {}),
            "approver": approver, "approved_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}
     AGENT_APPROVALS.mkdir(parents=True, exist_ok=True)
     (AGENT_APPROVALS / f"{rep['agent_spec_sha256']}.json").write_text(json.dumps(rec, indent=1))
@@ -335,7 +352,10 @@ def require_agent_approval(spec_path, contract_path):
     if not rep["pass"]: raise Refused("agent check failed:\n  - " + "\n  - ".join(rep["problems"]))
     f = AGENT_APPROVALS / f"{rep['agent_spec_sha256']}.json"
     if not f.exists(): raise Refused("agent spec not approved (or changed since approval): run `afd agent approve` after reviewing `afd agent check`")
-    return json.loads(f.read_text()), json.loads(Path(spec_path).read_text())
+    rec = json.loads(f.read_text())
+    if (rep.get("workspace") or {}).get("tree_sha256") != rec.get("workspace_tree_sha256"):
+        raise Refused("agent workspace changed since approval (or is not covered by it): re-approve after reviewing `afd agent check`")
+    return rec, json.loads(Path(spec_path).read_text())
 
 def qualify(path, ui_path=None, candidates=("scripted_trust_response", "scripted_verify_no_resubmit"), agent="scripted", seed=None, scripted_version="v2", agent_spec=None):
     """scripted_version: v2 (corrected read-back, default for new runs) or v1 (historical; reproduces pre-M4.1 results).
@@ -345,6 +365,9 @@ def qualify(path, ui_path=None, candidates=("scripted_trust_response", "scripted
     if agent_spec:
         arec, spec = require_agent_approval(agent_spec, path); require_local_images([spec["image"]])
         external = {"spec": spec, "sha256": sha_file(agent_spec), "approval": arec}; candidates = ()
+        if spec.get("workspace"):
+            root, entries, th = agent_workspace(spec)
+            external["workspace"] = {"root": str(root), "entries": entries, "tree_sha256": th, "stage_parent": str(C.VAR / "workflow" / "ws-staging")}
     elif agent != "scripted": raise Refused("use --agent-spec for your own agent; --agent accepts only 'scripted'")
     if scripted_version not in GEN.SCRIPTED_SRC: raise Refused(f"unknown --scripted-version {scripted_version!r} (v1 historical, v2 corrected)")
     for p in candidates: GEN.validate_scripted(p)
@@ -363,6 +386,9 @@ def qualify(path, ui_path=None, candidates=("scripted_trust_response", "scripted
     if external:
         extra.update({"agent_spec.json": external["spec"], "agent_approval.json": external["approval"],
                       "agent_spec_source.json": {"path": str(agent_spec), "sha256": external["sha256"]}})
+        if external.get("workspace"):
+            extra["agent_workspace.json"] = {"tree_sha256": external["workspace"]["tree_sha256"], "mount": AS.WS_MOUNT, "read_only": True,
+                                             "files": [{"path": e[0], "executable": e[1], "bytes": e[2], "sha256": e[3]} for e in external["workspace"]["entries"]]}
     if rep["protocol"] in ("contract-v2", "contract-v3"):
         extra["probe.json"].update({k: pr.get(k) for k in ("observed", "declared", "declared_vs_observed", "applicability", "false_failure_attribution")})
         b, digest = GEN.run(path, list(candidates), RUNS, seed=seed, extra_files=extra, observed=pr.get("observed"), applicability=pr.get("applicability"),
@@ -404,7 +430,13 @@ def external_agent_check(b):
         n += 1
         if ext.get("spec_sha256") != src.get("sha256"): probs.append(f"{f.parent.name}: run produced by a different agent spec")
         if "logs" not in ext or "exit_code" not in ext or "result_valid" not in ext: probs.append(f"{f.parent.name}: external agent evidence incomplete")
-    return {"agent_kind": "external", "agent_spec_sha256": src.get("sha256"), "external_runs": n, "problems": probs}
+        if (b / "agent_workspace.json").exists() and (ext.get("workspace") or {}).get("tree_sha256") != J("agent_workspace.json")["tree_sha256"]:
+            probs.append(f"{f.parent.name}: run did not use the approved workspace")
+    if (b / "agent_workspace.json").exists():
+        wj = J("agent_workspace.json")
+        if ap.get("workspace_tree_sha256") != wj.get("tree_sha256"): probs.append("agent approval does not cover the workspace recorded in the bundle")
+        if AS.tree_hash(sorted((x["path"], x["executable"], x["bytes"], x["sha256"]) for x in wj.get("files", []))) != wj.get("tree_sha256"): probs.append("workspace manifest does not match its tree hash")
+    return {"agent_kind": "external", "agent_spec_sha256": src.get("sha256"), "external_runs": n, "workspace_tree_sha256": (ap.get("workspace_tree_sha256")), "problems": probs}
 
 def verify_bundle(b):
     b = Path(b)

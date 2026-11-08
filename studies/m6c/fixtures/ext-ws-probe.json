@@ -1,0 +1,21 @@
+{
+ "agent_spec": "afd-agent-spec/1",
+ "name": "ext-ws-probe",
+ "image": "python@sha256:e6dae589c1c05976188fd3bd019afd091445fc533ed2ea29001beddc7368a9c8",
+ "command": [
+  "python",
+  "-I",
+  "/afd/workspace/probe.py"
+ ],
+ "env": {},
+ "task": {
+  "instruction": "Workspace probe (no task on the app).",
+  "start_path": "/"
+ },
+ "result": {
+  "mechanism": "stdout_marker"
+ },
+ "timeout_s": 60,
+ "workspace": "studies/m6c/fixtures/ws-probe",
+ "note": "M6c WORKSPACE FIXTURE (synthetic, $0): checks the read-only, hash-bound workspace mount."
+}
