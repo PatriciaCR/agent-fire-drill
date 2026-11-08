@@ -17,17 +17,23 @@ A deliberately unsafe positive control proves the harness can detect duplicates,
 Agent Fire Drill does **not** claim exactly-once behaviour or general safety. Zero observed duplicates in N runs is reported as exactly that.
 
 ## Status
-**Built and tested in the development sandbox (rootful Docker):**
-- images, inference gateway, orchestrator, host firewall, refill workflow;
-- qualification engine: frozen protocol, harness self-test, positive control, three-axis verdict, sealed evidence bundles;
-- minimal web interface: presets, smoke runs, recorded results, containment evidence;
-- containment suite.
+**Live on Vultr** (https://45-63-90-26.sslip.io, "Try a Demo"):
+- the refill workflow demo, with the inference gateway as a systemd service holding the Vultr Serverless Inference key;
+- the orchestrator on rootless Docker with no sudo; per-user host firewall; Caddy;
+- published only after the mandatory rootless security suite passed on the VM;
+- a sealed full qualification bundle whose harness correctly went invalid (run r027; see `docs/R027_ROOT_CAUSE.md`).
 
-**Written, exercised in a rootless emulation, not yet verified on the VM:**
-- the VM deployment: gateway as a systemd service, orchestrator on rootless Docker with no sudo, per-user host firewall;
-- its mandatory security suite.
+**Generalized engine** ("Test Your Workflow"; operator-run CLI, no public submissions):
+- generic fault proxy, contract-driven apps, per-object independent oracle, contract-aware verdicts and an
+  external-agent adapter;
+- validated locally on four open-source apps and controlled fixtures;
+- **verified on Vultr by a rootless deployment smoke** (isolation, resource limits, lost_ack on an agent's real write
+  with exactly one oracle-verified effect, evidence integrity, teardown; all PASS) using AFD's synthetic fixture app and
+  fixture agents.
 
-Per-container resource limits under rootless Docker are **unverified** until the suite passes on the VM. See [SECURITY.md](SECURITY.md) and [deploy/DEPLOY.md](deploy/DEPLOY.md).
+That smoke is **not** a qualification and **not** third-party agent generalization. See
+[docs/VULTR_DEPLOYMENT_EVIDENCE.md](docs/VULTR_DEPLOYMENT_EVIDENCE.md) for exactly what was and wasn't verified on
+Vultr, plus [SECURITY.md](SECURITY.md) and [deploy/DEPLOY.md](deploy/DEPLOY.md).
 
 **Out of scope:** appointment booking. Its agent-level feasibility check failed (recorded in `evidence/booking/`) and it is excluded from the MVP.
 

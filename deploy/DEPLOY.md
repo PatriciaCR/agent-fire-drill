@@ -71,6 +71,30 @@ sudo /opt/afd/deploy/vm/expose.sh                # Caddy + HTTPS on <ip>.sslip.i
   - a revoked token is rejected;
   - the janitor cleans up after an orchestrator SIGKILL.
 
+## Generalized engine: side-by-side staging and deployment smoke (operator-run, $0)
+**Staging (additive):**
+- Check out the tested commit at `/opt/afd-next` (root-owned, read-only for `afd-orch`). `/opt/afd`, Caddy, systemd
+  units and the live demo are left unchanged.
+- Pull the fixture image (`python@sha256:e6da…`) in a **bounded build window**: a transient root unit
+  (`systemd-run … -p ExecStartPre=…/afd-firewall.sh build-window -p ExecStopPost=…/afd-firewall.sh apply -p
+  ExecStopPost=systemctl --user -M afd-orch@ start afd-orchd.service`, `RuntimeMaxSec=300`, pull under
+  `timeout 240`).
+  - `afd-orchd` is stopped first, with zero managed containers.
+  - An independent re-lock guard (`systemd-run --on-active=8min …/afd-firewall.sh apply`) and the existing 10-minute
+    refresh timer back it up.
+  - Verify that the `AFD-ORCH` `dports 80,443` rule count is 0 (IPv4 and IPv6) and that `afd-orchd` is active before
+    continuing.
+
+**Approvals:** as `afd-orch` via `afd-ns`: `afd contract approve` for the M5 fixture (`--accept-destructive-controls`)
+and `afd agent approve` for `ext-order-client` and `ext-smoke-limits`.
+
+**Smoke:** `sudo -u afd-orch -H /opt/afd-next/deploy/vm/afd-ns python3 /opt/afd-next/deploy/vm/generic_smoke.py`
+checks S1 isolation, S2 limits, S3 lost_ack and the oracle, S4 evidence, S5 teardown. It writes to
+`$AFD_VAR/workflow/smoke`; exit 0 iff all pass.
+
+**First result (2026-11-08):** PASS on all five, rootless, 24.3 s; bundle `vmsmoke-20261108T055533Z-a1260f`, digest
+`f3b078ab…48645` (`docs/VULTR_DEPLOYMENT_EVIDENCE.md`).
+
 ## Operations
 - `sudo /opt/afd/deploy/vm/afdctl status`: services, firewall, latest verification, 24-hour spend.
 - `sudo /opt/afd/deploy/vm/afdctl qualify generic_guard cautious_no_resubmit`: queue a full qualification (about 46 runs; gateway budget $1.50).
