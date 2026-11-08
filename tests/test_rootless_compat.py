@@ -2,7 +2,8 @@
   1. `afd contract probe` / `afd qualify` never run the rootful host firewall (sudo iptables) when AFD_MODE=rootless;
      GenericJob then applies the in-namespace rules exactly like the refill path (afd.jobs.Job): F.ensure_netns().
      Rootful behaviour is unchanged.
-  2. The probe topology (LLMEpisodeJob, with_gateway=False) runs in rootless mode; a gateway attachment is refused.
+  2. The probe topology (LLMEpisodeJob, with_gateway=False) runs in rootless mode; with a gateway (P3) it mirrors
+     afd.jobs.Job: the host gateway service, no network connect, only the worker's gw network non-internal.
 Run: python3 -m unittest tests.test_rootless_compat"""
 import importlib.machinery, importlib.util, json, sys, unittest
 from pathlib import Path
@@ -62,8 +63,34 @@ class TestProbeTopologyRootless(unittest.TestCase):
         job, sh = self.enter(True, False)
         self.assertIsNone(job.gw_url); self.assertEqual(job.cdp_ip, "10.0.0.50")
         self.assertFalse(any("connect" in c.args and C.GATEWAY_NAME in c.args for c in sh.call_args_list))   # no gateway attachment
-    def test_gateway_attachment_refused_rootless(self):
-        with self.assertRaisesRegex(RuntimeError, "not implemented in rootless mode"): self.enter(True, True)
+    def test_rootless_gateway_mirrors_jobs_job(self):
+        """P3: like afd.jobs.Job: the host gateway service address, no `docker network connect`, and ONLY the gw network
+        non-internal (its egress is the slirp4netns socket the host firewall limits to the gateway address:port)."""
+        with mock.patch.object(GL.D, "create_internal_network") as cin:
+            job = GL.LLMEpisodeJob(CONTRACT, "t", with_gateway=True)
+            def base_enter(self_): self_.nets = {"app": "n-app", "agent": "n-agent"}; return self_
+            with mock.patch.object(C, "ROOTLESS", True), mock.patch.object(GEN.GenericJob, "__enter__", base_enter), \
+                 mock.patch.object(GL.LLMEpisodeJob, "__exit__", return_value=False), mock.patch.object(J, "_subnets", return_value=["10.0.0.48/28", "10.0.0.64/28", "10.0.0.80/28"]), \
+                 mock.patch.object(GL.D, "sh") as sh, mock.patch.object(GL.D, "ip_of", return_value="10.0.0.50"), mock.patch.object(GL.J, "wait_cdp"):
+                job.__enter__()
+        self.assertEqual((job.gw_ip, job.gw_url), (C.GATEWAY_ADDR, GL.G.url()))
+        self.assertFalse(any("connect" in c.args and C.GATEWAY_NAME in c.args for c in sh.call_args_list))
+        internal = {c.args[0].rsplit("-", 1)[1]: c.kwargs.get("internal", True) for c in cin.call_args_list}
+        self.assertEqual(internal, {"cdp": True, "gw": False})
+        browser_run = next(c for c in sh.call_args_list if c.args[:3] == ("docker", "run", "-d"))
+        self.assertIn("n-agent", browser_run.args); self.assertNotIn(job.nets2["gw"], " ".join(map(str, sh.call_args_list)))   # the browser never joins gw
+    def test_rootless_without_gateway_keeps_every_network_internal(self):
+        with mock.patch.object(GL.D, "create_internal_network") as cin:
+            self.enter_with(cin)
+        self.assertTrue(all(c.kwargs.get("internal", True) for c in cin.call_args_list))
+    def enter_with(self, cin):
+        job = GL.LLMEpisodeJob(CONTRACT, "t", with_gateway=False)
+        def base_enter(self_): self_.nets = {"app": "n-app", "agent": "n-agent"}; return self_
+        with mock.patch.object(C, "ROOTLESS", True), mock.patch.object(GEN.GenericJob, "__enter__", base_enter), \
+             mock.patch.object(GL.LLMEpisodeJob, "__exit__", return_value=False), mock.patch.object(J, "_subnets", return_value=["10.0.0.48/28", "10.0.0.64/28", "10.0.0.80/28"]), \
+             mock.patch.object(GL.D, "sh"), mock.patch.object(GL.D, "ip_of", return_value="10.0.0.50"), mock.patch.object(GL.J, "wait_cdp"):
+            job.__enter__()
+        return job
     def test_rootful_gateway_attachment_unchanged(self):
         job, sh = self.enter(False, True)
         self.assertTrue(any(c.args[:3] == ("docker", "network", "connect") and C.GATEWAY_NAME in c.args for c in sh.call_args_list))
