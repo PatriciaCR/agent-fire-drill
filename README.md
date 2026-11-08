@@ -48,6 +48,58 @@ afd contract verify-bundle BUNDLE                        # integrity, recomputed
 afd report BUNDLE [--out DIR]                            # readable safety report (self-contained HTML + Markdown), verified first
 ```
 
+## Built on Vultr
+**Vultr services used:**
+- **One Vultr cloud VM** (Ubuntu 24.04, 4 vCPU, 7.7 GiB RAM, 150 GB disk). It hosts the whole system: the public site,
+  the orchestrator, every per-job sandbox and the inference gateway.
+- **Vultr Serverless Inference** (OpenAI-compatible `https://api.vultrinference.com/v1/chat/completions`, model
+  `glm-5.3-flash`). It is the model behind the browser-use agent, in the live drills and in the autonomous Gitea
+  experiment.
+
+**How a live drill runs on the VM:**
+```
+visitor ──HTTPS──▶ Caddy (TLS, security headers) ──▶ afd-web (127.0.0.1 only; no Docker, no key, no egress)
+                                                        │ one queued drill request (access code required)
+                                                        ▼
+                  afd-orchd (user afd-orch, rootless Docker, no sudo): a fresh job per drill, on internal networks
+                     synthetic web app ◀── fault injected at its HTTP boundary ◀── Chromium ◀─CDP── browser-use worker
+                                                                                                   │ per-job token
+                                                                                                   ▼
+                  inference gateway (systemd, user afd-gw; the ONLY holder of the Vultr key) ──TCP 443──▶ Vultr Serverless Inference
+```
+- **The gateway** enforces each job's model allow-list, output-token cap and USD budget **before** any call goes
+  upstream. A live drill's token is capped at **$0.05**; the orchestrator also enforces a daily cap and a daily drill
+  quota.
+- **The host firewall** (root-owned, per-user chains) limits the orchestrator's user to the gateway address, and the
+  gateway's user to Vultr inference on TCP 443. It blocks cloud metadata and host services.
+
+**What the agent actually does:**
+- A browser-use agent receives a task, for example "refill one prescription" on a synthetic patient portal.
+- It drives a real headless Chromium through real clicks and form submissions.
+- AFD makes one of those real writes fail ambiguously, for example committing it but showing the agent a 503.
+- AFD then counts what the application's backend actually committed.
+
+Anyone can replay every recorded drill step by step on the live site; a drill run with a maintainer-issued access code
+executes the same path live.
+
+## Containment on Vultr (Challenge 1)
+Agent workers are treated as untrusted. Before the site is published, the VM runs a mandatory security suite
+(`deploy/vm/verify.sh`). **51/51 mandatory checks passed on the deployed commit `fa6974e`.** They're shown at
+[/containment](https://45-63-90-26.sslip.io/containment), with the raw evidence at
+[/containment.json](https://45-63-90-26.sslip.io/containment.json). Examples, each probed from the process or container
+concerned:
+- `worker_no_metadata`: the agent's worker container cannot reach the cloud metadata service (169.254.169.254);
+- `worker_no_internet`: the worker has no route to the internet;
+- `worker_key_absent_env_and_files`: the Vultr key is in neither the worker's environment nor its files;
+- `orch_host_egress_gateway_only`: the orchestrator's host user can reach only the inference gateway;
+- `gateway_credential_unreadable_by_other_services`, `revoked_token_rejected_after_job`, `teardown_removes_everything`.
+
+**Isolation we do not claim:** containers run with runc under rootless Docker, not gVisor or microVMs.
+
+The public qualification recorded on this deployment has an **invalid harness** (one run's backend and ledger counts
+disagreed, after a wrong-element click in run r027), so its candidate policies are **NOT ASSESSED**. No verdict is
+claimed for them.
+
 ## A third-party tool, unmodified: Gitea's official CLI `tea`
 `tea` 0.16.0 (binary SHA-256 checked against Gitea's published checksum) ran as the agent under test against a
 sandboxed Gitea. AFD intercepted its real `POST /api/v1/repos/…/issues` and checked every outcome against the
@@ -140,7 +192,7 @@ per job:   app services ── fault proxy ── agent (browser + worker, scrip
 make images            # builds afd/{site,browser,worker,gateway}:1 (fetches BreakingWeb at its pinned commit)
 python3 -m unittest tests.test_gateway tests.test_engine tests.test_web tests.test_deploy tests.test_listeners tests.test_ui_model \
   tests.test_validate_bundle tests.test_contract tests.test_scoring_objects tests.test_worker_v2 tests.test_workflow tests.test_scoring_v2 \
-  tests.test_scripted_v2 tests.test_scoring_v3 tests.test_agent_spec tests.test_rootless_compat tests.test_vm_smoke tests.test_agent_workspace tests.test_report tests.test_workspace_smoke tests.test_llm_episodes tests.test_p3_check tests.test_report_llm   # 240 tests, no Docker, no cost
+  tests.test_scripted_v2 tests.test_scoring_v3 tests.test_agent_spec tests.test_rootless_compat tests.test_vm_smoke tests.test_agent_workspace tests.test_report tests.test_workspace_smoke tests.test_llm_episodes tests.test_p3_check tests.test_report_llm   # 242 tests, no Docker, no cost
 python3 deploy/vm/generic_smoke.py   # $0 deployment smoke of the generalized engine (needs the approved M5 fixture)
 ```
 The demo's protocol (`protocols/refill-v1.json`) and the generic protocols (`protocols/contract-v*.json`) are frozen;

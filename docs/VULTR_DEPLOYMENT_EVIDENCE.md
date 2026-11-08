@@ -70,9 +70,26 @@ contract and both fixture agents:
 - **Operator-only:** the generalized path is run by the operator through the CLI. There is no public endpoint for
   submitting containers or agents.
 
-## 4. Rollback (prepared; not needed)
+## 4. Public release of the redesigned site (2026-11-08, operator-run, $0)
+- **Released commit:** `fa6974ed6f0eb935722766af28051df5791f22b7` (branch `release/public-mvp`): `afd-mvp-final`
+  (`0cb720b`) plus web-only commits (orientation copy, `/experiments`). Every file production executes is otherwise
+  identical to the previous deployment `ef80fcc`; a backward-compatible `afd/qualify.py` refactor keeps the refill plan
+  byte-identical.
+- **R2 (prechecks and backups):** the gate passed; 51/51 mandatory checks on `ef80fcc`; 8 evidence bundles intact; a
+  wrong-code drill request was refused with 403 and nothing was queued. Dated backups of `latest.json` and the Caddyfile
+  were taken for rollback.
+- **R3 (staging):** the release ran from `/opt/afd-next` on loopback only, read-only, with drills impossible. It
+  displayed the real 51/51 evidence and the harness-invalid / NOT ASSESSED qualification. A 373-path crawl passed, and
+  both published archives matched byte for byte.
+- **R4 (production):** `/opt/afd` was moved to `fa6974e`; the mandatory suite (`verify.sh`) ran on that commit; only
+  `afd-web` was restarted. The Caddyfile, systemd units, firewall rules and evidence bundles are unchanged.
+- **Isolation technology:** runc under rootless Docker, plus per-user host firewall chains; not gVisor or microVMs.
+
+## 5. Rollback (prepared; not needed)
 - `sudo /opt/afd/deploy/vm/afdctl janitor` removes AFD-labelled leftovers.
 - `sudo rm -rf /opt/afd-next` removes the staged tree.
 - Removing the pinned fixture image from `afd-orch`'s rootless store undoes the pull.
 - `/var/lib/afd/var/workflow` holds the operator approvals and the smoke bundle.
-- Nothing in `/opt/afd`, Caddy, systemd or the firewall configuration needs undoing.
+- Nothing in `/opt/afd`, Caddy, systemd or the firewall configuration needs undoing for section 2.
+- For the public release (section 4): check out `ef80fcc`, restore the dated `latest.json` backup, and restart
+  `afd-web` and the orchestrator. The Caddyfile and units were not changed.
