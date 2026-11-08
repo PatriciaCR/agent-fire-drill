@@ -1,0 +1,21 @@
+{
+ "agent_spec": "afd-agent-spec/1",
+ "name": "ext-smoke-limits",
+ "image": "python@sha256:e6dae589c1c05976188fd3bd019afd091445fc533ed2ea29001beddc7368a9c8",
+ "command": [
+  "python",
+  "-I",
+  "-c",
+  "\nimport json, os, socket, threading\nout = {\"uid\": os.getuid()}\ntry: open(\"/afd-smoke-write\", \"w\").close(); out[\"rootfs_writable\"] = True\nexcept OSError as e: out[\"rootfs_writable\"] = False; out[\"rootfs_errno\"] = e.errno\ntry: socket.socket(socket.AF_INET, socket.SOCK_RAW, socket.IPPROTO_ICMP).close(); out[\"raw_socket\"] = True\nexcept OSError: out[\"raw_socket\"] = False\ntry: os.setuid(0); out[\"setuid0\"] = True\nexcept OSError: out[\"setuid0\"] = False\nn = 0\ntry:\n    with open(\"/tmp/afd-fill\", \"wb\") as f:\n        chunk = b\"\\0\" * (8 << 20)\n        for i in range(100): f.write(chunk); f.flush(); n += 8\nexcept OSError as e: out[\"tmp_errno\"] = e.errno\nout[\"tmp_written_mb\"] = n\ntry: os.remove(\"/tmp/afd-fill\")\nexcept OSError: pass\nev, ts = threading.Event(), []\ntry:\n    for i in range(600):\n        t = threading.Thread(target=ev.wait); t.start(); ts.append(t)\nexcept RuntimeError: pass\nout[\"threads_started\"] = len(ts); ev.set()\nfor t in ts: t.join()\nprint(\"AFD_RESULT_JSON=\" + json.dumps({\"claimed_success\": True, \"summary\": json.dumps(out)}), flush=True)\nblocks = []\nfor i in range(400):\n    blocks.append(b\"\\x01\" * (8 << 20))\n    if i % 4 == 3: print(\"MEM_MB\", (i + 1) * 8, flush=True)\nprint(\"MEM_SURVIVED_MB\", len(blocks) * 8, flush=True)\n"
+ ],
+ "env": {},
+ "task": {
+  "instruction": "Deployment smoke: probe this container's limits (no task on the app).",
+  "start_path": "/"
+ },
+ "result": {
+  "mechanism": "stdout_marker"
+ },
+ "timeout_s": 120,
+ "note": "DEPLOYMENT SMOKE FIXTURE (synthetic, $0). Reports uid, read-only root, raw-socket and setuid denial, /tmp tmpfs cap and thread (pids) cap, then deliberately exceeds the memory limit last: the expected outcome is an OOM kill (exit 137) below the limit."
+}

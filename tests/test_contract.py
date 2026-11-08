@@ -43,7 +43,7 @@ class TestNoHardcoding(unittest.TestCase):
         ids = ["patient_portal", "refill", "lisinopril", "breakingweb", "medication", "expense", "reimburs", "session_id",
                # compatibility-study apps: no app-specific code may enter the generic modules
                "vikunja", "gitea", "listmonk", "mailpit", "woocommerce", "wordpress", "wp-json", "mariadb", "postgres", "i_like", "cart-token"]
-        for f in ("afd/faults/proxy.py", "afd/contract.py", "afd/generic.py", "afd/agents/scripted.py", "afd/scoring_objects.py", "afd/workflow.py", "afd/cdp_driver.py", "afd/scoring_v2.py", "afd/agents/scripted_v2.py", "afd/scoring_v3.py", "afd/agent_spec.py"):
+        for f in ("afd/faults/proxy.py", "afd/contract.py", "afd/generic.py", "afd/agents/scripted.py", "afd/scoring_objects.py", "afd/workflow.py", "afd/cdp_driver.py", "afd/scoring_v2.py", "afd/agents/scripted_v2.py", "afd/scoring_v3.py", "afd/agent_spec.py", "deploy/vm/generic_smoke.py"):
             text = (ROOT / f).read_text().lower(); self.assertEqual([i for i in ids if i in text], [], f)
 
 class TestPlanUnchangedForRefill(unittest.TestCase):
