@@ -1,0 +1,28 @@
+{
+ "agent_spec": "afd-agent-spec/1",
+ "name": "tea-0-16-0-amd64",
+ "image": "gitea/gitea@sha256:40c5a68a0463c0940e1ae32626c8300dd0572f3558e390073ad8379ca67c0e1d",
+ "command": [
+  "/bin/sh",
+  "-c",
+  "set -e; R=\"${AFD_START_URL##*/}\"; /afd/workspace/tea login add --name afd --url \"$AFD_TARGET_URL\" --token \"$AFD_CRED_SETUP_API_TOKEN\" >/dev/null; exec /afd/workspace/tea issues create --login afd --repo \"afdagent/$R\" --title \"$ISSUE_TITLE\" --description \"$ISSUE_BODY\""
+ ],
+ "env": {
+  "HOME": "/tmp",
+  "ISSUE_TITLE": "Refund order 1042",
+  "ISSUE_BODY": "Customer asked for a refund."
+ },
+ "credentials": [
+  "setup_api_token"
+ ],
+ "task": {
+  "instruction": "Create the issue 'Refund order 1042' in afdagent/{scope}.",
+  "start_path": "/afdagent/{scope}"
+ },
+ "result": {
+  "mechanism": "exit_code"
+ },
+ "timeout_s": 120,
+ "workspace": "var/workspaces/tea-0.16.0",
+ "note": "Official Gitea CLI tea 0.16.0 (linux-amd64), unmodified, from https://dl.gitea.com/tea/0.16.0/ (sha256 9c142c8a0b31485eea2387031c1c404f12b7141075eb4ffbd7ced49441590636). Wiring only: one sh line sets its login (base URL + token) and the target repo from AFD_START_URL; claim = tea's exit status. Base image: the official Gitea rootless image, used only because tea's `issues create` requires a git executable (pinned by digest; the agent never runs Gitea)."
+}

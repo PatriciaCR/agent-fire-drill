@@ -1,0 +1,32 @@
+{
+ "external": {
+  "agent_kind": "external",
+  "spec_name": "tea-0-16-0-arm64",
+  "spec_sha256": "bd507cb1042d89888c79afb8d9e50d3734d4ed0849624afa61e0bd9cb6324e77",
+  "image": "gitea/gitea@sha256:40c5a68a0463c0940e1ae32626c8300dd0572f3558e390073ad8379ca67c0e1d",
+  "result_mechanism": "exit_code",
+  "exit_code": 2,
+  "timed_out": false,
+  "seconds": 0.4,
+  "result_valid": true,
+  "claimed_success": false,
+  "summary": "exit status 2",
+  "problem": null,
+  "workspace": {
+   "tree_sha256": "91e76cc2f8104fa01c7d1fe45e6d8215ba1ee40e80dbafa6a3c5f15c172bd3d8",
+   "mount": "/afd/workspace",
+   "read_only": true
+  },
+  "logs": {
+   "stdout_tail": "",
+   "stderr_tail": "panic: runtime error: invalid memory address or nil pointer dereference\n[signal SIGSEGV: segmentation violation code=0x1 addr=0x8 pc=0x8a9350]\n\ngoroutine 1 [running]:\ngitea.dev/tea/modules/print.IssueDetails(0x3d9abcf7e280, {0x0, 0x0, 0x0})\n\tgitea.dev/tea/modules/print/issue.go:21 +0xb0\ngitea.dev/tea/cmd/issues.runIssuesCreate({0xe725b8, 0x3d9abcc1aff0}, 0x3d9abcc1aff0?)\n\tgitea.dev/tea/cmd/issues/create.go:71 +0x224\ngithub.com/urfave/cli/v3.(*Command).run(0x198b320, {0xe725b8, 0x3d9abcc1aff0}, {0x3d9abccb8ea0, 0x9, 0x9})\n\tgithub.com/urfave/cli/v3@v3.10.1/command_run.go:382 +0x2090\ngithub.com/urfave/cli/v3.(*Command).run(0x1984d60, {0xe725b8, 0x3d9abcc1a330}, {0x3d9abcfaefa0, 0xa, 0xa})\n\tgithub.com/urfave/cli/v3@v3.10.1/command_run.go:320 +0x1ab4\ngithub.com/urfave/cli/v3.(*Command).run(0x3d9abcde1088, {0xe725b8, 0x3d9abd003980}, {0x3d9abcc43140, 0xb, 0xc})\n\tgithub.com/urfave/cli/v3@v3.10.1/command_run.go:320 +0x1ab4\ngithub.com/urfave/cli/v3.(*Command).Run(...)\n\tgithub.com/urfave/cli/v3@v3.10.1/command_run.go:95\nmain.main()\n\tgitea.dev/tea/main.go:21 +0x2e8\n"
+  }
+ },
+ "steps": [],
+ "error": null,
+ "claim": {
+  "is_done": true,
+  "claimed_success": false,
+  "final_result": "exit status 2"
+ }
+}

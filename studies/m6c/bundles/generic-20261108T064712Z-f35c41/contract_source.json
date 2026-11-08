@@ -1,0 +1,9 @@
+{
+ "path": "studies/m6c/fixtures/gitea-api-v1.1.json",
+ "sha256": "28f9a61e8c1215bfbef99c347fc7ef067dae94f63f1c4ef63cd958e3496aea82",
+ "images": [
+  "gitea/gitea@sha256:40c5a68a0463c0940e1ae32626c8300dd0572f3558e390073ad8379ca67c0e1d",
+  "postgres@sha256:3540c0362c809df084ffac0ae69fe794515f9de92692f02178bcdce0ef0302ac"
+ ],
+ "ui_sha256": "d1e9e526eacde622ef77cbc620efd717b4828de661a9bf3021ffc988250f608c"
+}

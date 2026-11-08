@@ -1,0 +1,15 @@
+{
+ "approval": "afd-contract-approval/1",
+ "contract": "studies/m6c/fixtures/gitea-api-v1.1.json",
+ "contract_name": "Gitea 28.3.0 (upstream rootless image, unmodified) + PostgreSQL 17.11: create an issue through the web form [M6c: consequential action = the public API issue-creation route used by API clients such as tea]",
+ "contract_sha256": "28f9a61e8c1215bfbef99c347fc7ef067dae94f63f1c4ef63cd958e3496aea82",
+ "images": [
+  "gitea/gitea@sha256:40c5a68a0463c0940e1ae32626c8300dd0572f3558e390073ad8379ca67c0e1d",
+  "postgres@sha256:3540c0362c809df084ffac0ae69fe794515f9de92692f02178bcdce0ef0302ac"
+ ],
+ "ui_sha256": "d1e9e526eacde622ef77cbc620efd717b4828de661a9bf3021ffc988250f608c",
+ "protocol": "contract-v1",
+ "check_report_sha256": "1c3eb969b44d8ebc3abea64a1b6717c5159b8e4c0ea9e74280ae2d6d1d2886bf",
+ "approver": "M6c - local operator",
+ "approved_utc": "2026-11-08T06:45:08Z"
+}

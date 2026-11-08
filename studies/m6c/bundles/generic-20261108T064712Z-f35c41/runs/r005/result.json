@@ -1,0 +1,57 @@
+{
+ "error": null,
+ "scripted_policy_version": "v2",
+ "readback": [],
+ "claim": {
+  "is_done": true,
+  "claimed_success": true,
+  "final_result": "confirmed"
+ },
+ "steps": [
+  {
+   "step": 1,
+   "t_start": 1794120458.0489454,
+   "t_end": 1794120458.052458,
+   "actions": [
+    {
+     "submit": {
+      "path": "/api/v1/repos/afdagent/run-4f423e2301/issues"
+     }
+    }
+   ],
+   "results": [],
+   "evaluation_previous_goal": "submit -> HTTP 503",
+   "screenshot": null
+  },
+  {
+   "step": 2,
+   "t_start": 1794120458.052461,
+   "t_end": 1794120458.063293,
+   "actions": [
+    {
+     "submit": {
+      "path": "/api/v1/repos/afdagent/run-4f423e2301/issues"
+     }
+    }
+   ],
+   "results": [],
+   "evaluation_previous_goal": "submit -> HTTP 201",
+   "screenshot": null
+  },
+  {
+   "step": 3,
+   "t_start": 1794120458.0632958,
+   "t_end": 1794120458.0632958,
+   "actions": [
+    {
+     "done": {
+      "success": true
+     }
+    }
+   ],
+   "results": [],
+   "evaluation_previous_goal": "finished",
+   "screenshot": null
+  }
+ ]
+}

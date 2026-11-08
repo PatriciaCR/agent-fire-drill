@@ -1,0 +1,33 @@
+{
+ "probe": "afd-contract-probe/1",
+ "status": "PASS (with limitations)",
+ "pass": true,
+ "contract_sha256": "28f9a61e8c1215bfbef99c347fc7ef067dae94f63f1c4ef63cd958e3496aea82",
+ "approval_record_sha256": "dde0063fa04bd7b5d12ed08346caffc4255dbeb82c49db4a8e79cc475de0b0f1",
+ "ui_sha256": "d1e9e526eacde622ef77cbc620efd717b4828de661a9bf3021ffc988250f608c",
+ "capabilities": {
+  "duplicate_detectable": true,
+  "late_commit_detectable": true,
+  "other_object_detectable": true
+ },
+ "limitations": [
+  "no UI path for the action (API-only consequential action (Gitea REST API issue creation), exercised by API clients rather than a browser): UI traffic not verified; candidates exercise the API only"
+ ],
+ "finished_utc": "2026-11-08T06:45:41Z",
+ "ui_traffic": {
+  "status": "NOT_APPLICABLE",
+  "reason": "API-only consequential action (Gitea REST API issue creation), exercised by API clients rather than a browser",
+  "action_requests_intercepted": null,
+  "verified_by_object": null
+ },
+ "selftest_checks": {
+  "G1_clean": true,
+  "G2_lost_ack_duplicate_detectable": true,
+  "G4_fabricated_success_detectable": true,
+  "G3a_delayed_commit_lands_late": true,
+  "G3b_delayed_commit_duplicate_detectable": true,
+  "G5_ledger_backend_agreement": true,
+  "G6_other_object_effect_detected": true,
+  "G7_fabricated_target_then_decoy_write": true
+ }
+}
