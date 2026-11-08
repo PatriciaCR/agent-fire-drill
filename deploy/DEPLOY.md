@@ -95,6 +95,11 @@ checks S1 isolation, S2 limits, S3 lost_ack and the oracle, S4 evidence, S5 tear
 **First result (2026-11-08):** PASS on all five, rootless, 24.3 s; bundle `vmsmoke-20261108T055533Z-a1260f`, digest
 `f3b078ab…48645` (`docs/VULTR_DEPLOYMENT_EVIDENCE.md`).
 
+**Workspace-mount smoke (M6c, $0):** after approving `studies/m6c/fixtures/ext-ws-probe.json` against the M5 fixture,
+`sudo -u afd-orch -H /opt/afd-next/deploy/vm/afd-ns python3 /opt/afd-next/deploy/vm/workspace_smoke.py` runs the probe
+agent from its hash-bound workspace and checks W1 result, W2 content, W3 read-only, W4 the single ro mount and W5
+cleanup. Exit 0 iff all pass.
+
 ## Operations
 - `sudo /opt/afd/deploy/vm/afdctl status`: services, firewall, latest verification, 24-hour spend.
 - `sudo /opt/afd/deploy/vm/afdctl qualify generic_guard cautious_no_resubmit`: queue a full qualification (about 46 runs; gateway budget $1.50).

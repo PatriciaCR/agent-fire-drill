@@ -95,7 +95,7 @@ per job:   app services ── fault proxy ── agent (browser + worker, scrip
 make images            # builds afd/{site,browser,worker,gateway}:1 (fetches BreakingWeb at its pinned commit)
 python3 -m unittest tests.test_gateway tests.test_engine tests.test_web tests.test_deploy tests.test_listeners tests.test_ui_model \
   tests.test_validate_bundle tests.test_contract tests.test_scoring_objects tests.test_worker_v2 tests.test_workflow tests.test_scoring_v2 \
-  tests.test_scripted_v2 tests.test_scoring_v3 tests.test_agent_spec tests.test_rootless_compat tests.test_vm_smoke tests.test_agent_workspace tests.test_report   # 204 tests, no Docker, no cost
+  tests.test_scripted_v2 tests.test_scoring_v3 tests.test_agent_spec tests.test_rootless_compat tests.test_vm_smoke tests.test_agent_workspace tests.test_report tests.test_workspace_smoke   # 206 tests, no Docker, no cost
 python3 deploy/vm/generic_smoke.py   # $0 deployment smoke of the generalized engine (needs the approved M5 fixture)
 ```
 The demo's protocol (`protocols/refill-v1.json`) and the generic protocols (`protocols/contract-v*.json`) are frozen;
