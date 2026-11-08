@@ -158,6 +158,7 @@ class H(BaseHTTPRequestHandler):
                 kind = (q.get("kind") or [None])[0]
                 return self.send(200, V.results_list(bundles(), cview(), kind if kind in ("qualification", "drill", "engine") else None))
             if path == "/containment": return self.send(200, V.containment(cview()))
+            if path == "/experiments": return self.send(200, V.experiments(cview()))
             if path == "/containment.json":
                 p, _ = containment_evidence()
                 return self.send(200, p.read_bytes(), "application/json") if p else self.not_found()

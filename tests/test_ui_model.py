@@ -102,6 +102,19 @@ class TestTemplatesInventNothing(unittest.TestCase):
         linked = re.findall(r"/results/full-20261107T000000Z-abcdef/(r\d{3})'", html)      # table view + stacked phone view
         self.assertEqual(sorted(set(linked)), sorted(r["run_id"] for r in runs)); self.assertTrue(all(linked.count(r) == 2 for r in set(linked)))
 
+class TestHarnessInvalidExplained(unittest.TestCase):
+    def test_banner_only_when_invalid(self):
+        P, _ = Q.load_protocol(); pl = Q.plan(P, ["cautious_no_resubmit"], "full", seed=1)
+        runs = [{**r, "category": "agent", **Q.outcome({"backend_effects": 2 if r["role"] == "positive_control" else 1, "ledger_effects": 2 if r["role"] == "positive_control" else 1},
+                                                    {"success": True}, {"is_done": True, "claimed_success": True}), "claim": {"claimed_success": True}, "cost_usd": 0.001} for r in pl["runs"]]
+        td = {"site_removed": True, "token_revoked": True, "leftover_containers": [], "leftover_networks": []}
+        for selftest_ok in (True, False):
+            v = Q.verdict(P, pl, runs, {"pass": selftest_ok, "complete": True}, td)
+            s = {"bundle": "b", "profile": "full", "protocol": "refill-v1", "candidates": ["cautious_no_resubmit"], "finished_utc": "x", "spend": {"cost_usd": 0.0}, "verdict": v}
+            html = V.verdict_page("b", s, runs, pl, {"ok": True, "files": 1, "digest": "d"}, None, P).decode()
+            self.assertEqual("This is not a verdict on any policy" in html, not v["harness_validity"]["valid"], selftest_ok)
+            if not selftest_ok: self.assertIn("self test complete and passing", html)
+
 if __name__ == "__main__":
     unittest.main()
 

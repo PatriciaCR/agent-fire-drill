@@ -37,6 +37,8 @@ Every result surface carries exactly one provenance badge, derived from the bund
 /method                 Protocol, conditions, metric definitions, limitations, credits
 /presets                (merged into /drill and /method; old URL redirects)
 /healthz, *.tar.gz, screenshots   unchanged
+/experiments            (public release, Part A) the operator-run tea and P3 experiments: findings, bundle IDs, digests,
+                        docs pinned to afd-mvp-final; states that the public site runs only the refill demo
 ```
 Global navigation: **Drill · Results · Containment · Method**. On the right, a compact trust chip shows `VM verified · 51/51 · ea98677`, linking to /containment.
 
@@ -181,3 +183,16 @@ Deployment impact, batched once: worker and site images rebuilt (`build-images.s
   - worker step timing present;
   - old bundles still render.
 - **Visual check:** I will render the pages with a headless browser from real local bundles (the mini and smoke evidence) at desktop and phone widths, and review the screenshots before asking you to look.
+
+## 8. Public release, Part A (orientation and accurate scope)
+Copy and structure only; drill behaviour, access control, routes (one GET added), scoring and evidence are unchanged.
+- Landing, in the order a first-time visitor needs: what AFD is (a factual definition) · How AFD works (six steps:
+  approved agent → isolated sandbox → injected fault → agent behaviour → independent backend verification → evidence)
+  · what is measured (three axes, refill examples) · what you can do on this site (interactive drill with an access code
+  vs recorded evidence; "not available here: your own agent or application") · what the experiments showed · inspect
+  and verify · latest drills.
+- Drill: the workflow under test and the authorised effect, and why a policy and an ambiguous outcome are chosen, are
+  explained before the form; access codes are issued by the maintainer; no code → Results.
+- Results: the three kinds defined; "harness invalid is not a verdict on the agent"; bundle verification.
+- Verdict: an invalid harness names its failed checks and states that no verdict on any policy follows.
+- Static evidence copy lives in `afd/ui/content.py`; tests check it against the frozen docs and the sealed bundles.

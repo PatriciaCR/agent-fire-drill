@@ -55,7 +55,7 @@ class TestWeb(unittest.TestCase):
         except urllib.error.HTTPError as e: return e.code, dict(e.headers)
 
     def test_01_pages_render_and_escape(self):
-        for path in ("/", "/drill", "/method", "/results", "/containment", f"/results/{self.bid}"):
+        for path in ("/", "/drill", "/method", "/results", "/containment", "/experiments", f"/results/{self.bid}"):
             st, body, h = self.get(path); self.assertEqual(st, 200, path)
             self.assertEqual(h.get("X-Content-Type-Options"), "nosniff"); self.assertIn("script-src 'self'", h.get("Content-Security-Policy", ""))
             self.assertNotIn(b"<script", body, path)                 # no scripts outside the live progress page; evidence text is escaped
@@ -106,6 +106,37 @@ class TestWeb(unittest.TestCase):
     def test_05_rate_limit(self):
         codes = [self.post({"code": "wrong", "policy": "generic_guard", "condition": "clean"})[0] for _ in range(6)]
         self.assertIn(429, codes)
+
+    def test_07_public_release_pages(self):
+        """Part A of the public release: orientation before results, capability boundaries, pinned evidence links."""
+        import re as _re
+        from afd import bundle as B
+        from afd.ui import content as CT
+        pages = {p: self.get(p)[1].decode() for p in ("/", "/drill", "/results", "/experiments", "/containment", "/method", f"/results/{self.bid}")}
+        for p, body in pages.items():
+            self.assertIn("href='/experiments'", body, p)                                                  # nav item everywhere
+            self.assertNotRegex(body, r"type=['\"]?file", p)                                                # no upload UI anywhere
+            self.assertEqual([m for m in _re.findall(r"<form[^>]*>", body) if "action='/smoke'" not in m], [], p)   # the only form is the drill
+            for link in _re.findall(r"https://github\.com/PatriciaCR/agent-fire-drill/[^'\"]+", body):
+                self.assertIn(f"/{CT.TAG}/", link, (p, link))                                               # evidence links pinned to the frozen tag
+        home = pages["/"]
+        self.assertIn("<h1 style='margin-top:14px'>Agent Fire Drill</h1>", home)
+        order = ["How AFD works", "What is measured", "What you can do on this site", "What the experiments showed", "Inspect and verify", "Latest recorded drills"]
+        idx = [home.index(x) for x in order]; self.assertEqual(idx, sorted(idx))
+        for t, _ in CT.STEPS: self.assertIn(t, home)
+        self.assertIn("Not available on this site", home); self.assertIn("issued by the project maintainer", home)
+        drill = pages["/drill"]
+        for t in ("The workflow under test", "exactly one refill of the Lisinopril prescription", "Recovery policy:", "Ambiguous outcome (the injected fault):", "issued by the project maintainer"):
+            self.assertLess(drill.index(t), drill.index("<form"), t)                                         # explained before the selections
+        self.assertIn("Harness invalid is not a verdict on the agent", pages["/results"])
+        exp = pages["/experiments"]
+        for t in ("does not accept agents or applications from visitors", "the generalized engine is not publicly accessible", "not published on this site",
+                  "Developer-supplied LLM agent containers are not supported"): self.assertIn(t, exp)
+        docs = (open(os.path.join(ROOT, "docs", "P3_LLM_GENERIC_PATH.md")).read() + open(os.path.join(ROOT, "README.md")).read())
+        for v in (CT.P3["bundle"], CT.P3["digest"], CT.P3["total"].lstrip("$")) + tuple(e[4].lstrip("$") for e in CT.P3["episodes"]):
+            self.assertIn(v, exp); self.assertIn(v, docs)                                                   # figures come from the frozen docs
+        for b, d, _ in CT.TEA["bundles"]:
+            self.assertEqual(B.verify(os.path.join(ROOT, "studies", "m6c", "bundles", b))["digest"], d, b); self.assertIn(d, exp)
 
 class TestOriginPolicy(unittest.TestCase):
     """CSRF decisions for POST /smoke. Regression: behind Caddy's former Referrer-Policy: no-referrer, browsers sent
