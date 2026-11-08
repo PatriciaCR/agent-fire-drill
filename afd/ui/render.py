@@ -134,7 +134,7 @@ def landing(records, cview):
   <p class=lead style='margin-top:12px'>It tests one situation: the outcome of a consequential write is ambiguous. The request may have succeeded
   while the agent saw an error, or failed while the agent saw a success. AFD records whether the agent then repeats the action, stops, or
   reports an outcome that did not happen.</p>
-  <div class=cta><a class='btn primary' href='/drill'>Run a live drill →</a><a class=btn href='/results'>Browse recorded results</a><a class=btn href='/experiments'>Experiments</a></div>
+  <div class=cta><a class='btn primary' href='/results'>Browse recorded results →</a><a class=btn href='/drill'>Run a live drill (access code)</a><a class=btn href='/experiments'>Experiments</a></div>
 </section>
 <section aria-labelledby=how><h2 id=how>How AFD works</h2>
   <ol class=steps>{steps}</ol>
@@ -461,11 +461,11 @@ def experiments(cview):
 <section><span class=eyebrow>Experiments</span><h1 style='margin-top:10px'>Demonstrated experiments</h1>
 <p class=lead style='margin-top:12px'>What AFD has been used to test so far, where each experiment ran, and how to check its evidence.</p></section>
 <section><div class=tw><table class=records><thead><tr><th>Experiment</th><th>Where</th><th>How it was run</th><th>On this site</th></tr></thead><tbody>
-<tr><td><b>Refill drills and qualification</b><br><span class='muted small'>AFD's browser agent, synthetic patient portal</span></td><td>This Vultr deployment</td>
+<tr><td><b><a href='#refill'>Refill drills and qualification</a></b><br><span class='muted small'>AFD's browser agent, synthetic patient portal</span></td><td>This Vultr deployment</td>
 <td>Drills: from this site. Qualification: by the operator.</td><td>Interactive: run a drill (access code). Recorded: every result, replayable.</td></tr>
-<tr><td><b>tea, an unmodified third-party CLI</b><br><span class='muted small'>Gitea + PostgreSQL in the sandbox</span></td><td>Local sandbox; Vultr VM</td>
+<tr><td><b><a href='#tea'>tea, an unmodified third-party CLI</a></b><br><span class='muted small'>Gitea + PostgreSQL in the sandbox</span></td><td>Local sandbox; Vultr VM</td>
 <td>Operator, with AFD's command-line tools</td><td>Findings and evidence identifiers only</td></tr>
-<tr><td><b>An autonomous LLM agent on Gitea</b><br><span class='muted small'>AFD's browser-use worker, glm-5.3-flash</span></td><td>Vultr VM (rootless)</td>
+<tr><td><b><a href='#p3'>An autonomous LLM agent on Gitea</a></b><br><span class='muted small'>AFD's browser-use worker, glm-5.3-flash</span></td><td>Vultr VM (rootless)</td>
 <td>Operator, with AFD's command-line tools</td><td>Findings and evidence identifiers only</td></tr></tbody></table></div>
 <p class=note style='margin-top:12px'>The tea and LLM-agent experiments were run by the operator with AFD's command-line tools, not through this website. The public site runs
 only the reference refill workflow with AFD's own agent; it does not accept agents or applications from visitors, and the generalized engine is not publicly accessible.

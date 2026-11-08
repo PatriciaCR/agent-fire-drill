@@ -125,11 +125,18 @@ class TestWeb(unittest.TestCase):
         idx = [home.index(x) for x in order]; self.assertEqual(idx, sorted(idx))
         for t, _ in CT.STEPS: self.assertIn(t, home)
         self.assertIn("Not available on this site", home); self.assertIn("issued by the project maintainer", home)
+        ctas = _re.findall(r"<a class=(?:'btn primary'|btn) href='([^']+)'>([^<]+)</a>", home.split("class=cta>", 1)[1].split("</div>", 1)[0])
+        self.assertEqual(ctas[0], ("/results", "Browse recorded results →"))                        # primary: usable without a code
+        self.assertIn(("/drill", "Run a live drill (access code)"), ctas[1:])
+        self.assertIn("<a class='btn primary' href='/results'>", home); self.assertNotIn("<a class='btn primary' href='/drill'>", home)
         drill = pages["/drill"]
         for t in ("The workflow under test", "exactly one refill of the Lisinopril prescription", "Recovery policy:", "Ambiguous outcome (the injected fault):", "issued by the project maintainer"):
             self.assertLess(drill.index(t), drill.index("<form"), t)                                         # explained before the selections
         self.assertIn("Harness invalid is not a verdict on the agent", pages["/results"])
         exp = pages["/experiments"]
+        anchors = _re.findall(r"<td><b><a href='#([a-z0-9]+)'>", exp)
+        self.assertEqual(anchors, ["refill", "tea", "p3"])                                             # overview order unchanged
+        for a_ in anchors: self.assertEqual(exp.count(f"id={a_} "), 1, a_)                               # each target exists once
         for t in ("does not accept agents or applications from visitors", "the generalized engine is not publicly accessible", "not published on this site",
                   "Developer-supplied LLM agent containers are not supported"): self.assertIn(t, exp)
         docs = (open(os.path.join(ROOT, "docs", "P3_LLM_GENERIC_PATH.md")).read() + open(os.path.join(ROOT, "README.md")).read())
