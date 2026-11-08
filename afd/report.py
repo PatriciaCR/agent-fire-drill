@@ -7,7 +7,10 @@ Rules:
   - Verdict text (statuses, statements) is quoted verbatim from verdict.json / summary.json. Every count in the
     per-condition table is computed from runs.jsonl and labelled as such. Fields a bundle does not record are shown as
     "not recorded"; nothing is inferred or reinterpreted (e.g. historical status strings are shown as written).
-  - Supported: generic bundles (protocols contract-v1, contract-v2, contract-v3). Others are refused, not guessed at.
+  - Supported: generic qualification bundles (protocols contract-v1, contract-v2, contract-v3) and bounded LLM-episode
+    bundles from `afd llm-episodes` (identified by llm_config.json, which qualification bundles never contain). Others
+    are refused, not guessed at. An LLM-episode bundle must also pass verify_llm() (every episode's classification
+    recomputed with the frozen afd.scoring_objects.outcome, spend recomputed from the ledger rows) or it is refused.
   - All bundle text is untrusted: HTML-escaped, Markdown-escaped; no scripts, no external assets."""
 import html, json, re
 from pathlib import Path
@@ -58,6 +61,7 @@ def build(bundle_dir, verifier=None):
     if not m["ok"]: model["refused"] = "the bundle failed its manifest integrity check (MANIFEST.sha256); nothing in it can be trusted"; return model
     summ, prot = _j(d, "summary.json") or {}, _j(d, "protocol.json") or {}
     protocol = prot.get("protocol") or summ.get("protocol")
+    if is_llm_bundle(d): return build_llm(d, m, model)
     if protocol not in SUPPORTED:
         model["refused"] = f"unsupported bundle format (protocol {protocol!r}); this report renders generic bundles ({', '.join(SUPPORTED)}) only"; return model
     ver = verifier(d) if verifier else {"ok": None, "problems": ["verifier not run"]}
@@ -127,6 +131,7 @@ COND_COLS = [("planned_or_recorded", "runs"), ("no_valid_result", "no valid resu
              ("application_protection", "application protection (extra attempts)"), ("pending_at_horizon_runs", "pending at horizon")]
 
 def render_html(model):
+    if model.get("kind") == "llm-episodes": return render_llm_html(model)
     h = ["<!doctype html><html lang=en><head><meta charset=utf-8><meta name=viewport content='width=device-width,initial-scale=1'>",
          f"<title>AFD safety report {E(model['bundle'])}</title><style>body{{font:14px/1.45 system-ui,sans-serif;margin:24px;max-width:1200px;color:#111;background:#fff}}"
          "table{border-collapse:collapse;margin:8px 0 18px;width:100%}td,th{border:1px solid #ccc;padding:4px 6px;text-align:left;vertical-align:top}th{background:#f3f3f3}"
@@ -170,6 +175,7 @@ def render_html(model):
     return "".join(h)
 
 def render_md(model):
+    if model.get("kind") == "llm-episodes": return render_llm_md(model)
     L = [f"# Agent Fire Drill safety report", "", f"Bundle {C(model['bundle'])} · manifest digest {C(model['integrity'].get('digest'))} · integrity {'OK' if model['integrity']['ok'] else 'FAILED'}", ""]
     L += [f"> **{M(t)}**" for _, t in _banner(model)] + [""]
     if model.get("refused"): return "\n".join(L + ["Integrity problems: " + M("; ".join(map(str, model["integrity"]["problems"])))]) + "\n"
@@ -191,6 +197,8 @@ def render_md(model):
         L.append("")
     L += ["## Verify", ""] + [f"- {C(x)}" for x in model["verify"]]
     return "\n".join(L) + "\n"
+
+from .report_llm import is_llm_bundle, build_llm, render_llm_html, render_llm_md  # noqa: E402  (LLM-episode bundles)
 
 def write(bundle_dir, out_dir, verifier=None):
     model = build(bundle_dir, verifier)
