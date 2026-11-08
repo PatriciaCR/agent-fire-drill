@@ -6,6 +6,9 @@
   afd contract probe FILE [--ui UI]
   afd contract verify-bundle DIR
   afd qualify --contract FILE [--ui UI] [--agent scripted] [--candidates a,b] [--seed N]
+  afd agent check SPEC [--contract FILE]                     external agent (your own agent as the candidate)
+  afd agent approve SPEC --approver NAME [--contract FILE]
+  afd qualify --contract FILE --agent-spec SPEC [--ui UI] [--seed N]
 Exit status: 0 = pass, 1 = failed or refused, 2 = usage."""
 import argparse, json, os, sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -22,8 +25,12 @@ def main(argv=None):
     p = cs.add_parser("approve"); p.add_argument("file"); p.add_argument("--approver", required=True); p.add_argument("--ui")
     p.add_argument("--accept-destructive-controls", action="store_true", help="contract-v2: approve deliberate duplicate effects in the sandbox (PC-A, PC-B, G8)")
     p = cs.add_parser("verify-bundle"); p.add_argument("dir")
+    g = sub.add_parser("agent"); gs = g.add_subparsers(dest="sub", required=True)
+    p = gs.add_parser("check"); p.add_argument("spec"); p.add_argument("--contract")
+    p = gs.add_parser("approve"); p.add_argument("spec"); p.add_argument("--approver", required=True); p.add_argument("--contract")
     q = sub.add_parser("qualify"); q.add_argument("--contract", required=True); q.add_argument("--ui"); q.add_argument("--agent", default="scripted")
     q.add_argument("--candidates", default="scripted_trust_response,scripted_verify_no_resubmit"); q.add_argument("--seed", type=int)
+    q.add_argument("--agent-spec", help="approved external-agent spec: your agent is the candidate; scripted policies remain the positive controls")
     q.add_argument("--scripted-version", default="v2", choices=["v1", "v2"], help="v2: corrected read-back (default); v1: historical, reproduces pre-M4.1 results")
     a = ap.parse_args(argv)
     try:
@@ -45,14 +52,24 @@ def main(argv=None):
                    "selftest": {k: v["pass"] for k, v in r["selftest"]["checks"].items()}}
                 | {k: r[k] for k in ("observed", "declared_vs_observed", "applicability") if k in r})
             return 0 if r["pass"] else 1
+        if a.cmd == "agent" and a.sub == "check":
+            r = W.agent_check(a.spec, a.contract); out(r); return 0 if r["pass"] else 1
+        if a.cmd == "agent" and a.sub == "approve":
+            r = W.agent_approve(a.spec, a.approver, a.contract); out(r); return 0
         if a.cmd == "contract" and a.sub == "verify-bundle":
             r = W.verify_bundle(a.dir); out(r); return 0 if r["ok"] else 1
         if a.cmd == "qualify":
             from afd import firewall as F
             F.install()
-            b, digest, ver = W.qualify(a.contract, a.ui, [x for x in a.candidates.split(",") if x], a.agent, a.seed, a.scripted_version)
+            b, digest, ver = W.qualify(a.contract, a.ui, [x for x in a.candidates.split(",") if x], a.agent, a.seed, a.scripted_version, a.agent_spec)
             s = json.loads((b / "summary.json").read_text()); v = s["verdict"]
-            out({"bundle": str(b), "digest": digest, "verify": ver, "scripted_policy_version": s.get("scripted_policy_version"), "qualification_status": s["qualification_status"], "harness_validity": v["harness_validity"]["checks"],
+            runs = [json.loads(l) for l in (b / "runs.jsonl").read_text().splitlines() if l.strip()]
+            ext = [r for r in runs if r.get("agent_kind") == "external"]
+            xsum = {"external_runs": len(ext), "result_valid": sum(bool(r.get("agent_result_valid")) for r in ext),
+                    "reported_success": sum(r.get("agent_reported_success") is True for r in ext), "verified_success": sum(r.get("verified_success") is True for r in ext),
+                    "reported_success_but_not_verified": sum(r.get("agent_reported_success") is True and r.get("verified_success") is not True for r in ext),
+                    "verified_but_reported_failure": sum(r.get("verified_success") is True and r.get("agent_reported_success") is False for r in ext)} if ext else None
+            out({"bundle": str(b), "digest": digest, "verify": ver, "scripted_policy_version": s.get("scripted_policy_version"), "external_agent": xsum, "qualification_status": s["qualification_status"], "harness_validity": v["harness_validity"]["checks"],
                  "evidence_completeness": {k: s["evidence_completeness"][k] for k in ("planned_runs", "complete_runs", "complete")},
                  "candidates": {p: (x["status"], (x.get("effect_safety") or {}).get("statement") or x.get("reason"),
                                     (x.get("outcome_integrity") or {}).get("status"), (x.get("completion") or {}).get("completed")) for p, x in v["candidates"].items()},

@@ -15,11 +15,12 @@ locally: this workflow never pulls (a missing image is refused, not fetched). LL
 No application-specific identifiers (tests/test_contract.py)."""
 import hashlib, json, re, time
 from pathlib import Path
-from . import bundle as B, config as C, contract as K, dockerops as D, generic as GEN, scoring_objects as SO, scoring_v2 as SV2, scoring_v3 as SV3
+from . import agent_spec as AS, bundle as B, config as C, contract as K, dockerops as D, generic as GEN, scoring_objects as SO, scoring_v2 as SV2, scoring_v3 as SV3
 
 ROOT = Path(__file__).resolve().parent.parent
 STATE = C.VAR / "workflow"
 APPROVALS, PROBES, RUNS = STATE / "approvals", STATE / "probes", STATE / "runs"
+AGENT_APPROVALS = STATE / "agent-approvals"
 PINNED = re.compile(r"^[a-z0-9][a-z0-9._/:-]*@sha256:[0-9a-f]{64}$")
 SERVICE_KEYS = {"name", "image", "entrypoint", "args", "port", "uid", "env", "writable", "health", "public", "mounts", "sysctls", "note"}
 FORBIDDEN_WRITABLE = {"/", "/proc", "/sys", "/dev", "/etc", "/usr", "/bin", "/sbin", "/lib", "/boot", "/run"}
@@ -307,9 +308,44 @@ def probe(path, ui_path=None, delay=6):
     return res
 
 # ------------------------------------------------------------------------------------------------------------- qualify
-def qualify(path, ui_path=None, candidates=("scripted_trust_response", "scripted_verify_no_resubmit"), agent="scripted", seed=None, scripted_version="v2"):
-    """scripted_version: v2 (corrected read-back, default for new runs) or v1 (historical; reproduces pre-M4.1 results)."""
-    if agent != "scripted": raise Refused("only --agent scripted is enabled ($0); LLM candidates are not part of M3")
+# ------------------------------------------------------------------------------------------------------------- external agents (M6a)
+def agent_check(spec_path, contract_path=None):
+    try: spec = json.loads(Path(spec_path).read_text())
+    except (OSError, ValueError) as e: return {"pass": False, "problems": [f"unreadable agent spec: {e}"]}
+    contract = K.load(contract_path) if contract_path else None
+    probs = AS.check(spec, contract)
+    return {"pass": not probs, "problems": probs, "agent_spec_sha256": sha_file(spec_path), "name": spec.get("name"), "image": spec.get("image"),
+            "result_mechanism": (spec.get("result") or {}).get("mechanism"), "env_allowlist": sorted((spec.get("env") or {})), "credentials": spec.get("credentials") or [],
+            "runs_with": ["agent network only: reaches the app solely via http://afd-proxy:8080; no internet, no gateway, no direct app access",
+                          "read-only root filesystem, non-root, no capabilities, resource limits (AFD worker hardening)"]}
+
+def agent_approve(spec_path, approver, contract_path=None):
+    if not approver or not re.fullmatch(r"[\w .@-]{2,80}", approver): raise Refused("--approver NAME is required (2-80 characters)")
+    rep = agent_check(spec_path, contract_path)
+    if not rep["pass"]: raise Refused("agent check failed; nothing approved:\n  - " + "\n  - ".join(rep["problems"]))
+    rec = {"approval": "afd-agent-approval/1", "agent_spec_sha256": rep["agent_spec_sha256"], "name": rep["name"], "image": rep["image"],
+           "result_mechanism": rep["result_mechanism"], "env_allowlist": rep["env_allowlist"], "credentials": rep["credentials"], "runs_with": rep["runs_with"],
+           "approver": approver, "approved_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}
+    AGENT_APPROVALS.mkdir(parents=True, exist_ok=True)
+    (AGENT_APPROVALS / f"{rep['agent_spec_sha256']}.json").write_text(json.dumps(rec, indent=1))
+    return {**rec, "record_sha256": sha_obj(rec)}
+
+def require_agent_approval(spec_path, contract_path):
+    rep = agent_check(spec_path, contract_path)
+    if not rep["pass"]: raise Refused("agent check failed:\n  - " + "\n  - ".join(rep["problems"]))
+    f = AGENT_APPROVALS / f"{rep['agent_spec_sha256']}.json"
+    if not f.exists(): raise Refused("agent spec not approved (or changed since approval): run `afd agent approve` after reviewing `afd agent check`")
+    return json.loads(f.read_text()), json.loads(Path(spec_path).read_text())
+
+def qualify(path, ui_path=None, candidates=("scripted_trust_response", "scripted_verify_no_resubmit"), agent="scripted", seed=None, scripted_version="v2", agent_spec=None):
+    """scripted_version: v2 (corrected read-back, default for new runs) or v1 (historical; reproduces pre-M4.1 results).
+    agent_spec: path of an approved external-agent spec; the developer's agent is then the ONLY candidate and the
+    deterministic scripted positive controls validate the harness."""
+    external = None
+    if agent_spec:
+        arec, spec = require_agent_approval(agent_spec, path); require_local_images([spec["image"]])
+        external = {"spec": spec, "sha256": sha_file(agent_spec), "approval": arec}; candidates = ()
+    elif agent != "scripted": raise Refused("use --agent-spec for your own agent; --agent accepts only 'scripted'")
     if scripted_version not in GEN.SCRIPTED_SRC: raise Refused(f"unknown --scripted-version {scripted_version!r} (v1 historical, v2 corrected)")
     for p in candidates: GEN.validate_scripted(p)
     if scripted_version == "v1" and set(candidates) & set(GEN.V2_ONLY_POLICIES): raise Refused(f"{sorted(set(candidates) & set(GEN.V2_ONLY_POLICIES))} exist only in scripted-policy v2")
@@ -324,12 +360,15 @@ def qualify(path, ui_path=None, candidates=("scripted_trust_response", "scripted
              "probe.json": {k: pr.get(k) for k in ("probe", "status", "pass", "contract_sha256", "approval_record_sha256", "ui_sha256", "capabilities", "limitations", "finished_utc")}
                            | {"ui_traffic": {k: (pr.get("ui_traffic") or {}).get(k) for k in ("status", "reason", "action_requests_intercepted", "verified_by_object")},
                               "selftest_checks": {k: v["pass"] for k, v in pr["selftest"]["checks"].items()}}}
+    if external:
+        extra.update({"agent_spec.json": external["spec"], "agent_approval.json": external["approval"],
+                      "agent_spec_source.json": {"path": str(agent_spec), "sha256": external["sha256"]}})
     if rep["protocol"] in ("contract-v2", "contract-v3"):
         extra["probe.json"].update({k: pr.get(k) for k in ("observed", "declared", "declared_vs_observed", "applicability", "false_failure_attribution")})
         b, digest = GEN.run(path, list(candidates), RUNS, seed=seed, extra_files=extra, observed=pr.get("observed"), applicability=pr.get("applicability"),
-                            false_failure_attribution=pr.get("false_failure_attribution"), scripted_version=scripted_version)
+                            false_failure_attribution=pr.get("false_failure_attribution"), scripted_version=scripted_version, external=external)
         return b, digest, verify_bundle(b)
-    b, digest = GEN.run(path, list(candidates), RUNS, seed=seed, extra_files=extra, scripted_version=scripted_version)
+    b, digest = GEN.run(path, list(candidates), RUNS, seed=seed, extra_files=extra, scripted_version=scripted_version, external=external)
     return b, digest, verify_bundle(b)
 
 # ------------------------------------------------------------------------------------------------------------- verify
@@ -342,18 +381,38 @@ def scripted_version_check(b):
     probs = []
     if summ.get("scripted_policy_version") != ver: probs.append("summary and environment disagree on the scripted-policy version")
     for f in sorted((b / "runs").glob("*/result.json")):
-        rv = json.loads(f.read_text()).get("scripted_policy_version", "v1")
-        if rv != ver and "claim" in json.loads(f.read_text()): probs.append(f"{f.parent.name}: result produced by scripted policy {rv}, bundle says {ver}")
+        doc = json.loads(f.read_text())
+        if doc.get("external"): continue                                    # the external candidate is not a scripted policy
+        rv = doc.get("scripted_policy_version", "v1")
+        if rv != ver and "claim" in doc: probs.append(f"{f.parent.name}: result produced by scripted policy {rv}, bundle says {ver}")
     cur = GEN.SCRIPTED_SRC.get(ver)
     return {"scripted_policy_version": ver, "scripted_policy_sha256": env.get("scripted_agents_sha256"),
             "matches_current_file": bool(cur and cur.exists() and sha_file(cur) == env.get("scripted_agents_sha256")), "problems": probs}
+
+def external_agent_check(b):
+    """External-agent bundles: the approval covers the spec that ran, every external run names it, and each run's
+    agent evidence is present (exit status, result validity, logs)."""
+    if not (b / "agent_spec.json").exists(): return {"agent_kind": "scripted only", "problems": []}
+    J = lambda n: json.loads((b / n).read_text()); probs = []
+    try: src, ap = J("agent_spec_source.json"), J("agent_approval.json")
+    except (OSError, ValueError) as e: return {"agent_kind": "external", "problems": [f"agent binding missing: {e}"]}
+    if ap.get("agent_spec_sha256") != src.get("sha256"): probs.append("agent approval does not cover the agent spec that ran")
+    n = 0
+    for f in sorted((b / "runs").glob("*/result.json")):
+        ext = json.loads(f.read_text()).get("external")
+        if not ext: continue
+        n += 1
+        if ext.get("spec_sha256") != src.get("sha256"): probs.append(f"{f.parent.name}: run produced by a different agent spec")
+        if "logs" not in ext or "exit_code" not in ext or "result_valid" not in ext: probs.append(f"{f.parent.name}: external agent evidence incomplete")
+    return {"agent_kind": "external", "agent_spec_sha256": src.get("sha256"), "external_runs": n, "problems": probs}
 
 def verify_bundle(b):
     b = Path(b)
     r = _verify_bundle(b)
     if r.get("files") is None: return r
-    sv = scripted_version_check(b)
-    return {**r, "ok": r["ok"] and not sv["problems"], "problems": r["problems"] + sv["problems"], **{k: v for k, v in sv.items() if k != "problems"}}
+    sv = scripted_version_check(b); ea = external_agent_check(b)
+    return {**r, "ok": r["ok"] and not sv["problems"] and not ea["problems"], "problems": r["problems"] + sv["problems"] + ea["problems"],
+            **{k: v for k, v in sv.items() if k != "problems"}, **{k: v for k, v in ea.items() if k != "problems"}}
 
 def _verify_bundle(b):
     b = Path(b); probs = []

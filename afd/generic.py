@@ -15,7 +15,7 @@ other objects), the proxy's per-object records are the inference they are reconc
 are never counted as effects. Contracts without it keep the contract-v0 path below, unchanged."""
 import json, re, secrets, socket, time, uuid
 from pathlib import Path
-from . import bundle as B, config as C, contract as K, dockerops as D, jobs as J, qualify as Q, scoring_objects as SO, scoring_v2 as SV2, scoring_v3 as SV3
+from . import agent_spec as AS, bundle as B, config as C, contract as K, dockerops as D, jobs as J, qualify as Q, scoring_objects as SO, scoring_v2 as SV2, scoring_v3 as SV3
 
 ROOT = Path(__file__).resolve().parent.parent
 PROXY_SRC, AGENT_SRC = ROOT / "afd" / "faults" / "proxy.py", ROOT / "afd" / "agents" / "scripted.py"
@@ -48,6 +48,7 @@ class GenericJob:
         self.public = next(s for s in contract["services"] if s.get("public"))
         self.captured_names = []
         self.scripted_version = "v1"
+        self.external = None                                # {"spec": ..., "sha256": ...}: the external candidate (M6a adapter)
 
     # ---- lifecycle ----
     def __enter__(self):
@@ -145,7 +146,40 @@ class GenericJob:
     def reads(self, since):
         r = self.control("GET", f"/_afd/reads?since={since}"); return (r or {}).get("reads", []) if isinstance(r, dict) else []
 
+    def run_external(self, run_id, scenario):
+        """The developer's own agent (afd/agent_spec.py), as the candidate: its pinned image and command, on the agent
+        network ONLY (it reaches the app solely through http://afd-proxy:8080), AFD worker hardening, an env allowlist.
+        Returns the result in the worker format; a timeout or a missing/malformed result yields NO claim."""
+        spec = self.external["spec"]; name = f"afd-{self.id}-{run_id}-ext"
+        v = {**scenario.vars, "target": getattr(scenario, "target", scenario.vars.get("scope", ""))}
+        env = {**(spec.get("env") or {}), "AFD_TARGET_URL": f"http://{PROXY_ALIAS}:8080", "AFD_START_URL": f"http://{PROXY_ALIAS}:8080" + AS.render(spec["task"].get("start_path", "/"), v),
+               "AFD_TASK": AS.render(spec["task"]["instruction"], v), "AFD_RUN_ID": run_id,
+               **{f"AFD_CRED_{c.upper()}": str(v.get(c, self.vars.get(c, ""))) for c in spec.get("credentials") or []}}
+        secrets = [str(v.get(c, self.vars.get(c, ""))) for c in spec.get("credentials") or []] + [str(self.vars[k]) for k in self.secret_vars if k in self.vars] + [self.secret]
+        t0 = time.time(); timed_out, code, out, err = False, None, "", ""
+        try:
+            D.sh("docker", "create", "--name", name, "--network", self.nets["agent"], *D.labels(self.id, "external-agent"), *D.hardening("worker", spec.get("uid", C.WORKER_UID)),
+                 *[x for k, val in env.items() for x in ("-e", f"{k}={val}")], "--entrypoint", spec["command"][0], spec["image"], *spec["command"][1:])
+            try:
+                r = D.sh("docker", "start", "-a", name, check=False, timeout=int(spec.get("timeout_s", 300)))
+                out, err = r.stdout, r.stderr
+                code = int(D.sh("docker", "inspect", "-f", "{{.State.ExitCode}}", name).stdout.strip())
+            except Exception as e:                                         # subprocess timeout: kill, record, never a claim
+                timed_out = "Timeout" in type(e).__name__
+                D.sh("docker", "kill", name, check=False)
+                if not timed_out: err = f"{type(e).__name__}: {str(e)[:300]}"
+        finally:
+            D.remove_container(name)
+        res = AS.parse_result(spec["result"]["mechanism"], code, out, timed_out)
+        ext = {"agent_kind": "external", "spec_name": spec["name"], "spec_sha256": self.external["sha256"], "image": spec["image"], "result_mechanism": spec["result"]["mechanism"],
+               "exit_code": code, "timed_out": timed_out, "seconds": round(time.time() - t0, 1), **res,
+               "logs": {"stdout_tail": AS.redact(out, secrets), "stderr_tail": AS.redact(err, secrets)}}
+        result = {"external": ext, "steps": [], "error": None if res["result_valid"] else res["problem"]}
+        if res["result_valid"]: result["claim"] = {"is_done": True, "claimed_success": res["claimed_success"], "final_result": res["summary"]}
+        return result
+
     def run_agent(self, run_id, policy, scenario):
+        if policy.startswith("external:"): return self.run_external(run_id, scenario)
         name = f"afd-{self.id}-{run_id}-agent"
         cfg = {"policy": policy, "base": f"http://{PROXY_ALIAS}:8080", "action": scenario.action_request(), "check": scenario.check_request()}
         if policy == "scripted_wrong_target": cfg["wrong_action"] = scenario.action_request(on=scenario.decoys[0])
@@ -461,6 +495,18 @@ def classify_writes(writes, supporting):
     rx = [re.compile(p) for p in supporting or []]
     return [{**w, "class": "authorised_supporting" if any(r.search(f"{w['method']} {w['path']}") for r in rx) else "unclassified"} for w in writes]
 
+def agent_fields(result, rec, contract):
+    """Agent-reported vs verified success, kept apart (M6a). verified_success comes only from the independent oracle."""
+    ext = result.get("external")
+    intent = contract["intent"]["exactly"]
+    t = rec.get("target_effects", rec.get("backend_effects"))
+    other = rec.get("other_object_effects", 0) or 0
+    pend = sum((rec.get("pending_at_horizon") or {}).values()) if isinstance(rec.get("pending_at_horizon"), dict) else 0
+    return {"agent_kind": "external" if ext else "scripted", "agent_exit_code": (ext or {}).get("exit_code"),
+            "agent_result_valid": (ext or {}).get("result_valid", "claim" in result),
+            "agent_reported_success": (result.get("claim") or {}).get("claimed_success"),
+            "verified_success": None if t is None else ("unresolved_pending" if pend else (t == intent and other == 0))}
+
 def evidence_completeness(the_plan, runs, work):
     """Every planned run must have a scored agent record with a claim and at least one step on disk. Missing or partial
     agent evidence is an explicit failure (M3): it is listed, and the run can never count as a passing qualification."""
@@ -468,14 +514,20 @@ def evidence_completeness(the_plan, runs, work):
     for spec in the_plan["runs"]:
         r = by.get(spec["run_id"]); f = work / "runs" / spec["run_id"] / "result.json"
         res = json.loads(f.read_text()) if f.exists() else {}
+        ext = res.get("external")
         why = [w for w, bad in (("no run record", r is None), ("no result.json", not f.exists()), ("no agent claim", "claim" not in res or not res.get("claim")),
-                                ("no steps", not res.get("steps")), ("not scored as an agent run", r is not None and r.get("category") != "agent"),
-                                ("worker error", bool(res.get("error")))) if bad]
+                                ("no steps", not res.get("steps") and not ext), ("not scored as an agent run", r is not None and r.get("category") != "agent"),
+                                ("worker error", bool(res.get("error")) and not ext)) if bad]
+        if ext and not ext.get("result_valid"): why.append(f"external agent result invalid: {ext.get('problem')}")
         if why: gaps.append({"run_id": spec["run_id"], "policy": spec["policy"], "condition": spec["condition"], "problems": why})
     return {"planned_runs": len(the_plan["runs"]), "complete_runs": len(the_plan["runs"]) - len(gaps), "complete": not gaps, "gaps": gaps}
 
 def run(contract_path, candidates, out_root, seed=None, conditions=None, extra_files=None, observed=None, applicability=None, false_failure_attribution=None,
-        scripted_version="v1"):
+        scripted_version="v1", external=None):
+    """external: {"spec": <validated agent spec>, "sha256": ...}: the developer's agent becomes the ONLY candidate
+    ("external:<name>"); positive controls stay deterministic scripted policies (version `scripted_version`)."""
+    if external:
+        candidates = [f"external:{external['spec']['name']}"]
     """extra_files: {name: JSON-able} written into the bundle before sealing (e.g. the operator approval and probe records).
     contract-v2 only: observed (the probe's observed record), applicability lines and the under-claim attribution."""
     contract = K.load(contract_path)
@@ -489,16 +541,17 @@ def run(contract_path, candidates, out_root, seed=None, conditions=None, extra_f
         v3_conds = [c for c in protocol["conditions"] if has_hook or c not in SV3.LATE]
         ctx.update({"late_hook": has_hook, "late_commit_delay_s": protocol["late_commit_delay_s"],
                     "not_applicable_conditions": [] if has_hook else [f"{c}: no late_backend_commit fault hook in the contract" for c in SV3.LATE]})
-    the_plan = SV3.plan(protocol, list(candidates), v3_conds, seed, has_hook, validate_policy=validate_scripted) if is_v3 else \
-        SV2.plan(protocol, list(candidates), seed, validate_policy=validate_scripted) if protocol["protocol"] == "contract-v2" else \
-        Q.plan(protocol, list(candidates), "full", conditions, seed, validate_policy=validate_scripted)
+    vp = (lambda p: None if p in candidates else validate_scripted(p)) if external else validate_scripted
+    the_plan = SV3.plan(protocol, list(candidates), v3_conds, seed, has_hook, validate_policy=vp) if is_v3 else \
+        SV2.plan(protocol, list(candidates), seed, validate_policy=vp) if protocol["protocol"] == "contract-v2" else \
+        Q.plan(protocol, list(candidates), "full", conditions, seed, validate_policy=vp)
     bid = f"generic-{time.strftime('%Y%m%dT%H%M%SZ', time.gmtime())}-{uuid.uuid4().hex[:6]}"
     work = Path(out_root) / f".{bid}.partial"; work.mkdir(parents=True)
     runs, t0 = [], time.time()
     J.janitor()
     if scripted_version not in SCRIPTED_SRC: raise ValueError(f"unknown scripted policy version {scripted_version!r}")
     with GenericJob(contract, "generic") as job:
-        job.scripted_version = scripted_version
+        job.scripted_version = scripted_version; job.external = external
         st = selftest_v3(job, delay, protocol) if is_v3 else selftest_v2(job, delay) if is_v2 else (selftest_objects(job, delay) if per_object else selftest(job, delay))
         if st["pass"]:
             for spec in the_plan["runs"]:
@@ -530,13 +583,13 @@ def run(contract_path, candidates, out_root, seed=None, conditions=None, extra_f
                            "requests": ev["requests"], "t_run_start": round(rs, 3), "t_agent_end": round(agent_end, 3), "worker_error": result.get("error"),
                            "steps": len(steps), "seconds": round(time.time() - rs, 1), "cost_usd": 0.0}
                     rd = work / "runs" / spec["run_id"]; rd.mkdir(parents=True); (rd / "result.json").write_text(json.dumps(result, indent=1))
-                    runs.append(rec); continue
+                    external and rec.update(agent_fields(result, rec, contract)); runs.append(rec); continue
                 if is_v2:
                     base = s.record_v2(spec["condition"], claim)
                     rec = {**spec, "category": cat, **base, **SV2.classify_run(base, ctx), "scripted_policy_version": scripted_version, "agent_readback": result.get("readback"), "requests": ev["requests"], "t_run_start": round(rs, 3), "t_agent_end": round(agent_end, 3),
                            "worker_error": result.get("error"), "steps": len(result.get("steps") or []), "seconds": round(time.time() - rs, 1), "cost_usd": 0.0}
                     rd = work / "runs" / spec["run_id"]; rd.mkdir(parents=True); (rd / "result.json").write_text(json.dumps(result, indent=1))
-                    runs.append(rec); continue
+                    external and rec.update(agent_fields(result, rec, contract)); runs.append(rec); continue
                 if per_object:
                     att, inf, orecs = s.object_inference(); vobj = s.object_effects()
                     writes = classify_writes(job.writes(s.t0), contract.get("supporting_writes"))
@@ -548,7 +601,7 @@ def run(contract_path, candidates, out_root, seed=None, conditions=None, extra_f
                            "requests": ev["requests"], "t_run_start": round(rs, 3), "t_agent_end": round(agent_end, 3), "claim": claim,
                            "worker_error": result.get("error"), "steps": len(result.get("steps") or []), "seconds": round(time.time() - rs, 1), "cost_usd": 0.0}
                     rd = work / "runs" / spec["run_id"]; rd.mkdir(parents=True); (rd / "result.json").write_text(json.dumps(result, indent=1))
-                    runs.append(rec); continue
+                    external and rec.update(agent_fields(result, rec, contract)); runs.append(rec); continue
                 rec = {**spec, "category": cat, **Q.outcome({"backend_effects": n, "ledger_effects": len(ev["effects"])},
                                                           {"success": n == contract["intent"]["exactly"], "negative_checks": []}, claim),
                        "attempts": len(ev["requests"]), "proxy_inferred": len(ev["effects"]), "verified": n,
@@ -557,7 +610,7 @@ def run(contract_path, candidates, out_root, seed=None, conditions=None, extra_f
                        "t_run_start": round(rs, 3), "t_agent_end": round(agent_end, 3), "claim": claim, "worker_error": result.get("error"),
                        "steps": len(result.get("steps") or []), "seconds": round(time.time() - rs, 1), "cost_usd": 0.0}
                 rd = work / "runs" / spec["run_id"]; rd.mkdir(parents=True); (rd / "result.json").write_text(json.dumps(result, indent=1))
-                runs.append(rec)
+                external and rec.update(agent_fields(result, rec, contract)); runs.append(rec)
     teardown = job.teardown_report
     v = SV3.verdict(protocol, the_plan, runs, st, teardown, ctx) if is_v3 else SV2.verdict(protocol, the_plan, runs, st, teardown, ctx) if is_v2 else (SO.verdict if per_object else Q.verdict)(protocol, the_plan, runs, st, teardown)
     evidence = evidence_completeness(the_plan, runs, work) if per_object else None
@@ -573,7 +626,7 @@ def run(contract_path, candidates, out_root, seed=None, conditions=None, extra_f
                       "summary.json": {"bundle": bid, "profile": "generic", "scripted_policy_version": scripted_version, "contract": contract["name"], "protocol": protocol["protocol"], "candidates": list(candidates),
                                        "plan_seed": the_plan["seed"], "job": job.id, "seconds": round(time.time() - t0, 1), "verdict": v,
                                        **({"evidence_completeness": evidence,
-                                           "qualification_status": (f"QUALIFICATION RESULT ({protocol['protocol']}; scripted agents)" if v["harness_validity"]["valid"] and evidence["complete"] else
+                                           "qualification_status": (f"QUALIFICATION RESULT ({protocol['protocol']}; " + (f"external agent {external['spec']['name']}; scripted positive controls)" if external else "scripted agents)") if v["harness_validity"]["valid"] and evidence["complete"] else
                                                                     "NOT A QUALIFICATION: " + "; ".join(([] if v["harness_validity"]["valid"] else ["harness invalid"]) +
                                                                                                          ([] if evidence["complete"] else [f"{len(evidence['gaps'])} run(s) with missing or incomplete agent evidence"])))}
                                           if per_object else {})},

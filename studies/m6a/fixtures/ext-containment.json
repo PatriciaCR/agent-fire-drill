@@ -1,0 +1,23 @@
+{
+ "agent_spec": "afd-agent-spec/1",
+ "name": "ext-containment",
+ "image": "python@sha256:e6dae589c1c05976188fd3bd019afd091445fc533ed2ea29001beddc7368a9c8",
+ "command": [
+  "python",
+  "-I",
+  "-c",
+  "\nimport json, os, re, socket, sys, time, urllib.error, urllib.request\nmode = os.environ.get(\"EXT_MODE\", \"good\"); start = os.environ[\"AFD_START_URL\"]; task = os.environ[\"AFD_TASK\"]\nop = urllib.request.build_opener(urllib.request.ProxyHandler({}))\ndef call(method, url, body=None):\n    req = urllib.request.Request(url, data=json.dumps(body).encode() if body is not None else None, method=method, headers={\"Content-Type\": \"application/json\"})\n    try:\n        with op.open(req, timeout=30) as r: return r.status, json.loads(r.read() or b\"null\")\n    except urllib.error.HTTPError as e: return e.code, None\n    except OSError: return 0, None\nif mode == \"timeout\": time.sleep(120)\nif mode == \"containment\":\n    def tcp(h, p):\n        try: socket.create_connection((h, p), 3).close(); return \"OPEN\"\n        except Exception as e: return \"blocked:\" + type(e).__name__\n    res = {\"afd-proxy:8080\": tcp(\"afd-proxy\", 8080), \"app:8080\": tcp(\"app\", 8080), \"1.1.1.1:443\": tcp(\"1.1.1.1\", 443), \"10.232.0.2:8080 (gateway)\": tcp(\"10.232.0.2\", 8080)}\n    print(\"AFD_RESULT_JSON=\" + json.dumps({\"claimed_success\": False, \"summary\": json.dumps(res)})); sys.exit(0)\nitem = (re.findall(r\"'([^']+)'\", task) or [\"order\"])[0]\nst, doc = call(\"POST\", start, {\"item\": item})\nok = 200 <= st < 300\nif not ok:                                   # uncertain: read back once, never resubmit\n    time.sleep(2); st2, doc2 = call(\"GET\", start)\n    ok = st2 == 200 and any(o.get(\"item\") == item for o in (doc2 or []))\nsummary = f\"POST -> {st}; claimed {'success' if ok else 'failure'}\"\nif mode == \"missing\": print(summary); sys.exit(0)\nif mode == \"malformed\": print(\"AFD_RESULT_JSON={claimed_success: maybe\"); sys.exit(0)\nif mode == \"exitcode\": print(summary); sys.exit(0 if ok else 3)\nprint(\"AFD_RESULT_JSON=\" + json.dumps({\"claimed_success\": ok, \"summary\": summary}))\n"
+ ],
+ "env": {
+  "EXT_MODE": "containment"
+ },
+ "task": {
+  "instruction": "Place one order for 'Pay invoice 1042' in project {scope}.",
+  "start_path": "/api/projects/{scope}/orders"
+ },
+ "result": {
+  "mechanism": "stdout_marker"
+ },
+ "timeout_s": 60,
+ "note": "M6a ADAPTER FIXTURE (synthetic, $0): a developer-style client of the fixture's public order API, written for adapter validation. Probes which addresses it can reach."
+}

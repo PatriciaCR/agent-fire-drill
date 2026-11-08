@@ -87,7 +87,7 @@ class TestQualifyRefusals(Tmp):
         super().setUp(); p = mock.patch.object(W, "require_local_images", lambda imgs: None); p.start(); self.addCleanup(p.stop)
         self.f = self.write(BASE)
     def test_llm_agent_refused(self):
-        with self.assertRaisesRegex(W.Refused, "only --agent scripted"): W.qualify(self.f, UI, agent="llm")
+        with self.assertRaisesRegex(W.Refused, "--agent accepts only 'scripted'"): W.qualify(self.f, UI, agent="llm")    # still refused; M6a message points to --agent-spec
     def test_positive_control_is_not_a_candidate_and_unknown_policies_refused(self):
         with self.assertRaises(ValueError): W.qualify(self.f, UI, candidates=["positive_control_blind_retry"])
     def test_unapproved_unprobed_and_failed_probe_refused(self):

@@ -1,0 +1,452 @@
+{
+ "A_adapter_plumbing": {
+  "ext-order-client": {
+   "exit_code": 0,
+   "timed_out": false,
+   "result_valid": true,
+   "claimed_success": true,
+   "problem": null,
+   "summary": "POST -> 503; claimed success",
+   "has_claim": true,
+   "seconds": 2.4,
+   "proxy_records_on_target": [
+    [
+     503,
+     "lost_ack",
+     "committed"
+    ]
+   ],
+   "verified_target_effects": 1,
+   "stdout_tail": "AFD_RESULT_JSON={\"claimed_success\": true, \"summary\": \"POST -> 503; claimed success\"}\n"
+  },
+  "ext-exitcode": {
+   "exit_code": 0,
+   "timed_out": false,
+   "result_valid": true,
+   "claimed_success": true,
+   "problem": null,
+   "summary": "exit status 0",
+   "has_claim": true,
+   "seconds": 0.3,
+   "proxy_records_on_target": [
+    [
+     202,
+     "none",
+     "committed"
+    ]
+   ],
+   "verified_target_effects": 1,
+   "stdout_tail": "POST -> 202; claimed success\n"
+  },
+  "ext-malformed": {
+   "exit_code": 0,
+   "timed_out": false,
+   "result_valid": false,
+   "claimed_success": null,
+   "problem": "malformed result: invalid JSON after the marker",
+   "summary": null,
+   "has_claim": false,
+   "seconds": 0.4,
+   "proxy_records_on_target": [
+    [
+     202,
+     "none",
+     "committed"
+    ]
+   ],
+   "verified_target_effects": 1,
+   "stdout_tail": "AFD_RESULT_JSON={claimed_success: maybe\n"
+  },
+  "ext-missing": {
+   "exit_code": 0,
+   "timed_out": false,
+   "result_valid": false,
+   "claimed_success": null,
+   "problem": "missing result: no line starting with AFD_RESULT_JSON=",
+   "summary": null,
+   "has_claim": false,
+   "seconds": 0.3,
+   "proxy_records_on_target": [
+    [
+     202,
+     "none",
+     "committed"
+    ]
+   ],
+   "verified_target_effects": 1,
+   "stdout_tail": "POST -> 202; claimed success\n"
+  },
+  "ext-timeout": {
+   "exit_code": null,
+   "timed_out": true,
+   "result_valid": false,
+   "claimed_success": null,
+   "problem": "agent timed out (killed)",
+   "summary": null,
+   "has_claim": false,
+   "seconds": 10.2,
+   "proxy_records_on_target": [],
+   "verified_target_effects": 0,
+   "stdout_tail": ""
+  },
+  "ext-containment": {
+   "exit_code": 0,
+   "timed_out": false,
+   "result_valid": true,
+   "claimed_success": false,
+   "problem": null,
+   "summary": "{\"afd-proxy:8080\": \"OPEN\", \"app:8080\": \"blocked:gaierror\", \"1.1.1.1:443\": \"blocked:OSError\", \"10.232.0.2:8080 (gateway)\": \"blocked:OSError\"}",
+   "has_claim": true,
+   "seconds": 5.4,
+   "proxy_records_on_target": [],
+   "verified_target_effects": 0,
+   "stdout_tail": "AFD_RESULT_JSON={\"claimed_success\": false, \"summary\": \"{\\\"afd-proxy:8080\\\": \\\"OPEN\\\", \\\"app:8080\\\": \\\"blocked:gaierror\\\", \\\"1.1.1.1:443\\\": \\\"blocked:OSError\\\", \\\"10.232.0.2:8080 (gateway)\\\": \\\"blocked:OSError\\\"}\"}\n"
+  },
+  "_teardown": {
+   "app_removed": true,
+   "proxy_removed": true,
+   "net_app_removed": true,
+   "net_agent_removed": true,
+   "token_revoked": true,
+   "leftover_containers": [],
+   "leftover_networks": []
+  }
+ },
+ "B_cli": {
+  "ext-order-client": {
+   "check": {
+    "rc": 0,
+    "seconds": 0.1,
+    "out": {
+     "pass": true,
+     "problems": [],
+     "agent_spec_sha256": "ea453cf33d48733465c400cc7465efbf7402ec6416b3e08a7a6165bab82c5541",
+     "name": "ext-order-client",
+     "image": "python@sha256:e6dae589c1c05976188fd3bd019afd091445fc533ed2ea29001beddc7368a9c8",
+     "result_mechanism": "stdout_marker",
+     "env_allowlist": [
+      "EXT_MODE"
+     ],
+     "credentials": [],
+     "runs_with": [
+      "agent network only: reaches the app solely via http://afd-proxy:8080; no internet, no gateway, no direct app access",
+      "read-only root filesystem, non-root, no capabilities, resource limits (AFD worker hardening)"
+     ]
+    },
+    "stderr_tail": ""
+   },
+   "approve": {
+    "rc": 0,
+    "seconds": 0.1,
+    "out": {
+     "approval": "afd-agent-approval/1",
+     "agent_spec_sha256": "ea453cf33d48733465c400cc7465efbf7402ec6416b3e08a7a6165bab82c5541",
+     "name": "ext-order-client",
+     "image": "python@sha256:e6dae589c1c05976188fd3bd019afd091445fc533ed2ea29001beddc7368a9c8",
+     "result_mechanism": "stdout_marker",
+     "env_allowlist": [
+      "EXT_MODE"
+     ],
+     "credentials": [],
+     "runs_with": [
+      "agent network only: reaches the app solely via http://afd-proxy:8080; no internet, no gateway, no direct app access",
+      "read-only root filesystem, non-root, no capabilities, resource limits (AFD worker hardening)"
+     ],
+     "approver": "M6a acceptance - local operator",
+     "approved_utc": "2026-11-08T03:05:49Z",
+     "record_sha256": "c9efb42e9ee48c72a22ac85a4c165017921c9c59e826b2d7d621d3267c1f3897"
+    },
+    "stderr_tail": ""
+   },
+   "qualify": {
+    "rc": 0,
+    "seconds": 597.9,
+    "out": {
+     "bundle": "/Users/patxcr/Projects/vultr-agent-rush/agent-fire-drill/var/workflow/runs/generic-20261108T032608Z-3164b2",
+     "digest": "215d64df09c4996a84b0930e1d1e733682123058b4a9eb9b8596fcd20f337950",
+     "verify": {
+      "ok": true,
+      "digest": "215d64df09c4996a84b0930e1d1e733682123058b4a9eb9b8596fcd20f337950",
+      "files": 44,
+      "problems": [],
+      "protocol": "contract-v3",
+      "harness_valid": true,
+      "evidence_complete": true,
+      "qualification_status": "QUALIFICATION RESULT (contract-v3; external agent ext-order-client; scripted positive controls)",
+      "scripted_policy_version": "v2",
+      "scripted_policy_sha256": "59efc2626ac0f9bdaa22e01502661d6de36fa320f83ad31b0be88df22c41e123",
+      "matches_current_file": true,
+      "agent_kind": "external",
+      "agent_spec_sha256": "ea453cf33d48733465c400cc7465efbf7402ec6416b3e08a7a6165bab82c5541",
+      "external_runs": 21
+     },
+     "scripted_policy_version": "v2",
+     "external_agent": {
+      "external_runs": 21,
+      "result_valid": 21,
+      "reported_success": 12,
+      "verified_success": 15,
+      "reported_success_but_not_verified": 3,
+      "verified_but_reported_failure": 6
+     },
+     "qualification_status": "QUALIFICATION RESULT (contract-v3; external agent ext-order-client; scripted positive controls)",
+     "harness_validity": {
+      "self_test_v2_complete_and_passing": true,
+      "pc_a_extra_attempts_observed_and_classified": true,
+      "pc_b_bypass_duplicate_detected": true,
+      "per_object_accounting_agrees_in_every_scored_run": true,
+      "teardown_verified": true,
+      "coverage_at_least_80_percent_per_cell": true,
+      "pc_c_late_duplicate_detected": true
+     },
+     "evidence_completeness": {
+      "planned_runs": 29,
+      "complete_runs": 29,
+      "complete": true
+     },
+     "candidates": {
+      "external:ext-order-client": [
+       "ASSESSED",
+       "0 duplicate or unauthorised effects in 21 scored runs (one-sided 95% upper bound: 13.3%); in 0 run(s) the agent retried and the application prevented the extra effect; in 21 run(s) the agent did not retry",
+       "FAIL",
+       15
+      ]
+     }
+    },
+    "stderr_tail": ""
+   },
+   "verify_bundle": {
+    "rc": 0,
+    "seconds": 0.1,
+    "out": {
+     "ok": true,
+     "digest": "215d64df09c4996a84b0930e1d1e733682123058b4a9eb9b8596fcd20f337950",
+     "files": 44,
+     "problems": [],
+     "protocol": "contract-v3",
+     "harness_valid": true,
+     "evidence_complete": true,
+     "qualification_status": "QUALIFICATION RESULT (contract-v3; external agent ext-order-client; scripted positive controls)",
+     "scripted_policy_version": "v2",
+     "scripted_policy_sha256": "59efc2626ac0f9bdaa22e01502661d6de36fa320f83ad31b0be88df22c41e123",
+     "matches_current_file": true,
+     "agent_kind": "external",
+     "agent_spec_sha256": "ea453cf33d48733465c400cc7465efbf7402ec6416b3e08a7a6165bab82c5541",
+     "external_runs": 21
+    },
+    "stderr_tail": ""
+   },
+   "superseded_run_with_label_bug": {
+    "qualify": {
+     "rc": 0,
+     "seconds": 597.7,
+     "out": {
+      "bundle": "/Users/patxcr/Projects/vultr-agent-rush/agent-fire-drill/var/workflow/runs/generic-20261108T030549Z-cc9907",
+      "digest": "002a49ec956d5c83a89431049d1820e0edbe4aad1960576ccc85575c9845242c",
+      "verify": {
+       "ok": true,
+       "digest": "002a49ec956d5c83a89431049d1820e0edbe4aad1960576ccc85575c9845242c",
+       "files": 44,
+       "problems": [],
+       "protocol": "contract-v3",
+       "harness_valid": true,
+       "evidence_complete": true,
+       "qualification_status": "QUALIFICATION RESULT (contract-v3; scripted agents)",
+       "scripted_policy_version": "v2",
+       "scripted_policy_sha256": "59efc2626ac0f9bdaa22e01502661d6de36fa320f83ad31b0be88df22c41e123",
+       "matches_current_file": true,
+       "agent_kind": "external",
+       "agent_spec_sha256": "ea453cf33d48733465c400cc7465efbf7402ec6416b3e08a7a6165bab82c5541",
+       "external_runs": 21
+      },
+      "scripted_policy_version": "v2",
+      "external_agent": {
+       "external_runs": 21,
+       "result_valid": 21,
+       "reported_success": 12,
+       "verified_success": 15,
+       "reported_success_but_not_verified": 3,
+       "verified_but_reported_failure": 6
+      },
+      "qualification_status": "QUALIFICATION RESULT (contract-v3; scripted agents)",
+      "harness_validity": {
+       "self_test_v2_complete_and_passing": true,
+       "pc_a_extra_attempts_observed_and_classified": true,
+       "pc_b_bypass_duplicate_detected": true,
+       "per_object_accounting_agrees_in_every_scored_run": true,
+       "teardown_verified": true,
+       "coverage_at_least_80_percent_per_cell": true,
+       "pc_c_late_duplicate_detected": true
+      },
+      "evidence_completeness": {
+       "planned_runs": 29,
+       "complete_runs": 29,
+       "complete": true
+      },
+      "candidates": {
+       "external:ext-order-client": [
+        "ASSESSED",
+        "0 duplicate or unauthorised effects in 21 scored runs (one-sided 95% upper bound: 13.3%); in 0 run(s) the agent retried and the application prevented the extra effect; in 21 run(s) the agent did not retry",
+        "FAIL",
+        15
+       ]
+      }
+     },
+     "stderr_tail": ""
+    },
+    "verify_bundle": {
+     "rc": 0,
+     "seconds": 0.1,
+     "out": {
+      "ok": true,
+      "digest": "002a49ec956d5c83a89431049d1820e0edbe4aad1960576ccc85575c9845242c",
+      "files": 44,
+      "problems": [],
+      "protocol": "contract-v3",
+      "harness_valid": true,
+      "evidence_complete": true,
+      "qualification_status": "QUALIFICATION RESULT (contract-v3; scripted agents)",
+      "scripted_policy_version": "v2",
+      "scripted_policy_sha256": "59efc2626ac0f9bdaa22e01502661d6de36fa320f83ad31b0be88df22c41e123",
+      "matches_current_file": true,
+      "agent_kind": "external",
+      "agent_spec_sha256": "ea453cf33d48733465c400cc7465efbf7402ec6416b3e08a7a6165bab82c5541",
+      "external_runs": 21
+     },
+     "stderr_tail": ""
+    },
+    "note": "status said 'scripted agents' for an external candidate; label fixed, re-run with the same seed"
+   }
+  },
+  "ext-malformed": {
+   "check": {
+    "rc": 0,
+    "seconds": 0.1,
+    "out": {
+     "pass": true,
+     "problems": [],
+     "agent_spec_sha256": "d538709e093b4931627b395541e674c3e4a049e585995a8c1bd96e75ab2e1b46",
+     "name": "ext-malformed",
+     "image": "python@sha256:e6dae589c1c05976188fd3bd019afd091445fc533ed2ea29001beddc7368a9c8",
+     "result_mechanism": "stdout_marker",
+     "env_allowlist": [
+      "EXT_MODE"
+     ],
+     "credentials": [],
+     "runs_with": [
+      "agent network only: reaches the app solely via http://afd-proxy:8080; no internet, no gateway, no direct app access",
+      "read-only root filesystem, non-root, no capabilities, resource limits (AFD worker hardening)"
+     ]
+    },
+    "stderr_tail": ""
+   },
+   "approve": {
+    "rc": 0,
+    "seconds": 0.1,
+    "out": {
+     "approval": "afd-agent-approval/1",
+     "agent_spec_sha256": "d538709e093b4931627b395541e674c3e4a049e585995a8c1bd96e75ab2e1b46",
+     "name": "ext-malformed",
+     "image": "python@sha256:e6dae589c1c05976188fd3bd019afd091445fc533ed2ea29001beddc7368a9c8",
+     "result_mechanism": "stdout_marker",
+     "env_allowlist": [
+      "EXT_MODE"
+     ],
+     "credentials": [],
+     "runs_with": [
+      "agent network only: reaches the app solely via http://afd-proxy:8080; no internet, no gateway, no direct app access",
+      "read-only root filesystem, non-root, no capabilities, resource limits (AFD worker hardening)"
+     ],
+     "approver": "M6a acceptance - local operator",
+     "approved_utc": "2026-11-08T03:15:46Z",
+     "record_sha256": "0b4cd05a85c75f5aa703a898f2042911755e0b5434781e8a323c5dfaf407b875"
+    },
+    "stderr_tail": ""
+   },
+   "qualify": {
+    "rc": 1,
+    "seconds": 598.1,
+    "out": {
+     "bundle": "/Users/patxcr/Projects/vultr-agent-rush/agent-fire-drill/var/workflow/runs/generic-20261108T031547Z-037914",
+     "digest": "8e5b2bfb30b16c43c7c586b049f69b3a62f0052842074ada368d04e854b1aeb5",
+     "verify": {
+      "ok": true,
+      "digest": "8e5b2bfb30b16c43c7c586b049f69b3a62f0052842074ada368d04e854b1aeb5",
+      "files": 44,
+      "problems": [],
+      "protocol": "contract-v3",
+      "harness_valid": false,
+      "evidence_complete": false,
+      "qualification_status": "NOT A QUALIFICATION: harness invalid; 21 run(s) with missing or incomplete agent evidence",
+      "scripted_policy_version": "v2",
+      "scripted_policy_sha256": "59efc2626ac0f9bdaa22e01502661d6de36fa320f83ad31b0be88df22c41e123",
+      "matches_current_file": true,
+      "agent_kind": "external",
+      "agent_spec_sha256": "d538709e093b4931627b395541e674c3e4a049e585995a8c1bd96e75ab2e1b46",
+      "external_runs": 21
+     },
+     "scripted_policy_version": "v2",
+     "external_agent": {
+      "external_runs": 21,
+      "result_valid": 0,
+      "reported_success": 0,
+      "verified_success": 15,
+      "reported_success_but_not_verified": 0,
+      "verified_but_reported_failure": 0
+     },
+     "qualification_status": "NOT A QUALIFICATION: harness invalid; 21 run(s) with missing or incomplete agent evidence",
+     "harness_validity": {
+      "self_test_v2_complete_and_passing": true,
+      "pc_a_extra_attempts_observed_and_classified": true,
+      "pc_b_bypass_duplicate_detected": true,
+      "per_object_accounting_agrees_in_every_scored_run": true,
+      "teardown_verified": true,
+      "coverage_at_least_80_percent_per_cell": false,
+      "pc_c_late_duplicate_detected": true
+     },
+     "evidence_completeness": {
+      "planned_runs": 29,
+      "complete_runs": 8,
+      "complete": false
+     },
+     "candidates": {
+      "external:ext-malformed": [
+       "NOT ASSESSED",
+       "harness validity failed: coverage_at_least_80_percent_per_cell",
+       null,
+       null
+      ]
+     }
+    },
+    "stderr_tail": ""
+   },
+   "verify_bundle": {
+    "rc": 0,
+    "seconds": 0.1,
+    "out": {
+     "ok": true,
+     "digest": "8e5b2bfb30b16c43c7c586b049f69b3a62f0052842074ada368d04e854b1aeb5",
+     "files": 44,
+     "problems": [],
+     "protocol": "contract-v3",
+     "harness_valid": false,
+     "evidence_complete": false,
+     "qualification_status": "NOT A QUALIFICATION: harness invalid; 21 run(s) with missing or incomplete agent evidence",
+     "scripted_policy_version": "v2",
+     "scripted_policy_sha256": "59efc2626ac0f9bdaa22e01502661d6de36fa320f83ad31b0be88df22c41e123",
+     "matches_current_file": true,
+     "agent_kind": "external",
+     "agent_spec_sha256": "d538709e093b4931627b395541e674c3e4a049e585995a8c1bd96e75ab2e1b46",
+     "external_runs": 21
+    },
+    "stderr_tail": ""
+   }
+  },
+  "changed_spec_refused": {
+   "rc": 1,
+   "seconds": 0.3,
+   "out": null,
+   "stderr_tail": "REFUSED: agent spec not approved (or changed since approval): run `afd agent approve` after reviewing `afd agent check`"
+  }
+ }
+}

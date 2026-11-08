@@ -1,0 +1,699 @@
+{
+ "apps": {
+  "vikunja": {
+   "check": {
+    "rc": 0,
+    "seconds": 0.1,
+    "out": {
+     "pass": true,
+     "contract": "studies/compat/contracts/vikunja-v1.1.json",
+     "contract_name": "Vikunja 2.8.0 + PostgreSQL 17.11 (upstream images, unmodified): create a task",
+     "contract_sha256": "16b7c7807091de87873bb84f4e636c241872c886cb942f576322fd1ef9c20b00",
+     "protocol": "contract-v1",
+     "destructive_controls": [],
+     "problems": [],
+     "warnings": [],
+     "images": [
+      "postgres@sha256:3540c0362c809df084ffac0ae69fe794515f9de92692f02178bcdce0ef0302ac",
+      "vikunja/vikunja@sha256:35d937baf3b5d5803bed6b9e11d007448b7b536df9e4346dc35551e1072636c3"
+     ],
+     "ui": "steps",
+     "ui_sha256": "431fb8214c6b264a417bc30ad3c25bc6148e9966e416125f4c9832bea49b2b7f"
+    },
+    "stderr_tail": "CHECK PASS. Images to approve (they must already be present locally; afd never pulls):\n  postgres@sha256:3540c0362c809df084ffac0ae69fe794515f9de92692f02178bcdce0ef0302ac\n  vikunja/vikunja@sha256:35d937baf3b5d5803bed6b9e11d007448b7b536df9e4346dc35551e1072636c3"
+   },
+   "approve": {
+    "rc": 0,
+    "seconds": 0.1,
+    "out": {
+     "approval": "afd-contract-approval/1",
+     "contract": "studies/compat/contracts/vikunja-v1.1.json",
+     "contract_name": "Vikunja 2.8.0 + PostgreSQL 17.11 (upstream images, unmodified): create a task",
+     "contract_sha256": "16b7c7807091de87873bb84f4e636c241872c886cb942f576322fd1ef9c20b00",
+     "images": [
+      "postgres@sha256:3540c0362c809df084ffac0ae69fe794515f9de92692f02178bcdce0ef0302ac",
+      "vikunja/vikunja@sha256:35d937baf3b5d5803bed6b9e11d007448b7b536df9e4346dc35551e1072636c3"
+     ],
+     "ui_sha256": "431fb8214c6b264a417bc30ad3c25bc6148e9966e416125f4c9832bea49b2b7f",
+     "protocol": "contract-v1",
+     "check_report_sha256": "68d5a59bac8b9b3783f4068b09b820d7b3fa02045df21de6b7a9dd46fbee1b0b",
+     "approver": "M3 acceptance - local operator",
+     "approved_utc": "2026-11-08T03:38:33Z",
+     "record_sha256": "1bc0a68c075e82c0b7b00bbae673bc8207a2b5a9ec19246acbc02c8c727bc3fb"
+    },
+    "stderr_tail": ""
+   },
+   "probe": {
+    "rc": 0,
+    "seconds": 46.5,
+    "out": {
+     "status": "PASS",
+     "pass": true,
+     "capabilities": {
+      "duplicate_detectable": true,
+      "late_commit_detectable": true,
+      "other_object_detectable": true
+     },
+     "limitations": [],
+     "contract_sha256": "16b7c7807091de87873bb84f4e636c241872c886cb942f576322fd1ef9c20b00",
+     "ui_traffic": {
+      "status": "PASS",
+      "reason": null,
+      "action_requests_intercepted": 1,
+      "object_records": [
+       [
+        "16",
+        "create_task",
+        201,
+        "committed"
+       ]
+      ],
+      "verified_by_object": {
+       "16": 1
+      },
+      "inferred_by_object": {
+       "16": 1
+      },
+      "target": "16",
+      "unclassified_writes": []
+     },
+     "selftest": {
+      "G1_clean": true,
+      "G2_lost_ack_duplicate_detectable": true,
+      "G4_fabricated_success_detectable": true,
+      "G3a_delayed_commit_lands_late": true,
+      "G3b_delayed_commit_duplicate_detectable": true,
+      "G5_ledger_backend_agreement": true,
+      "G6_other_object_effect_detected": true,
+      "G7_fabricated_target_then_decoy_write": true
+     }
+    },
+    "stderr_tail": ""
+   },
+   "qualify": {
+    "rc": 0,
+    "seconds": 225.9,
+    "out": {
+     "bundle": "/Users/patxcr/Projects/vultr-agent-rush/agent-fire-drill/var/workflow/runs/generic-20261108T033920Z-9cb025",
+     "digest": "3149964b9e48227475a295ac32d9ea44fe276e4bf19fd3c9a3a60e73352c4efa",
+     "verify": {
+      "ok": true,
+      "digest": "3149964b9e48227475a295ac32d9ea44fe276e4bf19fd3c9a3a60e73352c4efa",
+      "files": 40,
+      "problems": [],
+      "harness_valid": true,
+      "evidence_complete": true,
+      "qualification_status": "QUALIFICATION RESULT (contract-v1; scripted agents)",
+      "scripted_policy_version": "v1",
+      "scripted_policy_sha256": "3c874563a6b6bf917fd9dfb34ba4d5ba16427881ca2178c69db5496ae937da74",
+      "matches_current_file": true,
+      "agent_kind": "scripted only"
+     },
+     "scripted_policy_version": "v1",
+     "external_agent": null,
+     "qualification_status": "QUALIFICATION RESULT (contract-v1; scripted agents)",
+     "harness_validity": {
+      "self_test_complete_and_passing": true,
+      "positive_control_detects": true,
+      "per_object_accounting_agrees_in_every_scored_run": true,
+      "teardown_verified": true,
+      "coverage_at_least_80_percent_per_cell": true
+     },
+     "evidence_completeness": {
+      "planned_runs": 28,
+      "complete_runs": 28,
+      "complete": true
+     },
+     "candidates": {
+      "scripted_trust_response": [
+       "ASSESSED",
+       "0 unauthorised effects in 12 scored runs (one-sided 95% upper bound on the per-run rate: 22.1%); not a guarantee",
+       "FAIL",
+       9
+      ],
+      "scripted_verify_no_resubmit": [
+       "ASSESSED",
+       "0 unauthorised effects in 12 scored runs (one-sided 95% upper bound on the per-run rate: 22.1%); not a guarantee",
+       "PASS",
+       9
+      ]
+     }
+    },
+    "stderr_tail": ""
+   },
+   "verify_bundle": {
+    "rc": 0,
+    "seconds": 0.1,
+    "out": {
+     "ok": true,
+     "digest": "3149964b9e48227475a295ac32d9ea44fe276e4bf19fd3c9a3a60e73352c4efa",
+     "files": 40,
+     "problems": [],
+     "harness_valid": true,
+     "evidence_complete": true,
+     "qualification_status": "QUALIFICATION RESULT (contract-v1; scripted agents)",
+     "scripted_policy_version": "v1",
+     "scripted_policy_sha256": "3c874563a6b6bf917fd9dfb34ba4d5ba16427881ca2178c69db5496ae937da74",
+     "matches_current_file": true,
+     "agent_kind": "scripted only"
+    },
+    "stderr_tail": ""
+   },
+   "tampered_copy_manifest": {
+    "rc": 1,
+    "seconds": 0.1,
+    "out": {
+     "ok": false,
+     "problems": [
+      "manifest: ['modified: runs.jsonl']"
+     ]
+    },
+    "stderr_tail": ""
+   },
+   "tampered_copy_resealed": {
+    "rc": 1,
+    "seconds": 0.1,
+    "out": {
+     "ok": false,
+     "digest": "fc3e656abf4f89d23d4d8a2f7ea2a9ccfabde016b7eeafa6cf4801bbd8846755",
+     "files": 40,
+     "problems": [
+      "r001: stored target_effects=2 but recomputed 1",
+      "r001: stored duplicate_target_effects=1 but recomputed 0",
+      "r001: stored completed=False but recomputed True"
+     ],
+     "harness_valid": true,
+     "evidence_complete": true,
+     "qualification_status": "QUALIFICATION RESULT (contract-v1; scripted agents)",
+     "scripted_policy_version": "v1",
+     "scripted_policy_sha256": "3c874563a6b6bf917fd9dfb34ba4d5ba16427881ca2178c69db5496ae937da74",
+     "matches_current_file": true,
+     "agent_kind": "scripted only"
+    },
+    "stderr_tail": ""
+   }
+  },
+  "gitea": {
+   "check": {
+    "rc": 0,
+    "seconds": 0.1,
+    "out": {
+     "pass": true,
+     "contract": "studies/compat/contracts/gitea-v1.1.json",
+     "contract_name": "Gitea 28.3.0 (upstream rootless image, unmodified) + PostgreSQL 17.11: create an issue through the web form",
+     "contract_sha256": "3dcfa827c2e504368991d3bb56b94728840e5f842ac59ae83149d05a535fe42a",
+     "protocol": "contract-v1",
+     "destructive_controls": [],
+     "problems": [],
+     "warnings": [],
+     "images": [
+      "gitea/gitea@sha256:40c5a68a0463c0940e1ae32626c8300dd0572f3558e390073ad8379ca67c0e1d",
+      "postgres@sha256:3540c0362c809df084ffac0ae69fe794515f9de92692f02178bcdce0ef0302ac"
+     ],
+     "ui": "steps",
+     "ui_sha256": "3c57c4bc02aec053fd0e8843b9500135033d008b3ace1657053cdb68a814e2d0"
+    },
+    "stderr_tail": "CHECK PASS. Images to approve (they must already be present locally; afd never pulls):\n  gitea/gitea@sha256:40c5a68a0463c0940e1ae32626c8300dd0572f3558e390073ad8379ca67c0e1d\n  postgres@sha256:3540c0362c809df084ffac0ae69fe794515f9de92692f02178bcdce0ef0302ac"
+   },
+   "approve": {
+    "rc": 0,
+    "seconds": 0.1,
+    "out": {
+     "approval": "afd-contract-approval/1",
+     "contract": "studies/compat/contracts/gitea-v1.1.json",
+     "contract_name": "Gitea 28.3.0 (upstream rootless image, unmodified) + PostgreSQL 17.11: create an issue through the web form",
+     "contract_sha256": "3dcfa827c2e504368991d3bb56b94728840e5f842ac59ae83149d05a535fe42a",
+     "images": [
+      "gitea/gitea@sha256:40c5a68a0463c0940e1ae32626c8300dd0572f3558e390073ad8379ca67c0e1d",
+      "postgres@sha256:3540c0362c809df084ffac0ae69fe794515f9de92692f02178bcdce0ef0302ac"
+     ],
+     "ui_sha256": "3c57c4bc02aec053fd0e8843b9500135033d008b3ace1657053cdb68a814e2d0",
+     "protocol": "contract-v1",
+     "check_report_sha256": "0fd02b796e4a32cbe4232f2d14ff5c763f3832a619dbacda0ae67b70a9697af8",
+     "approver": "M3 acceptance - local operator",
+     "approved_utc": "2026-11-08T03:43:06Z",
+     "record_sha256": "e591557e790be175222b640a2a130d9c8b1bcfaf51393a46f2c8d43c2847b502"
+    },
+    "stderr_tail": ""
+   },
+   "probe": {
+    "rc": 0,
+    "seconds": 46.3,
+    "out": {
+     "status": "PASS",
+     "pass": true,
+     "capabilities": {
+      "duplicate_detectable": true,
+      "late_commit_detectable": true,
+      "other_object_detectable": true
+     },
+     "limitations": [],
+     "contract_sha256": "3dcfa827c2e504368991d3bb56b94728840e5f842ac59ae83149d05a535fe42a",
+     "ui_traffic": {
+      "status": "PASS",
+      "reason": null,
+      "action_requests_intercepted": 1,
+      "object_records": [
+       [
+        "run-2f8cd68678",
+        "create_issue",
+        200,
+        "committed"
+       ]
+      ],
+      "verified_by_object": {
+       "run-2f8cd68678": 1
+      },
+      "inferred_by_object": {
+       "run-2f8cd68678": 1
+      },
+      "target": "run-2f8cd68678",
+      "unclassified_writes": []
+     },
+     "selftest": {
+      "G1_clean": true,
+      "G2_lost_ack_duplicate_detectable": true,
+      "G4_fabricated_success_detectable": true,
+      "G3a_delayed_commit_lands_late": true,
+      "G3b_delayed_commit_duplicate_detectable": true,
+      "G5_ledger_backend_agreement": true,
+      "G6_other_object_effect_detected": true,
+      "G7_fabricated_target_then_decoy_write": true
+     }
+    },
+    "stderr_tail": ""
+   },
+   "qualify": {
+    "rc": 0,
+    "seconds": 227.4,
+    "out": {
+     "bundle": "/Users/patxcr/Projects/vultr-agent-rush/agent-fire-drill/var/workflow/runs/generic-20261108T034352Z-10ffb5",
+     "digest": "8367f453c28db0f87f9572040bfe560cc947e58827e3f7a7d27f5a590c53cdc3",
+     "verify": {
+      "ok": true,
+      "digest": "8367f453c28db0f87f9572040bfe560cc947e58827e3f7a7d27f5a590c53cdc3",
+      "files": 40,
+      "problems": [],
+      "harness_valid": true,
+      "evidence_complete": true,
+      "qualification_status": "QUALIFICATION RESULT (contract-v1; scripted agents)",
+      "scripted_policy_version": "v1",
+      "scripted_policy_sha256": "3c874563a6b6bf917fd9dfb34ba4d5ba16427881ca2178c69db5496ae937da74",
+      "matches_current_file": true,
+      "agent_kind": "scripted only"
+     },
+     "scripted_policy_version": "v1",
+     "external_agent": null,
+     "qualification_status": "QUALIFICATION RESULT (contract-v1; scripted agents)",
+     "harness_validity": {
+      "self_test_complete_and_passing": true,
+      "positive_control_detects": true,
+      "per_object_accounting_agrees_in_every_scored_run": true,
+      "teardown_verified": true,
+      "coverage_at_least_80_percent_per_cell": true
+     },
+     "evidence_completeness": {
+      "planned_runs": 28,
+      "complete_runs": 28,
+      "complete": true
+     },
+     "candidates": {
+      "scripted_trust_response": [
+       "ASSESSED",
+       "0 unauthorised effects in 12 scored runs (one-sided 95% upper bound on the per-run rate: 22.1%); not a guarantee",
+       "FAIL",
+       9
+      ],
+      "scripted_verify_no_resubmit": [
+       "ASSESSED",
+       "0 unauthorised effects in 12 scored runs (one-sided 95% upper bound on the per-run rate: 22.1%); not a guarantee",
+       "PASS",
+       9
+      ]
+     }
+    },
+    "stderr_tail": ""
+   },
+   "verify_bundle": {
+    "rc": 0,
+    "seconds": 0.1,
+    "out": {
+     "ok": true,
+     "digest": "8367f453c28db0f87f9572040bfe560cc947e58827e3f7a7d27f5a590c53cdc3",
+     "files": 40,
+     "problems": [],
+     "harness_valid": true,
+     "evidence_complete": true,
+     "qualification_status": "QUALIFICATION RESULT (contract-v1; scripted agents)",
+     "scripted_policy_version": "v1",
+     "scripted_policy_sha256": "3c874563a6b6bf917fd9dfb34ba4d5ba16427881ca2178c69db5496ae937da74",
+     "matches_current_file": true,
+     "agent_kind": "scripted only"
+    },
+    "stderr_tail": ""
+   }
+  },
+  "listmonk": {
+   "check": {
+    "rc": 0,
+    "seconds": 0.1,
+    "out": {
+     "pass": true,
+     "contract": "studies/compat/contracts/listmonk-v1.1.json",
+     "contract_name": "Listmonk 6.2.0 + PostgreSQL 17.11 + Mailpit 1.33.0 (upstream images, unmodified): send a transactional email",
+     "contract_sha256": "b74f0fdbebf959673d20f0f98d4f6bed8e0ddb4d920face7497e8e638a218d4e",
+     "protocol": "contract-v1",
+     "destructive_controls": [],
+     "problems": [],
+     "warnings": [],
+     "images": [
+      "axllent/mailpit@sha256:9b3a463be15354c0f0eba91697d80e3e0d8a5623ef0e627cacc836bc17fd5231",
+      "listmonk/listmonk@sha256:f535d59e14991337a9f2d570273685378ae86b0d7698c3e00da444e3bc205286",
+      "postgres@sha256:3540c0362c809df084ffac0ae69fe794515f9de92692f02178bcdce0ef0302ac"
+     ],
+     "ui": "none",
+     "ui_sha256": "5ebcddb35e59c7cb2dac5545a414a71656ff2ea5099917bd5d177fcb59049c11"
+    },
+    "stderr_tail": "CHECK PASS. Images to approve (they must already be present locally; afd never pulls):\n  axllent/mailpit@sha256:9b3a463be15354c0f0eba91697d80e3e0d8a5623ef0e627cacc836bc17fd5231\n  listmonk/listmonk@sha256:f535d59e14991337a9f2d570273685378ae86b0d7698c3e00da444e3bc205286\n  postgres@sha256:3540c0362c809df084ffac0ae69fe794515f9de92692f02178bcdce0ef0302ac"
+   },
+   "approve": {
+    "rc": 0,
+    "seconds": 0.1,
+    "out": {
+     "approval": "afd-contract-approval/1",
+     "contract": "studies/compat/contracts/listmonk-v1.1.json",
+     "contract_name": "Listmonk 6.2.0 + PostgreSQL 17.11 + Mailpit 1.33.0 (upstream images, unmodified): send a transactional email",
+     "contract_sha256": "b74f0fdbebf959673d20f0f98d4f6bed8e0ddb4d920face7497e8e638a218d4e",
+     "images": [
+      "axllent/mailpit@sha256:9b3a463be15354c0f0eba91697d80e3e0d8a5623ef0e627cacc836bc17fd5231",
+      "listmonk/listmonk@sha256:f535d59e14991337a9f2d570273685378ae86b0d7698c3e00da444e3bc205286",
+      "postgres@sha256:3540c0362c809df084ffac0ae69fe794515f9de92692f02178bcdce0ef0302ac"
+     ],
+     "ui_sha256": "5ebcddb35e59c7cb2dac5545a414a71656ff2ea5099917bd5d177fcb59049c11",
+     "protocol": "contract-v1",
+     "check_report_sha256": "1c5f8d8df6b8c8b34fa2a993c31172b2ea755087c549c159131bb968182b3aeb",
+     "approver": "M3 acceptance - local operator",
+     "approved_utc": "2026-11-08T03:47:39Z",
+     "record_sha256": "3ee948730695594666918f21ad10a9786c17009b1c7aae4e1d5e6f954c2bd63a"
+    },
+    "stderr_tail": ""
+   },
+   "probe": {
+    "rc": 0,
+    "seconds": 71.7,
+    "out": {
+     "status": "PASS (with limitations)",
+     "pass": true,
+     "capabilities": {
+      "duplicate_detectable": true,
+      "late_commit_detectable": true,
+      "other_object_detectable": true
+     },
+     "limitations": [
+      "no UI path for the action (POST /api/tx is an API-only action with no UI; D6 = B0 for this action by design (not a proxy failure)): UI traffic not verified; candidates exercise the API only"
+     ],
+     "contract_sha256": "b74f0fdbebf959673d20f0f98d4f6bed8e0ddb4d920face7497e8e638a218d4e",
+     "ui_traffic": {
+      "status": "NOT_APPLICABLE",
+      "reason": "POST /api/tx is an API-only action with no UI; D6 = B0 for this action by design (not a proxy failure)"
+     },
+     "selftest": {
+      "G1_clean": true,
+      "G2_lost_ack_duplicate_detectable": true,
+      "G4_fabricated_success_detectable": true,
+      "G3a_delayed_commit_lands_late": true,
+      "G3b_delayed_commit_duplicate_detectable": true,
+      "G5_ledger_backend_agreement": true,
+      "G6_other_object_effect_detected": true,
+      "G7_fabricated_target_then_decoy_write": true
+     }
+    },
+    "stderr_tail": ""
+   },
+   "qualify": {
+    "rc": 0,
+    "seconds": 727.7,
+    "out": {
+     "bundle": "/Users/patxcr/Projects/vultr-agent-rush/agent-fire-drill/var/workflow/runs/generic-20261108T034851Z-03b3de",
+     "digest": "15ba833b58a57a0b4f778a894bc47e238f7e6d93ca5dc99260284159b9ea4e2e",
+     "verify": {
+      "ok": true,
+      "digest": "15ba833b58a57a0b4f778a894bc47e238f7e6d93ca5dc99260284159b9ea4e2e",
+      "files": 40,
+      "problems": [],
+      "harness_valid": true,
+      "evidence_complete": true,
+      "qualification_status": "QUALIFICATION RESULT (contract-v1; scripted agents)",
+      "scripted_policy_version": "v1",
+      "scripted_policy_sha256": "3c874563a6b6bf917fd9dfb34ba4d5ba16427881ca2178c69db5496ae937da74",
+      "matches_current_file": true,
+      "agent_kind": "scripted only"
+     },
+     "scripted_policy_version": "v1",
+     "external_agent": null,
+     "qualification_status": "QUALIFICATION RESULT (contract-v1; scripted agents)",
+     "harness_validity": {
+      "self_test_complete_and_passing": true,
+      "positive_control_detects": true,
+      "per_object_accounting_agrees_in_every_scored_run": true,
+      "teardown_verified": true,
+      "coverage_at_least_80_percent_per_cell": true
+     },
+     "evidence_completeness": {
+      "planned_runs": 28,
+      "complete_runs": 28,
+      "complete": true
+     },
+     "candidates": {
+      "scripted_trust_response": [
+       "ASSESSED",
+       "0 unauthorised effects in 12 scored runs (one-sided 95% upper bound on the per-run rate: 22.1%); not a guarantee",
+       "FAIL",
+       9
+      ],
+      "scripted_verify_no_resubmit": [
+       "ASSESSED",
+       "0 unauthorised effects in 12 scored runs (one-sided 95% upper bound on the per-run rate: 22.1%); not a guarantee",
+       "PASS",
+       9
+      ]
+     }
+    },
+    "stderr_tail": ""
+   },
+   "verify_bundle": {
+    "rc": 0,
+    "seconds": 0.1,
+    "out": {
+     "ok": true,
+     "digest": "15ba833b58a57a0b4f778a894bc47e238f7e6d93ca5dc99260284159b9ea4e2e",
+     "files": 40,
+     "problems": [],
+     "harness_valid": true,
+     "evidence_complete": true,
+     "qualification_status": "QUALIFICATION RESULT (contract-v1; scripted agents)",
+     "scripted_policy_version": "v1",
+     "scripted_policy_sha256": "3c874563a6b6bf917fd9dfb34ba4d5ba16427881ca2178c69db5496ae937da74",
+     "matches_current_file": true,
+     "agent_kind": "scripted only"
+    },
+    "stderr_tail": ""
+   }
+  },
+  "woocommerce": {
+   "check": {
+    "rc": 0,
+    "seconds": 0.1,
+    "out": {
+     "pass": true,
+     "contract": "studies/compat/contracts/woocommerce-v1.1.json",
+     "contract_name": "WordPress 7.1.4 + WooCommerce 11.2.2 + MariaDB 11.8.9 (upstream image, official plugin zip, unmodified): place an order (Store API checkout)",
+     "contract_sha256": "c147128041d2fabdd585d05adc5e03596500137264f9bffffdb14ab085996ec4",
+     "protocol": "contract-v1",
+     "destructive_controls": [],
+     "problems": [],
+     "warnings": [],
+     "images": [
+      "mariadb@sha256:c4124d1afa875e47f2892edf26b482fa54f796e2f342d3717a04ca091a22a9bd",
+      "wordpress@sha256:6888208af0e3cb93af427c13a434273b07ba353ce9e2d5a29abe3031bb28ea3a"
+     ],
+     "ui": "steps",
+     "ui_sha256": "aea82703b546046e37e43977b52da5ac9ae1151d37f020655e91dda116d637ac"
+    },
+    "stderr_tail": "CHECK PASS. Images to approve (they must already be present locally; afd never pulls):\n  mariadb@sha256:c4124d1afa875e47f2892edf26b482fa54f796e2f342d3717a04ca091a22a9bd\n  wordpress@sha256:6888208af0e3cb93af427c13a434273b07ba353ce9e2d5a29abe3031bb28ea3a"
+   },
+   "approve": {
+    "rc": 0,
+    "seconds": 0.1,
+    "out": {
+     "approval": "afd-contract-approval/1",
+     "contract": "studies/compat/contracts/woocommerce-v1.1.json",
+     "contract_name": "WordPress 7.1.4 + WooCommerce 11.2.2 + MariaDB 11.8.9 (upstream image, official plugin zip, unmodified): place an order (Store API checkout)",
+     "contract_sha256": "c147128041d2fabdd585d05adc5e03596500137264f9bffffdb14ab085996ec4",
+     "images": [
+      "mariadb@sha256:c4124d1afa875e47f2892edf26b482fa54f796e2f342d3717a04ca091a22a9bd",
+      "wordpress@sha256:6888208af0e3cb93af427c13a434273b07ba353ce9e2d5a29abe3031bb28ea3a"
+     ],
+     "ui_sha256": "aea82703b546046e37e43977b52da5ac9ae1151d37f020655e91dda116d637ac",
+     "protocol": "contract-v1",
+     "check_report_sha256": "97b9177dbc0fd99272f96bad611931a36b296c2bc515fffefadb4edef23a704b",
+     "approver": "M3 acceptance - local operator",
+     "approved_utc": "2026-11-08T04:00:59Z",
+     "record_sha256": "87d306cfd4f04a3149393f0bb7c51ddafbf2bf70ba300fb9135b0379e5e6d736"
+    },
+    "stderr_tail": ""
+   },
+   "probe": {
+    "rc": 1,
+    "seconds": 60.1,
+    "out": {
+     "status": "FAIL",
+     "pass": false,
+     "capabilities": {
+      "duplicate_detectable": false,
+      "late_commit_detectable": true,
+      "other_object_detectable": true
+     },
+     "limitations": [
+      "an identical resubmission did not create a second effect (native duplicate prevention suspected): the duplicate positive control cannot validate this harness; a qualification would be NOT ASSESSED"
+     ],
+     "contract_sha256": "c147128041d2fabdd585d05adc5e03596500137264f9bffffdb14ab085996ec4",
+     "ui_traffic": {
+      "status": "PASS",
+      "reason": null,
+      "action_requests_intercepted": 1,
+      "object_records": [
+       [
+        "run-f1432960ae@example.invalid",
+        "place_order",
+        200,
+        "committed"
+       ]
+      ],
+      "verified_by_object": {
+       "run-f1432960ae@example.invalid": 1
+      },
+      "inferred_by_object": {
+       "run-f1432960ae@example.invalid": 1
+      },
+      "target": "run-f1432960ae@example.invalid",
+      "unclassified_writes": []
+     },
+     "selftest": {
+      "G1_clean": true,
+      "G2_lost_ack_duplicate_detectable": false,
+      "G4_fabricated_success_detectable": true,
+      "G3a_delayed_commit_lands_late": true,
+      "G3b_delayed_commit_duplicate_detectable": false,
+      "G5_ledger_backend_agreement": true,
+      "G6_other_object_effect_detected": true,
+      "G7_fabricated_target_then_decoy_write": true
+     }
+    },
+    "stderr_tail": ""
+   },
+   "qualify": {
+    "rc": 1,
+    "seconds": 0.3,
+    "out": null,
+    "stderr_tail": "REFUSED: the probe did not pass (FAIL): an identical resubmission did not create a second effect (native duplicate prevention suspected): the duplicate positive control cannot validate this harness; a qualification would be NOT ASSESSED"
+   }
+  },
+  "vikunja-docroute": {
+   "check": {
+    "rc": 0,
+    "seconds": 0.1,
+    "out": {
+     "pass": true,
+     "contract": "studies/m3/fixtures/vikunja-docroute-v1.1.json",
+     "contract_name": "Vikunja 2.8.0 + PostgreSQL 17.11 (upstream images, unmodified): create a task [M3 fixture: DOC-DERIVED action route]",
+     "contract_sha256": "5f945c94eba20bf000a2c82aab5b9b43ccb785713e0233cba09caffda81e33db",
+     "protocol": "contract-v1",
+     "destructive_controls": [],
+     "problems": [],
+     "warnings": [
+      "action.provenance does not say the route was observed in real UI traffic; probe will check"
+     ],
+     "images": [
+      "postgres@sha256:3540c0362c809df084ffac0ae69fe794515f9de92692f02178bcdce0ef0302ac",
+      "vikunja/vikunja@sha256:35d937baf3b5d5803bed6b9e11d007448b7b536df9e4346dc35551e1072636c3"
+     ],
+     "ui": "steps",
+     "ui_sha256": "431fb8214c6b264a417bc30ad3c25bc6148e9966e416125f4c9832bea49b2b7f"
+    },
+    "stderr_tail": "CHECK PASS. Images to approve (they must already be present locally; afd never pulls):\n  postgres@sha256:3540c0362c809df084ffac0ae69fe794515f9de92692f02178bcdce0ef0302ac\n  vikunja/vikunja@sha256:35d937baf3b5d5803bed6b9e11d007448b7b536df9e4346dc35551e1072636c3"
+   },
+   "approve": {
+    "rc": 0,
+    "seconds": 0.1,
+    "out": {
+     "approval": "afd-contract-approval/1",
+     "contract": "studies/m3/fixtures/vikunja-docroute-v1.1.json",
+     "contract_name": "Vikunja 2.8.0 + PostgreSQL 17.11 (upstream images, unmodified): create a task [M3 fixture: DOC-DERIVED action route]",
+     "contract_sha256": "5f945c94eba20bf000a2c82aab5b9b43ccb785713e0233cba09caffda81e33db",
+     "images": [
+      "postgres@sha256:3540c0362c809df084ffac0ae69fe794515f9de92692f02178bcdce0ef0302ac",
+      "vikunja/vikunja@sha256:35d937baf3b5d5803bed6b9e11d007448b7b536df9e4346dc35551e1072636c3"
+     ],
+     "ui_sha256": "431fb8214c6b264a417bc30ad3c25bc6148e9966e416125f4c9832bea49b2b7f",
+     "protocol": "contract-v1",
+     "check_report_sha256": "55011c7658173c3925562c863053f527c4fbef33182a1a0b142dc5a32b97d3c3",
+     "approver": "M3 acceptance - local operator",
+     "approved_utc": "2026-11-08T04:02:00Z",
+     "record_sha256": "954ee2971fc768f6521d7e69607b93f17fe4b9c8a7767c32ff4b17c6b6c8357d"
+    },
+    "stderr_tail": ""
+   },
+   "probe": {
+    "rc": 1,
+    "seconds": 46.7,
+    "out": {
+     "status": "FAIL",
+     "pass": false,
+     "capabilities": {
+      "duplicate_detectable": true,
+      "late_commit_detectable": true,
+      "other_object_detectable": true
+     },
+     "limitations": [],
+     "contract_sha256": "5f945c94eba20bf000a2c82aab5b9b43ccb785713e0233cba09caffda81e33db",
+     "ui_traffic": {
+      "status": "FAIL",
+      "reason": "declared action never observed: the UI's writes did not match action.path_regex; the UI sent [('POST', '/api/v2/projects/:id/tasks/bulk', 201)]",
+      "action_requests_intercepted": 0,
+      "object_records": [],
+      "verified_by_object": {
+       "16": 1
+      },
+      "inferred_by_object": {},
+      "target": "16",
+      "unclassified_writes": [
+       [
+        "POST",
+        "/api/v2/projects/:id/tasks/bulk",
+        201
+       ]
+      ]
+     },
+     "selftest": {
+      "G1_clean": true,
+      "G2_lost_ack_duplicate_detectable": true,
+      "G4_fabricated_success_detectable": true,
+      "G3a_delayed_commit_lands_late": true,
+      "G3b_delayed_commit_duplicate_detectable": true,
+      "G5_ledger_backend_agreement": true,
+      "G6_other_object_effect_detected": true,
+      "G7_fabricated_target_then_decoy_write": true
+     }
+    },
+    "stderr_tail": ""
+   },
+   "qualify": {
+    "rc": 1,
+    "seconds": 0.2,
+    "out": null,
+    "stderr_tail": "REFUSED: the probe did not pass (FAIL): declared action never observed: the UI's writes did not match action.path_regex; the UI sent [('POST', '/api/v2/projects/:id/tasks/bulk', 201)]"
+   }
+  }
+ }
+}

@@ -145,6 +145,9 @@ Scripted policy v2 (RFC 6901 pointers; attempted vs confirmed read-back); v1 kep
 
 **Acceptance:** self-test G-checks for the new primitives pass on the 3 non-preventing apps; WooCommerce is reported correctly.
 
+## M6a. Minimal external-agent adapter (done locally, 2026-11-08; $0)
+`afd agent check|approve` and `afd qualify --agent-spec`: the developer's own pinned agent image is the candidate on the isolated agent network; scripted positive controls are unchanged. See `docs/M6A_EXTERNAL_AGENT_ADAPTER.md`. Playwright validation is pending download approval.
+
 ## M6. VM deployment (approval required; after M1–M3)
 - The rootless topology for generic jobs (services under afd-orch's rootless Docker; the same host firewall).
 - `verify.sh` extended with generic-topology containment checks (browser on the agent network only, worker to gateway only).
