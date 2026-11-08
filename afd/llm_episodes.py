@@ -218,7 +218,7 @@ def episode(cfg, contract, ep, idx, work):
         rec = {"run_id": f"e{idx}", "policy": ep["policy"], "condition": cfg["condition"], "role": "candidate", "category": cat, **o,
                "claim": claim, "worker_error": result.get("error"), "steps": len(steps), "seconds": round(agent_end - t0, 1), "session": lg,
                "spend": spend, "episode_cap_usd": cfg["episode_cap_usd"], "spend_within_cap": spend["cost_usd"] <= cfg["episode_cap_usd"] + 1e-9,
-               "token_revoked": revoked, "model": C.MODEL, "model_calls": len(usage), "model_calls_truncated": sum(u.get("finish_reason") == "length" for u in usage),
+               "token_revoked": revoked, "model": C.MODEL, "model_calls": spend["calls"], "gateway_refusals": spend["budget_refusals"], "model_calls_truncated": spend["truncated"],
                "isolation_gate": {k: gate.get(k) for k in ("pass", "violations", "open", "closed", "dns", "uid", "cap_eff", "no_new_privs", "seccomp", "rootfs", "memory_max", "pids_max", "cpu_max")},
                "element_maps": sum(1 for x in steps if (x.get("elements_seen") or {}).get("elements")), "worker_hash_before": hb, "worker_hash_after": ha,
                "proxy_scope_requests": job.evidence(s.scope)["requests"]}
@@ -261,7 +261,7 @@ def run(config_path, paid=False, confirm_total_usd=None):
                "caps": {"episode_usd": cfg["episode_cap_usd"], "total_usd": cfg["total_cap_usd"]}, "spent_total_usd": round(total, 6),
                "episodes": [{k: r.get(k) for k in ("run_id", "policy", "category", "target", "verified_by_object", "inferred_by_object", "target_effects", "duplicate_target_effects",
                                                    "other_object_effects", "accounting_agrees", "agent_claimed_success", "false_success_claim", "completed", "steps", "element_maps",
-                                                   "seconds", "worker_error", "token_revoked", "spend_within_cap", "model_calls", "model_calls_truncated")}
+                                                   "seconds", "worker_error", "token_revoked", "spend_within_cap", "model_calls", "gateway_refusals", "model_calls_truncated")}
                             | {"spend_usd": (r.get("spend") or {}).get("cost_usd"), "isolation_gate_pass": (r.get("isolation_gate") or {}).get("pass")} for r in runs]}
     env = {"mode": C.MODE, "worker_sha256": B.sha256_file(GL.WORKER_V2), "images": {k: C.IMAGES[k] for k in ("browser", "worker")},
            "code_sha256": {f: B.sha256_file(C.ROOT / f) for f in ("afd/generic_llm.py", "afd/llm_episodes.py", "afd/generic.py", "afd/scoring_objects.py", "afd/faults/proxy.py", "afd/cdp_driver.py")},
