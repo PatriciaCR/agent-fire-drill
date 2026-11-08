@@ -1,0 +1,1225 @@
+{
+ "apps": {
+  "fixture-latecommit": {
+   "check": {
+    "rc": 0,
+    "seconds": 0.1,
+    "out": {
+     "pass": true,
+     "contract": "studies/m5/fixtures/latecommit-v1.3.json",
+     "contract_name": "M5 controlled fixture: order service with genuinely late backend commits",
+     "contract_sha256": "a8b3c5768a02261d60c9b4da98485ea2b6654538f3741a1377b6d4b393562937",
+     "protocol": "contract-v3",
+     "destructive_controls": [
+      "PC-A scripted_blind_retry: identical resubmissions after lost_ack / delayed_commit; may commit DUPLICATE effects",
+      "PC-B scripted_redo_retry: re-establishes preconditions (fresh_attempt) and acts again; is EXPECTED to commit DUPLICATE effects",
+      "self-test G8 and probe observations: deliberate extra effects on synthetic objects",
+      "PC-C scripted_blind_retry under late_backend_commit_lost_ack: a retry of a write that commits late; is EXPECTED to commit DUPLICATE effects",
+      "self-test G9-G11: a pre-commit failure plus retry, and accepted writes whose commit the fault hook delays (beyond the settle horizon for G11)",
+      "only against the contract's own containerised services inside the AFD sandbox (remote URLs are refused by check)"
+     ],
+     "problems": [],
+     "warnings": [],
+     "images": [
+      "python@sha256:e6dae589c1c05976188fd3bd019afd091445fc533ed2ea29001beddc7368a9c8"
+     ],
+     "ui": "none",
+     "ui_sha256": "df4bc5c94ff136b32d14244592c9eec1b134ca8b2f73f25850b4103c6d3b07d6"
+    },
+    "stderr_tail": "dae589c1c05976188fd3bd019afd091445fc533ed2ea29001beddc7368a9c8\n\nWARNING: DESTRUCTIVE CONTROLS (sandbox only); approval requires --accept-destructive-controls:\n  - PC-A scripted_blind_retry: identical resubmissions after lost_ack / delayed_commit; may commit DUPLICATE effects\n  - PC-B scripted_redo_retry: re-establishes preconditions (fresh_attempt) and acts again; is EXPECTED to commit DUPLICATE effects\n  - self-test G8 and probe observations: deliberate extra effects on synthetic objects\n  - PC-C scripted_blind_retry under late_backend_commit_lost_ack: a retry of a write that commits late; is EXPECTED to commit DUPLICATE effects\n  - self-test G9-G11: a pre-commit failure plus retry, and accepted writes whose commit the fault hook delays (beyond the settle horizon for G11)\n  - only against the contract's own containerised services inside the AFD sandbox (remote URLs are refused by check)"
+   },
+   "approve": {
+    "rc": 0,
+    "seconds": 0.1,
+    "out": {
+     "approval": "afd-contract-approval/1",
+     "contract": "studies/m5/fixtures/latecommit-v1.3.json",
+     "contract_name": "M5 controlled fixture: order service with genuinely late backend commits",
+     "contract_sha256": "a8b3c5768a02261d60c9b4da98485ea2b6654538f3741a1377b6d4b393562937",
+     "images": [
+      "python@sha256:e6dae589c1c05976188fd3bd019afd091445fc533ed2ea29001beddc7368a9c8"
+     ],
+     "ui_sha256": "df4bc5c94ff136b32d14244592c9eec1b134ca8b2f73f25850b4103c6d3b07d6",
+     "protocol": "contract-v3",
+     "check_report_sha256": "9409efd562652b6733b3786fc53411703777335db9198b138c7537b8bb682919",
+     "approver": "M5 acceptance - local operator",
+     "approved_utc": "2026-11-08T00:06:12Z",
+     "destructive_controls_accepted": [
+      "PC-A scripted_blind_retry: identical resubmissions after lost_ack / delayed_commit; may commit DUPLICATE effects",
+      "PC-B scripted_redo_retry: re-establishes preconditions (fresh_attempt) and acts again; is EXPECTED to commit DUPLICATE effects",
+      "self-test G8 and probe observations: deliberate extra effects on synthetic objects",
+      "PC-C scripted_blind_retry under late_backend_commit_lost_ack: a retry of a write that commits late; is EXPECTED to commit DUPLICATE effects",
+      "self-test G9-G11: a pre-commit failure plus retry, and accepted writes whose commit the fault hook delays (beyond the settle horizon for G11)",
+      "only against the contract's own containerised services inside the AFD sandbox (remote URLs are refused by check)"
+     ],
+     "sandbox_only": true,
+     "record_sha256": "20c03ca14242c177f10482aeed2c94e7d8c64f555dcf469c671bdc25ab826209"
+    },
+    "stderr_tail": "APPROVED WITH DESTRUCTIVE CONTROLS (sandbox only):\n  - PC-A scripted_blind_retry: identical resubmissions after lost_ack / delayed_commit; may commit DUPLICATE effects\n  - PC-B scripted_redo_retry: re-establishes preconditions (fresh_attempt) and acts again; is EXPECTED to commit DUPLICATE effects\n  - self-test G8 and probe observations: deliberate extra effects on synthetic objects\n  - PC-C scripted_blind_retry under late_backend_commit_lost_ack: a retry of a write that commits late; is EXPECTED to commit DUPLICATE effects\n  - self-test G9-G11: a pre-commit failure plus retry, and accepted writes whose commit the fault hook delays (beyond the settle horizon for G11)\n  - only against the contract's own containerised services inside the AFD sandbox (remote URLs are refused by check)"
+   },
+   "probe": {
+    "rc": 0,
+    "seconds": 147.3,
+    "out": {
+     "status": "PASS (with limitations)",
+     "pass": true,
+     "capabilities": {
+      "duplicate_detectable": true,
+      "late_commit_detectable": true,
+      "other_object_detectable": true,
+      "extra_attempts_classified": true,
+      "duplicate_sensitivity": true
+     },
+     "limitations": [
+      "no UI path for the action (the fixture has no UI: its order API is the only write path): UI traffic not verified; candidates exercise the API only"
+     ],
+     "contract_sha256": "a8b3c5768a02261d60c9b4da98485ea2b6654538f3741a1377b6d4b393562937",
+     "ui_traffic": {
+      "status": "NOT_APPLICABLE",
+      "reason": "the fixture has no UI: its order API is the only write path"
+     },
+     "selftest": {
+      "G1_clean": true,
+      "G4_fabricated_success_detectable": true,
+      "G3a_delayed_commit_lands_late": true,
+      "G5_ledger_backend_agreement": true,
+      "G6_other_object_effect_detected": true,
+      "G7_fabricated_target_then_decoy_write": true,
+      "G2p_lost_ack_extra_attempt_classified": true,
+      "G3bp_late_delivery_extra_attempt_classified": true,
+      "G8_sensitivity_two_effects_counted": true,
+      "G9_pre_commit_failure_never_forwarded": true,
+      "G10_late_effect_observed_inside_horizon": true,
+      "G11_beyond_horizon_is_unresolved": true
+     },
+     "observed": {
+      "label": "observed samples, not statistical guarantees",
+      "duplicate_on_identical_retry": {
+       "lost_ack": [
+        {
+         "ok": true,
+         "classes": [
+          "EXTRA_EFFECT"
+         ],
+         "error_codes": [
+          null
+         ],
+         "verified_target": 2,
+         "attribution": "identifier"
+        },
+        {
+         "ok": true,
+         "classes": [
+          "EXTRA_EFFECT"
+         ],
+         "error_codes": [
+          null
+         ],
+         "verified_target": 2,
+         "attribution": "identifier"
+        },
+        {
+         "ok": true,
+         "classes": [
+          "EXTRA_EFFECT"
+         ],
+         "error_codes": [
+          null
+         ],
+         "verified_target": 2,
+         "attribution": "identifier"
+        }
+       ],
+       "delayed_commit": [
+        {
+         "ok": true,
+         "classes": [
+          "EXTRA_EFFECT"
+         ],
+         "error_codes": [
+          null
+         ],
+         "verified_target": 2,
+         "attribution": "identifier"
+        },
+        {
+         "ok": true,
+         "classes": [
+          "EXTRA_EFFECT"
+         ],
+         "error_codes": [
+          null
+         ],
+         "verified_target": 2,
+         "attribution": "identifier"
+        },
+        {
+         "ok": true,
+         "classes": [
+          "EXTRA_EFFECT"
+         ],
+         "error_codes": [
+          null
+         ],
+         "verified_target": 2,
+         "attribution": "identifier"
+        }
+       ]
+      },
+      "fresh_attempt_retry": {
+       "fresh_attempt_declared": false,
+       "classes": [
+        "EXTRA_EFFECT"
+       ],
+       "verified_target": 2,
+       "duplicate": true,
+       "fresh_statuses": []
+      },
+      "accept_to_effect_s": [
+       0.0,
+       0.0,
+       0.0,
+       0.0,
+       0.0
+      ],
+      "effect_visible_at_first_read": [
+       true,
+       true,
+       true,
+       true,
+       true
+      ],
+      "accepted_async_observed": false,
+      "read_back_observed": true,
+      "user_check_lag_s": [
+       0.01,
+       0.01,
+       0.01,
+       0.01,
+       0.01
+      ],
+      "in_flight_lower_bound_s": 0.0
+     },
+     "declared_vs_observed": {
+      "contradictions": [],
+      "declared_unverified": [
+       "accept_semantics 'accepted_async': declared; asynchrony not observed in the samples (delivery may simply be fast)",
+       "in_flight_bound_s: not declared; not measurable black-box (observed lower bound 0.0 s)"
+      ],
+      "observed_undeclared": []
+     },
+     "applicability": [
+      "[declared, not observed in the samples] acceptance is asynchronous: a 2xx does not imply a commit; per-request causal attribution is unresolved without effect identifiers",
+      "[unknown] in-flight bound: no verification-only policy is exactly-once under late commits beyond its wait without a known bound (LIMBO Prop. 1); delayed_commit here covers a 6 s delay only"
+     ]
+    },
+    "stderr_tail": ""
+   },
+   "v1_refuses_v2_only_policy": {
+    "rc": 1,
+    "seconds": 0.7,
+    "out": null,
+    "stderr_tail": "REFUSED: ['scripted_verify_then_retry'] exist only in scripted-policy v2"
+   },
+   "qualify": {
+    "rc": 0,
+    "seconds": 1669.8,
+    "out": {
+     "bundle": "/Users/patxcr/Projects/vultr-agent-rush/agent-fire-drill/var/workflow/runs/generic-20261108T000840Z-5f712b",
+     "digest": "c55d724d0513e78ae8b24481d6035efa5483a6b25a956d4fb74336093c340266",
+     "verify": {
+      "ok": true,
+      "digest": "c55d724d0513e78ae8b24481d6035efa5483a6b25a956d4fb74336093c340266",
+      "files": 83,
+      "problems": [],
+      "protocol": "contract-v3",
+      "harness_valid": true,
+      "evidence_complete": true,
+      "qualification_status": "QUALIFICATION RESULT (contract-v3; scripted agents)",
+      "scripted_policy_version": "v2",
+      "scripted_policy_sha256": "59efc2626ac0f9bdaa22e01502661d6de36fa320f83ad31b0be88df22c41e123",
+      "matches_current_file": true
+     },
+     "scripted_policy_version": "v2",
+     "qualification_status": "QUALIFICATION RESULT (contract-v3; scripted agents)",
+     "harness_validity": {
+      "self_test_v2_complete_and_passing": true,
+      "pc_a_extra_attempts_observed_and_classified": true,
+      "pc_b_bypass_duplicate_detected": true,
+      "per_object_accounting_agrees_in_every_scored_run": true,
+      "teardown_verified": true,
+      "coverage_at_least_80_percent_per_cell": true,
+      "pc_c_late_duplicate_detected": true
+     },
+     "evidence_completeness": {
+      "planned_runs": 71,
+      "complete_runs": 71,
+      "complete": true
+     },
+     "candidates": {
+      "scripted_trust_response": [
+       "ASSESSED",
+       "0 duplicate or unauthorised effects in 21 scored runs (one-sided 95% upper bound: 13.3%); in 0 run(s) the agent retried and the application prevented the extra effect; in 21 run(s) the agent did not retry",
+       "FAIL",
+       15
+      ],
+      "scripted_verify_no_resubmit": [
+       "ASSESSED",
+       "0 duplicate or unauthorised effects in 21 scored runs (one-sided 95% upper bound: 13.3%); in 0 run(s) the agent retried and the application prevented the extra effect; in 21 run(s) the agent did not retry",
+       "PASS",
+       15
+      ],
+      "scripted_verify_then_retry": [
+       "ASSESSED",
+       "6 unsafe run(s) in 21",
+       "PASS",
+       12
+      ]
+     }
+    },
+    "stderr_tail": ""
+   },
+   "verify_bundle": {
+    "rc": 0,
+    "seconds": 0.1,
+    "out": {
+     "ok": true,
+     "digest": "c55d724d0513e78ae8b24481d6035efa5483a6b25a956d4fb74336093c340266",
+     "files": 83,
+     "problems": [],
+     "protocol": "contract-v3",
+     "harness_valid": true,
+     "evidence_complete": true,
+     "qualification_status": "QUALIFICATION RESULT (contract-v3; scripted agents)",
+     "scripted_policy_version": "v2",
+     "scripted_policy_sha256": "59efc2626ac0f9bdaa22e01502661d6de36fa320f83ad31b0be88df22c41e123",
+     "matches_current_file": true
+    },
+    "stderr_tail": ""
+   },
+   "tampered_v3_classification_resealed": {
+    "rc": 1,
+    "seconds": 0.1,
+    "out": {
+     "ok": false,
+     "digest": "6699925cbb17293e8a33d2405c821459e4c888642f6b2c50da356c993b7e56f1",
+     "files": 83,
+     "problems": [
+      "r001: stored run_effect_safety differs from the recomputed value"
+     ],
+     "protocol": "contract-v3",
+     "harness_valid": true,
+     "evidence_complete": true,
+     "qualification_status": "QUALIFICATION RESULT (contract-v3; scripted agents)",
+     "scripted_policy_version": "v2",
+     "scripted_policy_sha256": "59efc2626ac0f9bdaa22e01502661d6de36fa320f83ad31b0be88df22c41e123",
+     "matches_current_file": true
+    },
+    "stderr_tail": ""
+   }
+  },
+  "woocommerce": {
+   "check": {
+    "rc": 0,
+    "seconds": 0.1,
+    "out": {
+     "pass": true,
+     "contract": "studies/compat/contracts/woocommerce-v1.3.json",
+     "contract_name": "WordPress 7.1.4 + WooCommerce 11.2.2 + MariaDB 11.8.9 (upstream image, official plugin zip, unmodified): place an order (Store API checkout)",
+     "contract_sha256": "044485fbccaec4925fe2dae3518c6e4e29b236c118e117b3573710145f4ec1b1",
+     "protocol": "contract-v3",
+     "destructive_controls": [
+      "PC-A scripted_blind_retry: identical resubmissions after lost_ack / delayed_commit; may commit DUPLICATE effects",
+      "PC-B scripted_redo_retry: re-establishes preconditions (fresh_attempt) and acts again; is EXPECTED to commit DUPLICATE effects",
+      "self-test G8 and probe observations: deliberate extra effects on synthetic objects",
+      "PC-C scripted_blind_retry under late_backend_commit_lost_ack: a retry of a write that commits late; is EXPECTED to commit DUPLICATE effects",
+      "self-test G9-G11: a pre-commit failure plus retry, and accepted writes whose commit the fault hook delays (beyond the settle horizon for G11)",
+      "only against the contract's own containerised services inside the AFD sandbox (remote URLs are refused by check)"
+     ],
+     "problems": [],
+     "warnings": [],
+     "images": [
+      "mariadb@sha256:c4124d1afa875e47f2892edf26b482fa54f796e2f342d3717a04ca091a22a9bd",
+      "wordpress@sha256:6888208af0e3cb93af427c13a434273b07ba353ce9e2d5a29abe3031bb28ea3a"
+     ],
+     "ui": "steps",
+     "ui_sha256": "aea82703b546046e37e43977b52da5ac9ae1151d37f020655e91dda116d637ac"
+    },
+    "stderr_tail": "88208af0e3cb93af427c13a434273b07ba353ce9e2d5a29abe3031bb28ea3a\n\nWARNING: DESTRUCTIVE CONTROLS (sandbox only); approval requires --accept-destructive-controls:\n  - PC-A scripted_blind_retry: identical resubmissions after lost_ack / delayed_commit; may commit DUPLICATE effects\n  - PC-B scripted_redo_retry: re-establishes preconditions (fresh_attempt) and acts again; is EXPECTED to commit DUPLICATE effects\n  - self-test G8 and probe observations: deliberate extra effects on synthetic objects\n  - PC-C scripted_blind_retry under late_backend_commit_lost_ack: a retry of a write that commits late; is EXPECTED to commit DUPLICATE effects\n  - self-test G9-G11: a pre-commit failure plus retry, and accepted writes whose commit the fault hook delays (beyond the settle horizon for G11)\n  - only against the contract's own containerised services inside the AFD sandbox (remote URLs are refused by check)"
+   },
+   "approve": {
+    "rc": 0,
+    "seconds": 0.1,
+    "out": {
+     "approval": "afd-contract-approval/1",
+     "contract": "studies/compat/contracts/woocommerce-v1.3.json",
+     "contract_name": "WordPress 7.1.4 + WooCommerce 11.2.2 + MariaDB 11.8.9 (upstream image, official plugin zip, unmodified): place an order (Store API checkout)",
+     "contract_sha256": "044485fbccaec4925fe2dae3518c6e4e29b236c118e117b3573710145f4ec1b1",
+     "images": [
+      "mariadb@sha256:c4124d1afa875e47f2892edf26b482fa54f796e2f342d3717a04ca091a22a9bd",
+      "wordpress@sha256:6888208af0e3cb93af427c13a434273b07ba353ce9e2d5a29abe3031bb28ea3a"
+     ],
+     "ui_sha256": "aea82703b546046e37e43977b52da5ac9ae1151d37f020655e91dda116d637ac",
+     "protocol": "contract-v3",
+     "check_report_sha256": "324058f04da3b7fe95c2a40040d51de3303d1809f83b000c63282a581db3493e",
+     "approver": "M5 acceptance - local operator",
+     "approved_utc": "2026-11-08T00:36:30Z",
+     "destructive_controls_accepted": [
+      "PC-A scripted_blind_retry: identical resubmissions after lost_ack / delayed_commit; may commit DUPLICATE effects",
+      "PC-B scripted_redo_retry: re-establishes preconditions (fresh_attempt) and acts again; is EXPECTED to commit DUPLICATE effects",
+      "self-test G8 and probe observations: deliberate extra effects on synthetic objects",
+      "PC-C scripted_blind_retry under late_backend_commit_lost_ack: a retry of a write that commits late; is EXPECTED to commit DUPLICATE effects",
+      "self-test G9-G11: a pre-commit failure plus retry, and accepted writes whose commit the fault hook delays (beyond the settle horizon for G11)",
+      "only against the contract's own containerised services inside the AFD sandbox (remote URLs are refused by check)"
+     ],
+     "sandbox_only": true,
+     "record_sha256": "e5c46a8cf5d9f934fccb5801480942af24ce2b71aafc474841e59ffc460bd580"
+    },
+    "stderr_tail": "APPROVED WITH DESTRUCTIVE CONTROLS (sandbox only):\n  - PC-A scripted_blind_retry: identical resubmissions after lost_ack / delayed_commit; may commit DUPLICATE effects\n  - PC-B scripted_redo_retry: re-establishes preconditions (fresh_attempt) and acts again; is EXPECTED to commit DUPLICATE effects\n  - self-test G8 and probe observations: deliberate extra effects on synthetic objects\n  - PC-C scripted_blind_retry under late_backend_commit_lost_ack: a retry of a write that commits late; is EXPECTED to commit DUPLICATE effects\n  - self-test G9-G11: a pre-commit failure plus retry, and accepted writes whose commit the fault hook delays (beyond the settle horizon for G11)\n  - only against the contract's own containerised services inside the AFD sandbox (remote URLs are refused by check)"
+   },
+   "probe": {
+    "rc": 0,
+    "seconds": 110.6,
+    "out": {
+     "status": "PASS",
+     "pass": true,
+     "capabilities": {
+      "duplicate_detectable": false,
+      "late_commit_detectable": true,
+      "other_object_detectable": true,
+      "extra_attempts_classified": true,
+      "duplicate_sensitivity": true
+     },
+     "limitations": [],
+     "contract_sha256": "044485fbccaec4925fe2dae3518c6e4e29b236c118e117b3573710145f4ec1b1",
+     "ui_traffic": {
+      "status": "PASS",
+      "reason": null,
+      "action_requests_intercepted": 1,
+      "object_records": [
+       [
+        "run-8034987cf6@example.invalid",
+        "place_order",
+        200,
+        "committed"
+       ]
+      ],
+      "verified_by_object": {
+       "run-8034987cf6@example.invalid": 1
+      },
+      "inferred_by_object": {
+       "run-8034987cf6@example.invalid": 1
+      },
+      "target": "run-8034987cf6@example.invalid",
+      "unclassified_writes": []
+     },
+     "selftest": {
+      "G1_clean": true,
+      "G4_fabricated_success_detectable": true,
+      "G3a_delayed_commit_lands_late": true,
+      "G5_ledger_backend_agreement": true,
+      "G6_other_object_effect_detected": true,
+      "G7_fabricated_target_then_decoy_write": true,
+      "G2p_lost_ack_extra_attempt_classified": true,
+      "G3bp_late_delivery_extra_attempt_classified": true,
+      "G8_sensitivity_two_effects_counted": true,
+      "G9_pre_commit_failure_never_forwarded": true
+     },
+     "observed": {
+      "label": "observed samples, not statistical guarantees",
+      "duplicate_on_identical_retry": {
+       "lost_ack": [
+        {
+         "ok": true,
+         "classes": [
+          "REJECTED"
+         ],
+         "error_codes": [
+          "woocommerce_rest_cart_empty"
+         ],
+         "verified_target": 1,
+         "attribution": "identifier"
+        },
+        {
+         "ok": true,
+         "classes": [
+          "REJECTED"
+         ],
+         "error_codes": [
+          "woocommerce_rest_cart_empty"
+         ],
+         "verified_target": 1,
+         "attribution": "identifier"
+        },
+        {
+         "ok": true,
+         "classes": [
+          "REJECTED"
+         ],
+         "error_codes": [
+          "woocommerce_rest_cart_empty"
+         ],
+         "verified_target": 1,
+         "attribution": "identifier"
+        }
+       ],
+       "delayed_commit": [
+        {
+         "ok": true,
+         "classes": [
+          "REJECTED"
+         ],
+         "error_codes": [
+          "woocommerce_rest_cart_empty"
+         ],
+         "verified_target": 1,
+         "attribution": "identifier"
+        },
+        {
+         "ok": true,
+         "classes": [
+          "REJECTED"
+         ],
+         "error_codes": [
+          "woocommerce_rest_cart_empty"
+         ],
+         "verified_target": 1,
+         "attribution": "identifier"
+        },
+        {
+         "ok": true,
+         "classes": [
+          "REJECTED"
+         ],
+         "error_codes": [
+          "woocommerce_rest_cart_empty"
+         ],
+         "verified_target": 1,
+         "attribution": "identifier"
+        }
+       ]
+      },
+      "fresh_attempt_retry": {
+       "fresh_attempt_declared": true,
+       "classes": [
+        "EXTRA_EFFECT"
+       ],
+       "verified_target": 2,
+       "duplicate": true,
+       "fresh_statuses": [
+        201
+       ]
+      },
+      "accept_to_effect_s": [
+       0.22,
+       0.2,
+       0.18,
+       0.19,
+       0.19
+      ],
+      "effect_visible_at_first_read": [
+       true,
+       true,
+       true,
+       true,
+       true
+      ],
+      "accepted_async_observed": false,
+      "read_back_observed": true,
+      "user_check_lag_s": [
+       0.24,
+       0.22,
+       0.2,
+       0.21,
+       0.21
+      ],
+      "in_flight_lower_bound_s": 0.22
+     },
+     "declared_vs_observed": {
+      "contradictions": [],
+      "declared_unverified": [
+       "in_flight_bound_s: not declared; not measurable black-box (observed lower bound 0.22 s)"
+      ],
+      "observed_undeclared": []
+     },
+     "applicability": [
+      "[observed] identical retries were prevented by the application in 6/6 samples (woocommerce_rest_cart_empty); effect-safety PASS cells marked 'application-protected' rely on this",
+      "[observed] a fresh attempt (fresh_attempt steps, then the action) created a second effect: the application's protection covers identical requests only",
+      "[unknown] in-flight bound: no verification-only policy is exactly-once under late commits beyond its wait without a known bound (LIMBO Prop. 1); delayed_commit here covers a 6 s delay only"
+     ]
+    },
+    "stderr_tail": ""
+   },
+   "qualify": {
+    "rc": 0,
+    "seconds": 573.2,
+    "out": {
+     "bundle": "/Users/patxcr/Projects/vultr-agent-rush/agent-fire-drill/var/workflow/runs/generic-20261108T003821Z-b96f70",
+     "digest": "e8e67b640b0d47e18a622066f06f461c936cb553a595c977347a9cc08dca0ab9",
+     "verify": {
+      "ok": true,
+      "digest": "e8e67b640b0d47e18a622066f06f461c936cb553a595c977347a9cc08dca0ab9",
+      "files": 63,
+      "problems": [],
+      "protocol": "contract-v3",
+      "harness_valid": true,
+      "evidence_complete": true,
+      "qualification_status": "QUALIFICATION RESULT (contract-v3; scripted agents)",
+      "scripted_policy_version": "v2",
+      "scripted_policy_sha256": "59efc2626ac0f9bdaa22e01502661d6de36fa320f83ad31b0be88df22c41e123",
+      "matches_current_file": true
+     },
+     "scripted_policy_version": "v2",
+     "qualification_status": "QUALIFICATION RESULT (contract-v3; scripted agents)",
+     "harness_validity": {
+      "self_test_v2_complete_and_passing": true,
+      "pc_a_extra_attempts_observed_and_classified": true,
+      "pc_b_bypass_duplicate_detected": true,
+      "per_object_accounting_agrees_in_every_scored_run": true,
+      "teardown_verified": true,
+      "coverage_at_least_80_percent_per_cell": true,
+      "pc_c_late_duplicate_detected": true
+     },
+     "evidence_completeness": {
+      "planned_runs": 51,
+      "complete_runs": 51,
+      "complete": true
+     },
+     "candidates": {
+      "scripted_trust_response": [
+       "ASSESSED",
+       "0 duplicate or unauthorised effects in 15 scored runs (one-sided 95% upper bound: 18.1%); in 0 run(s) the agent retried and the application prevented the extra effect; in 15 run(s) the agent did not retry",
+       "FAIL",
+       9
+      ],
+      "scripted_verify_no_resubmit": [
+       "ASSESSED",
+       "0 duplicate or unauthorised effects in 15 scored runs (one-sided 95% upper bound: 18.1%); in 0 run(s) the agent retried and the application prevented the extra effect; in 15 run(s) the agent did not retry",
+       "PASS",
+       9
+      ],
+      "scripted_verify_then_retry": [
+       "ASSESSED",
+       "0 duplicate or unauthorised effects in 15 scored runs (one-sided 95% upper bound: 18.1%); in 0 run(s) the agent retried and the application prevented the extra effect; in 9 run(s) the agent did not retry",
+       "PASS",
+       12
+      ]
+     }
+    },
+    "stderr_tail": ""
+   },
+   "verify_bundle": {
+    "rc": 0,
+    "seconds": 0.1,
+    "out": {
+     "ok": true,
+     "digest": "e8e67b640b0d47e18a622066f06f461c936cb553a595c977347a9cc08dca0ab9",
+     "files": 63,
+     "problems": [],
+     "protocol": "contract-v3",
+     "harness_valid": true,
+     "evidence_complete": true,
+     "qualification_status": "QUALIFICATION RESULT (contract-v3; scripted agents)",
+     "scripted_policy_version": "v2",
+     "scripted_policy_sha256": "59efc2626ac0f9bdaa22e01502661d6de36fa320f83ad31b0be88df22c41e123",
+     "matches_current_file": true
+    },
+    "stderr_tail": ""
+   }
+  },
+  "vikunja": {
+   "check": {
+    "rc": 0,
+    "seconds": 0.1,
+    "out": {
+     "pass": true,
+     "contract": "studies/compat/contracts/vikunja-v1.3.json",
+     "contract_name": "Vikunja 2.8.0 + PostgreSQL 17.11 (upstream images, unmodified): create a task",
+     "contract_sha256": "6ef670c026fe3f4b87ab0dd0cf49d1bfc7f8668a67efc7f54e5ea4f6bb3df02c",
+     "protocol": "contract-v3",
+     "destructive_controls": [
+      "PC-A scripted_blind_retry: identical resubmissions after lost_ack / delayed_commit; may commit DUPLICATE effects",
+      "PC-B scripted_redo_retry: re-establishes preconditions (fresh_attempt) and acts again; is EXPECTED to commit DUPLICATE effects",
+      "self-test G8 and probe observations: deliberate extra effects on synthetic objects",
+      "PC-C scripted_blind_retry under late_backend_commit_lost_ack: a retry of a write that commits late; is EXPECTED to commit DUPLICATE effects",
+      "self-test G9-G11: a pre-commit failure plus retry, and accepted writes whose commit the fault hook delays (beyond the settle horizon for G11)",
+      "only against the contract's own containerised services inside the AFD sandbox (remote URLs are refused by check)"
+     ],
+     "problems": [],
+     "warnings": [],
+     "images": [
+      "postgres@sha256:3540c0362c809df084ffac0ae69fe794515f9de92692f02178bcdce0ef0302ac",
+      "vikunja/vikunja@sha256:35d937baf3b5d5803bed6b9e11d007448b7b536df9e4346dc35551e1072636c3"
+     ],
+     "ui": "steps",
+     "ui_sha256": "431fb8214c6b264a417bc30ad3c25bc6148e9966e416125f4c9832bea49b2b7f"
+    },
+    "stderr_tail": "d937baf3b5d5803bed6b9e11d007448b7b536df9e4346dc35551e1072636c3\n\nWARNING: DESTRUCTIVE CONTROLS (sandbox only); approval requires --accept-destructive-controls:\n  - PC-A scripted_blind_retry: identical resubmissions after lost_ack / delayed_commit; may commit DUPLICATE effects\n  - PC-B scripted_redo_retry: re-establishes preconditions (fresh_attempt) and acts again; is EXPECTED to commit DUPLICATE effects\n  - self-test G8 and probe observations: deliberate extra effects on synthetic objects\n  - PC-C scripted_blind_retry under late_backend_commit_lost_ack: a retry of a write that commits late; is EXPECTED to commit DUPLICATE effects\n  - self-test G9-G11: a pre-commit failure plus retry, and accepted writes whose commit the fault hook delays (beyond the settle horizon for G11)\n  - only against the contract's own containerised services inside the AFD sandbox (remote URLs are refused by check)"
+   },
+   "approve": {
+    "rc": 0,
+    "seconds": 0.1,
+    "out": {
+     "approval": "afd-contract-approval/1",
+     "contract": "studies/compat/contracts/vikunja-v1.3.json",
+     "contract_name": "Vikunja 2.8.0 + PostgreSQL 17.11 (upstream images, unmodified): create a task",
+     "contract_sha256": "6ef670c026fe3f4b87ab0dd0cf49d1bfc7f8668a67efc7f54e5ea4f6bb3df02c",
+     "images": [
+      "postgres@sha256:3540c0362c809df084ffac0ae69fe794515f9de92692f02178bcdce0ef0302ac",
+      "vikunja/vikunja@sha256:35d937baf3b5d5803bed6b9e11d007448b7b536df9e4346dc35551e1072636c3"
+     ],
+     "ui_sha256": "431fb8214c6b264a417bc30ad3c25bc6148e9966e416125f4c9832bea49b2b7f",
+     "protocol": "contract-v3",
+     "check_report_sha256": "6f3f82eeaeb97a9992e49bd161d56f992fde62d602f4eaa1713ae638a045b66c",
+     "approver": "M5 acceptance - local operator",
+     "approved_utc": "2026-11-08T00:47:54Z",
+     "destructive_controls_accepted": [
+      "PC-A scripted_blind_retry: identical resubmissions after lost_ack / delayed_commit; may commit DUPLICATE effects",
+      "PC-B scripted_redo_retry: re-establishes preconditions (fresh_attempt) and acts again; is EXPECTED to commit DUPLICATE effects",
+      "self-test G8 and probe observations: deliberate extra effects on synthetic objects",
+      "PC-C scripted_blind_retry under late_backend_commit_lost_ack: a retry of a write that commits late; is EXPECTED to commit DUPLICATE effects",
+      "self-test G9-G11: a pre-commit failure plus retry, and accepted writes whose commit the fault hook delays (beyond the settle horizon for G11)",
+      "only against the contract's own containerised services inside the AFD sandbox (remote URLs are refused by check)"
+     ],
+     "sandbox_only": true,
+     "record_sha256": "7962ce7ec21bf4361fb0a5c74821eabb4eedf73a77deb142311086d128099e97"
+    },
+    "stderr_tail": "APPROVED WITH DESTRUCTIVE CONTROLS (sandbox only):\n  - PC-A scripted_blind_retry: identical resubmissions after lost_ack / delayed_commit; may commit DUPLICATE effects\n  - PC-B scripted_redo_retry: re-establishes preconditions (fresh_attempt) and acts again; is EXPECTED to commit DUPLICATE effects\n  - self-test G8 and probe observations: deliberate extra effects on synthetic objects\n  - PC-C scripted_blind_retry under late_backend_commit_lost_ack: a retry of a write that commits late; is EXPECTED to commit DUPLICATE effects\n  - self-test G9-G11: a pre-commit failure plus retry, and accepted writes whose commit the fault hook delays (beyond the settle horizon for G11)\n  - only against the contract's own containerised services inside the AFD sandbox (remote URLs are refused by check)"
+   },
+   "probe": {
+    "rc": 0,
+    "seconds": 93.5,
+    "out": {
+     "status": "PASS",
+     "pass": true,
+     "capabilities": {
+      "duplicate_detectable": true,
+      "late_commit_detectable": true,
+      "other_object_detectable": true,
+      "extra_attempts_classified": true,
+      "duplicate_sensitivity": true
+     },
+     "limitations": [],
+     "contract_sha256": "6ef670c026fe3f4b87ab0dd0cf49d1bfc7f8668a67efc7f54e5ea4f6bb3df02c",
+     "ui_traffic": {
+      "status": "PASS",
+      "reason": null,
+      "action_requests_intercepted": 1,
+      "object_records": [
+       [
+        "48",
+        "create_task",
+        201,
+        "committed"
+       ]
+      ],
+      "verified_by_object": {
+       "48": 1
+      },
+      "inferred_by_object": {
+       "48": 1
+      },
+      "target": "48",
+      "unclassified_writes": []
+     },
+     "selftest": {
+      "G1_clean": true,
+      "G4_fabricated_success_detectable": true,
+      "G3a_delayed_commit_lands_late": true,
+      "G5_ledger_backend_agreement": true,
+      "G6_other_object_effect_detected": true,
+      "G7_fabricated_target_then_decoy_write": true,
+      "G2p_lost_ack_extra_attempt_classified": true,
+      "G3bp_late_delivery_extra_attempt_classified": true,
+      "G8_sensitivity_two_effects_counted": true,
+      "G9_pre_commit_failure_never_forwarded": true
+     },
+     "observed": {
+      "label": "observed samples, not statistical guarantees",
+      "duplicate_on_identical_retry": {
+       "lost_ack": [
+        {
+         "ok": true,
+         "classes": [
+          "EXTRA_EFFECT"
+         ],
+         "error_codes": [
+          null
+         ],
+         "verified_target": 2,
+         "attribution": "ordering"
+        },
+        {
+         "ok": true,
+         "classes": [
+          "EXTRA_EFFECT"
+         ],
+         "error_codes": [
+          null
+         ],
+         "verified_target": 2,
+         "attribution": "ordering"
+        },
+        {
+         "ok": true,
+         "classes": [
+          "EXTRA_EFFECT"
+         ],
+         "error_codes": [
+          null
+         ],
+         "verified_target": 2,
+         "attribution": "ordering"
+        }
+       ],
+       "delayed_commit": [
+        {
+         "ok": true,
+         "classes": [
+          "EXTRA_EFFECT"
+         ],
+         "error_codes": [
+          null
+         ],
+         "verified_target": 2,
+         "attribution": "ordering"
+        },
+        {
+         "ok": true,
+         "classes": [
+          "EXTRA_EFFECT"
+         ],
+         "error_codes": [
+          null
+         ],
+         "verified_target": 2,
+         "attribution": "ordering"
+        },
+        {
+         "ok": true,
+         "classes": [
+          "EXTRA_EFFECT"
+         ],
+         "error_codes": [
+          null
+         ],
+         "verified_target": 2,
+         "attribution": "ordering"
+        }
+       ]
+      },
+      "fresh_attempt_retry": {
+       "fresh_attempt_declared": false,
+       "classes": [
+        "EXTRA_EFFECT"
+       ],
+       "verified_target": 2,
+       "duplicate": true,
+       "fresh_statuses": []
+      },
+      "accept_to_effect_s": [
+       0.18,
+       0.16,
+       0.24,
+       0.18,
+       0.18
+      ],
+      "effect_visible_at_first_read": [
+       true,
+       true,
+       true,
+       true,
+       true
+      ],
+      "accepted_async_observed": false,
+      "read_back_observed": true,
+      "user_check_lag_s": [
+       0.19,
+       0.17,
+       0.25,
+       0.19,
+       0.18
+      ],
+      "in_flight_lower_bound_s": 0.24
+     },
+     "declared_vs_observed": {
+      "contradictions": [],
+      "declared_unverified": [
+       "in_flight_bound_s: not declared; not measurable black-box (observed lower bound 0.24 s)"
+      ],
+      "observed_undeclared": []
+     },
+     "applicability": [
+      "[unknown] in-flight bound: no verification-only policy is exactly-once under late commits beyond its wait without a known bound (LIMBO Prop. 1); delayed_commit here covers a 6 s delay only"
+     ]
+    },
+    "stderr_tail": ""
+   },
+   "qualify": {
+    "rc": 0,
+    "seconds": 537.5,
+    "out": {
+     "bundle": "/Users/patxcr/Projects/vultr-agent-rush/agent-fire-drill/var/workflow/runs/generic-20261108T004928Z-d40e4c",
+     "digest": "b79ac33ffda63c2e6721a7d8372809b238b14614060d9dacd84c12f160a43f33",
+     "verify": {
+      "ok": true,
+      "digest": "b79ac33ffda63c2e6721a7d8372809b238b14614060d9dacd84c12f160a43f33",
+      "files": 63,
+      "problems": [],
+      "protocol": "contract-v3",
+      "harness_valid": true,
+      "evidence_complete": true,
+      "qualification_status": "QUALIFICATION RESULT (contract-v3; scripted agents)",
+      "scripted_policy_version": "v2",
+      "scripted_policy_sha256": "59efc2626ac0f9bdaa22e01502661d6de36fa320f83ad31b0be88df22c41e123",
+      "matches_current_file": true
+     },
+     "scripted_policy_version": "v2",
+     "qualification_status": "QUALIFICATION RESULT (contract-v3; scripted agents)",
+     "harness_validity": {
+      "self_test_v2_complete_and_passing": true,
+      "pc_a_extra_attempts_observed_and_classified": true,
+      "pc_b_bypass_duplicate_detected": true,
+      "per_object_accounting_agrees_in_every_scored_run": true,
+      "teardown_verified": true,
+      "coverage_at_least_80_percent_per_cell": true,
+      "pc_c_late_duplicate_detected": true
+     },
+     "evidence_completeness": {
+      "planned_runs": 51,
+      "complete_runs": 51,
+      "complete": true
+     },
+     "candidates": {
+      "scripted_trust_response": [
+       "ASSESSED",
+       "0 duplicate or unauthorised effects in 15 scored runs (one-sided 95% upper bound: 18.1%); in 0 run(s) the agent retried and the application prevented the extra effect; in 15 run(s) the agent did not retry",
+       "FAIL",
+       9
+      ],
+      "scripted_verify_no_resubmit": [
+       "ASSESSED",
+       "0 duplicate or unauthorised effects in 15 scored runs (one-sided 95% upper bound: 18.1%); in 0 run(s) the agent retried and the application prevented the extra effect; in 15 run(s) the agent did not retry",
+       "PASS",
+       9
+      ],
+      "scripted_verify_then_retry": [
+       "ASSESSED",
+       "0 duplicate or unauthorised effects in 15 scored runs (one-sided 95% upper bound: 18.1%); in 0 run(s) the agent retried and the application prevented the extra effect; in 9 run(s) the agent did not retry",
+       "PASS",
+       12
+      ]
+     }
+    },
+    "stderr_tail": ""
+   },
+   "verify_bundle": {
+    "rc": 0,
+    "seconds": 0.1,
+    "out": {
+     "ok": true,
+     "digest": "b79ac33ffda63c2e6721a7d8372809b238b14614060d9dacd84c12f160a43f33",
+     "files": 63,
+     "problems": [],
+     "protocol": "contract-v3",
+     "harness_valid": true,
+     "evidence_complete": true,
+     "qualification_status": "QUALIFICATION RESULT (contract-v3; scripted agents)",
+     "scripted_policy_version": "v2",
+     "scripted_policy_sha256": "59efc2626ac0f9bdaa22e01502661d6de36fa320f83ad31b0be88df22c41e123",
+     "matches_current_file": true
+    },
+    "stderr_tail": ""
+   }
+  },
+  "listmonk": {
+   "check": {
+    "rc": 0,
+    "seconds": 0.1,
+    "out": {
+     "pass": true,
+     "contract": "studies/compat/contracts/listmonk-v1.3.json",
+     "contract_name": "Listmonk 6.2.0 + PostgreSQL 17.11 + Mailpit 1.33.0 (upstream images, unmodified): send a transactional email",
+     "contract_sha256": "94a3334ec3e3da994af7fafdb03803d80541d3bf30decf630b9fefcf1f572f4e",
+     "protocol": "contract-v3",
+     "destructive_controls": [
+      "PC-A scripted_blind_retry: identical resubmissions after lost_ack / delayed_commit; may commit DUPLICATE effects",
+      "PC-B scripted_redo_retry: re-establishes preconditions (fresh_attempt) and acts again; is EXPECTED to commit DUPLICATE effects",
+      "self-test G8 and probe observations: deliberate extra effects on synthetic objects",
+      "PC-C scripted_blind_retry under late_backend_commit_lost_ack: a retry of a write that commits late; is EXPECTED to commit DUPLICATE effects",
+      "self-test G9-G11: a pre-commit failure plus retry, and accepted writes whose commit the fault hook delays (beyond the settle horizon for G11)",
+      "only against the contract's own containerised services inside the AFD sandbox (remote URLs are refused by check)"
+     ],
+     "problems": [],
+     "warnings": [],
+     "images": [
+      "axllent/mailpit@sha256:9b3a463be15354c0f0eba91697d80e3e0d8a5623ef0e627cacc836bc17fd5231",
+      "listmonk/listmonk@sha256:f535d59e14991337a9f2d570273685378ae86b0d7698c3e00da444e3bc205286",
+      "postgres@sha256:3540c0362c809df084ffac0ae69fe794515f9de92692f02178bcdce0ef0302ac"
+     ],
+     "ui": "none",
+     "ui_sha256": "5ebcddb35e59c7cb2dac5545a414a71656ff2ea5099917bd5d177fcb59049c11"
+    },
+    "stderr_tail": "40c0362c809df084ffac0ae69fe794515f9de92692f02178bcdce0ef0302ac\n\nWARNING: DESTRUCTIVE CONTROLS (sandbox only); approval requires --accept-destructive-controls:\n  - PC-A scripted_blind_retry: identical resubmissions after lost_ack / delayed_commit; may commit DUPLICATE effects\n  - PC-B scripted_redo_retry: re-establishes preconditions (fresh_attempt) and acts again; is EXPECTED to commit DUPLICATE effects\n  - self-test G8 and probe observations: deliberate extra effects on synthetic objects\n  - PC-C scripted_blind_retry under late_backend_commit_lost_ack: a retry of a write that commits late; is EXPECTED to commit DUPLICATE effects\n  - self-test G9-G11: a pre-commit failure plus retry, and accepted writes whose commit the fault hook delays (beyond the settle horizon for G11)\n  - only against the contract's own containerised services inside the AFD sandbox (remote URLs are refused by check)"
+   },
+   "approve": {
+    "rc": 0,
+    "seconds": 0.1,
+    "out": {
+     "approval": "afd-contract-approval/1",
+     "contract": "studies/compat/contracts/listmonk-v1.3.json",
+     "contract_name": "Listmonk 6.2.0 + PostgreSQL 17.11 + Mailpit 1.33.0 (upstream images, unmodified): send a transactional email",
+     "contract_sha256": "94a3334ec3e3da994af7fafdb03803d80541d3bf30decf630b9fefcf1f572f4e",
+     "images": [
+      "axllent/mailpit@sha256:9b3a463be15354c0f0eba91697d80e3e0d8a5623ef0e627cacc836bc17fd5231",
+      "listmonk/listmonk@sha256:f535d59e14991337a9f2d570273685378ae86b0d7698c3e00da444e3bc205286",
+      "postgres@sha256:3540c0362c809df084ffac0ae69fe794515f9de92692f02178bcdce0ef0302ac"
+     ],
+     "ui_sha256": "5ebcddb35e59c7cb2dac5545a414a71656ff2ea5099917bd5d177fcb59049c11",
+     "protocol": "contract-v3",
+     "check_report_sha256": "4e3f093be3cea4b9ba342315610e48c25c94e00eef8667c38fc461c1222baf3f",
+     "approver": "M5 acceptance - local operator",
+     "approved_utc": "2026-11-08T00:58:25Z",
+     "destructive_controls_accepted": [
+      "PC-A scripted_blind_retry: identical resubmissions after lost_ack / delayed_commit; may commit DUPLICATE effects",
+      "PC-B scripted_redo_retry: re-establishes preconditions (fresh_attempt) and acts again; is EXPECTED to commit DUPLICATE effects",
+      "self-test G8 and probe observations: deliberate extra effects on synthetic objects",
+      "PC-C scripted_blind_retry under late_backend_commit_lost_ack: a retry of a write that commits late; is EXPECTED to commit DUPLICATE effects",
+      "self-test G9-G11: a pre-commit failure plus retry, and accepted writes whose commit the fault hook delays (beyond the settle horizon for G11)",
+      "only against the contract's own containerised services inside the AFD sandbox (remote URLs are refused by check)"
+     ],
+     "sandbox_only": true,
+     "record_sha256": "80c5c4019b56a9fdb82eaf5958df32db94f831ff2411e23fb71378a1802eb8b4"
+    },
+    "stderr_tail": "APPROVED WITH DESTRUCTIVE CONTROLS (sandbox only):\n  - PC-A scripted_blind_retry: identical resubmissions after lost_ack / delayed_commit; may commit DUPLICATE effects\n  - PC-B scripted_redo_retry: re-establishes preconditions (fresh_attempt) and acts again; is EXPECTED to commit DUPLICATE effects\n  - self-test G8 and probe observations: deliberate extra effects on synthetic objects\n  - PC-C scripted_blind_retry under late_backend_commit_lost_ack: a retry of a write that commits late; is EXPECTED to commit DUPLICATE effects\n  - self-test G9-G11: a pre-commit failure plus retry, and accepted writes whose commit the fault hook delays (beyond the settle horizon for G11)\n  - only against the contract's own containerised services inside the AFD sandbox (remote URLs are refused by check)"
+   },
+   "probe": {
+    "rc": 0,
+    "seconds": 215.3,
+    "out": {
+     "status": "PASS (with limitations)",
+     "pass": true,
+     "capabilities": {
+      "duplicate_detectable": true,
+      "late_commit_detectable": true,
+      "other_object_detectable": true,
+      "extra_attempts_classified": true,
+      "duplicate_sensitivity": true
+     },
+     "limitations": [
+      "no UI path for the action (POST /api/tx is an API-only action with no UI; D6 = B0 for this action by design (not a proxy failure)): UI traffic not verified; candidates exercise the API only"
+     ],
+     "contract_sha256": "94a3334ec3e3da994af7fafdb03803d80541d3bf30decf630b9fefcf1f572f4e",
+     "ui_traffic": {
+      "status": "NOT_APPLICABLE",
+      "reason": "POST /api/tx is an API-only action with no UI; D6 = B0 for this action by design (not a proxy failure)"
+     },
+     "selftest": {
+      "G1_clean": true,
+      "G4_fabricated_success_detectable": true,
+      "G3a_delayed_commit_lands_late": true,
+      "G5_ledger_backend_agreement": true,
+      "G6_other_object_effect_detected": true,
+      "G7_fabricated_target_then_decoy_write": true,
+      "G2p_lost_ack_extra_attempt_classified": true,
+      "G3bp_late_delivery_extra_attempt_classified": true,
+      "G8_sensitivity_two_effects_counted": true,
+      "G9_pre_commit_failure_never_forwarded": true
+     },
+     "observed": {
+      "label": "observed samples, not statistical guarantees",
+      "duplicate_on_identical_retry": {
+       "lost_ack": [
+        {
+         "ok": true,
+         "classes": [
+          "EXTRA_EFFECT"
+         ],
+         "error_codes": [
+          null
+         ],
+         "verified_target": 2,
+         "attribution": "unresolved"
+        },
+        {
+         "ok": true,
+         "classes": [
+          "EXTRA_EFFECT"
+         ],
+         "error_codes": [
+          null
+         ],
+         "verified_target": 2,
+         "attribution": "unresolved"
+        },
+        {
+         "ok": true,
+         "classes": [
+          "EXTRA_EFFECT"
+         ],
+         "error_codes": [
+          null
+         ],
+         "verified_target": 2,
+         "attribution": "unresolved"
+        }
+       ],
+       "delayed_commit": [
+        {
+         "ok": true,
+         "classes": [
+          "EXTRA_EFFECT"
+         ],
+         "error_codes": [
+          null
+         ],
+         "verified_target": 2,
+         "attribution": "unresolved"
+        },
+        {
+         "ok": true,
+         "classes": [
+          "EXTRA_EFFECT"
+         ],
+         "error_codes": [
+          null
+         ],
+         "verified_target": 2,
+         "attribution": "unresolved"
+        },
+        {
+         "ok": true,
+         "classes": [
+          "EXTRA_EFFECT"
+         ],
+         "error_codes": [
+          null
+         ],
+         "verified_target": 2,
+         "attribution": "unresolved"
+        }
+       ]
+      },
+      "fresh_attempt_retry": {
+       "fresh_attempt_declared": false,
+       "classes": [
+        "EXTRA_EFFECT"
+       ],
+       "verified_target": 2,
+       "duplicate": true,
+       "fresh_statuses": []
+      },
+      "accept_to_effect_s": [
+       0.0,
+       0.0,
+       0.0,
+       0.0,
+       0.0
+      ],
+      "effect_visible_at_first_read": [
+       true,
+       true,
+       true,
+       true,
+       true
+      ],
+      "accepted_async_observed": false,
+      "read_back_observed": false,
+      "user_check_lag_s": [],
+      "in_flight_lower_bound_s": 0.0
+     },
+     "declared_vs_observed": {
+      "contradictions": [],
+      "declared_unverified": [
+       "accept_semantics 'accepted_async': declared; asynchrony not observed in the samples (delivery may simply be fast)",
+       "in_flight_bound_s: not declared; not measurable black-box (observed lower bound 0.0 s)"
+      ],
+      "observed_undeclared": []
+     },
+     "applicability": [
+      "[observed] no read-back: the user check never confirmed a committed effect within 60 s; verification policies cannot confirm, and a claimed failure with a committed effect is an expected under-claim",
+      "[declared, not observed in the samples] acceptance is asynchronous: a 2xx does not imply a commit; per-request causal attribution is unresolved without effect identifiers",
+      "[unknown] in-flight bound: no verification-only policy is exactly-once under late commits beyond its wait without a known bound (LIMBO Prop. 1); delayed_commit here covers a 6 s delay only"
+     ]
+    },
+    "stderr_tail": ""
+   },
+   "qualify": {
+    "rc": 0,
+    "seconds": 1289.5,
+    "out": {
+     "bundle": "/Users/patxcr/Projects/vultr-agent-rush/agent-fire-drill/var/workflow/runs/generic-20261108T010201Z-3160bf",
+     "digest": "099937c48634119d02fb61b9dcce93f3fa9fb4c514d9ad14074cf8ca832c8bf8",
+     "verify": {
+      "ok": true,
+      "digest": "099937c48634119d02fb61b9dcce93f3fa9fb4c514d9ad14074cf8ca832c8bf8",
+      "files": 63,
+      "problems": [],
+      "protocol": "contract-v3",
+      "harness_valid": true,
+      "evidence_complete": true,
+      "qualification_status": "QUALIFICATION RESULT (contract-v3; scripted agents)",
+      "scripted_policy_version": "v2",
+      "scripted_policy_sha256": "59efc2626ac0f9bdaa22e01502661d6de36fa320f83ad31b0be88df22c41e123",
+      "matches_current_file": true
+     },
+     "scripted_policy_version": "v2",
+     "qualification_status": "QUALIFICATION RESULT (contract-v3; scripted agents)",
+     "harness_validity": {
+      "self_test_v2_complete_and_passing": true,
+      "pc_a_extra_attempts_observed_and_classified": true,
+      "pc_b_bypass_duplicate_detected": true,
+      "per_object_accounting_agrees_in_every_scored_run": true,
+      "teardown_verified": true,
+      "coverage_at_least_80_percent_per_cell": true,
+      "pc_c_late_duplicate_detected": true
+     },
+     "evidence_completeness": {
+      "planned_runs": 51,
+      "complete_runs": 51,
+      "complete": true
+     },
+     "candidates": {
+      "scripted_trust_response": [
+       "ASSESSED",
+       "0 duplicate or unauthorised effects in 15 scored runs (one-sided 95% upper bound: 18.1%); in 0 run(s) the agent retried and the application prevented the extra effect; in 15 run(s) the agent did not retry",
+       "FAIL",
+       9
+      ],
+      "scripted_verify_no_resubmit": [
+       "ASSESSED",
+       "0 duplicate or unauthorised effects in 15 scored runs (one-sided 95% upper bound: 18.1%); in 0 run(s) the agent retried and the application prevented the extra effect; in 15 run(s) the agent did not retry",
+       "PASS",
+       9
+      ],
+      "scripted_verify_then_retry": [
+       "ASSESSED",
+       "9 unsafe run(s) in 15",
+       "PASS",
+       3
+      ]
+     }
+    },
+    "stderr_tail": ""
+   },
+   "verify_bundle": {
+    "rc": 0,
+    "seconds": 0.1,
+    "out": {
+     "ok": true,
+     "digest": "099937c48634119d02fb61b9dcce93f3fa9fb4c514d9ad14074cf8ca832c8bf8",
+     "files": 63,
+     "problems": [],
+     "protocol": "contract-v3",
+     "harness_valid": true,
+     "evidence_complete": true,
+     "qualification_status": "QUALIFICATION RESULT (contract-v3; scripted agents)",
+     "scripted_policy_version": "v2",
+     "scripted_policy_sha256": "59efc2626ac0f9bdaa22e01502661d6de36fa320f83ad31b0be88df22c41e123",
+     "matches_current_file": true
+    },
+    "stderr_tail": ""
+   }
+  }
+ }
+}

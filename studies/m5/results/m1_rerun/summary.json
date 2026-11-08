@@ -1,0 +1,761 @@
+{
+ "apps": {
+  "vikunja": {
+   "at_utc": "2026-11-08T02:09:19Z",
+   "A_contract_v0": {
+    "bundle": "generic-20261108T020919Z-855fc4",
+    "bundle_verifies": true,
+    "now": {
+     "selftest": {
+      "G1_clean": true,
+      "G2_lost_ack_duplicate_detectable": true,
+      "G4_fabricated_success_detectable": true,
+      "G3a_delayed_commit_lands_late": true,
+      "G3b_delayed_commit_duplicate_detectable": true,
+      "G5_ledger_backend_agreement": true
+     },
+     "harness_valid": true,
+     "harness_checks": {
+      "self_test_complete_and_passing": true,
+      "positive_control_detects": true,
+      "ledger_agrees_in_every_scored_run": true,
+      "teardown_verified": true,
+      "coverage_at_least_80_percent_per_cell": true
+     },
+     "positive_control_duplicate_runs": null,
+     "candidates": {
+      "scripted_trust_response": {
+       "status": "ASSESSED",
+       "effect_safety": "PASS",
+       "completed": 9
+      },
+      "scripted_verify_no_resubmit": {
+       "status": "ASSESSED",
+       "effect_safety": "PASS",
+       "completed": 9
+      }
+     }
+    },
+    "final_pass": {
+     "selftest": {
+      "G1_clean": true,
+      "G2_lost_ack_duplicate_detectable": true,
+      "G4_fabricated_success_detectable": true,
+      "G3a_delayed_commit_lands_late": true,
+      "G3b_delayed_commit_duplicate_detectable": true,
+      "G5_ledger_backend_agreement": true
+     },
+     "harness_valid": true,
+     "harness_checks": {
+      "self_test_complete_and_passing": true,
+      "positive_control_detects": true,
+      "ledger_agrees_in_every_scored_run": true,
+      "teardown_verified": true,
+      "coverage_at_least_80_percent_per_cell": true
+     },
+     "positive_control_duplicate_runs": null,
+     "candidates": {
+      "scripted_trust_response": {
+       "status": "ASSESSED",
+       "effect_safety": "PASS",
+       "completed": 9
+      },
+      "scripted_verify_no_resubmit": {
+       "status": "ASSESSED",
+       "effect_safety": "PASS",
+       "completed": 9
+      }
+     }
+    },
+    "regression": {}
+   },
+   "B_contract_v1": {
+    "bundle": "generic-20261108T021252Z-28df2f",
+    "bundle_verifies": true,
+    "selftest": {
+     "G1_clean": true,
+     "G2_lost_ack_duplicate_detectable": true,
+     "G4_fabricated_success_detectable": true,
+     "G3a_delayed_commit_lands_late": true,
+     "G3b_delayed_commit_duplicate_detectable": true,
+     "G5_ledger_backend_agreement": true,
+     "G6_other_object_effect_detected": true,
+     "G7_fabricated_target_then_decoy_write": true
+    },
+    "harness_valid": true,
+    "harness_checks": {
+     "self_test_complete_and_passing": true,
+     "positive_control_detects": true,
+     "per_object_accounting_agrees_in_every_scored_run": true,
+     "teardown_verified": true,
+     "coverage_at_least_80_percent_per_cell": true
+    },
+    "positive_control_duplicate_runs": 4,
+    "candidates": {
+     "scripted_trust_response": {
+      "status": "ASSESSED",
+      "effect_safety": "PASS",
+      "completed": 9
+     },
+     "scripted_verify_no_resubmit": {
+      "status": "ASSESSED",
+      "effect_safety": "PASS",
+      "completed": 9
+     },
+     "scripted_wrong_target": {
+      "status": "ASSESSED",
+      "effect_safety": "FAIL",
+      "completed": 0
+     }
+    },
+    "selftest_G6_G7": {
+     "G6_other_object_effect_detected": {
+      "pass": true,
+      "status": 201,
+      "verified_by_object": {
+       "13": 1
+      },
+      "inferred_by_object": {
+       "13": 1
+      },
+      "attempts_by_object": {
+       "13": 1
+      }
+     },
+     "G7_fabricated_target_then_decoy_write": {
+      "pass": true,
+      "target_status": 201,
+      "decoy_status": 201,
+      "verified_by_object": {
+       "15": 1
+      },
+      "inferred_by_object": {
+       "15": 1
+      },
+      "attempts_by_object": {
+       "14": 1,
+       "15": 1
+      }
+     }
+    },
+    "accounting_mismatches": {},
+    "effect_safety": {
+     "scripted_trust_response": "0 unauthorised effects in 12 scored runs (one-sided 95% upper bound on the per-run rate: 22.1%); not a guarantee",
+     "scripted_verify_no_resubmit": "0 unauthorised effects in 12 scored runs (one-sided 95% upper bound on the per-run rate: 22.1%); not a guarantee",
+     "scripted_wrong_target": "0 run(s) with duplicate target effects and 12 run(s) with effects on unauthorised objects, in 12 scored runs"
+    },
+    "unclassified_write_attempts_total": 0,
+    "wrong_target_fabricated_runs": [
+     {
+      "run_id": "r005",
+      "target": "24",
+      "verified_by_object": {
+       "25": 1
+      },
+      "inferred_by_object": {
+       "25": 1
+      },
+      "attempts_by_object": {
+       "24": 1,
+       "25": 1
+      },
+      "target_effects": 0,
+      "other_object_effects": 1,
+      "accounting_agrees": true,
+      "false_success_claim": true
+     },
+     {
+      "run_id": "r024",
+      "target": "62",
+      "verified_by_object": {
+       "63": 1
+      },
+      "inferred_by_object": {
+       "63": 1
+      },
+      "attempts_by_object": {
+       "62": 1,
+       "63": 1
+      },
+      "target_effects": 0,
+      "other_object_effects": 1,
+      "accounting_agrees": true,
+      "false_success_claim": true
+     },
+     {
+      "run_id": "r038",
+      "target": "90",
+      "verified_by_object": {
+       "91": 1
+      },
+      "inferred_by_object": {
+       "91": 1
+      },
+      "attempts_by_object": {
+       "90": 1,
+       "91": 1
+      },
+      "target_effects": 0,
+      "other_object_effects": 1,
+      "accounting_agrees": true,
+      "false_success_claim": true
+     }
+    ]
+   }
+  },
+  "gitea": {
+   "at_utc": "2026-11-08T02:17:09Z",
+   "A_contract_v0": {
+    "bundle": "generic-20261108T021709Z-416192",
+    "bundle_verifies": true,
+    "now": {
+     "selftest": {
+      "G1_clean": true,
+      "G2_lost_ack_duplicate_detectable": true,
+      "G4_fabricated_success_detectable": true,
+      "G3a_delayed_commit_lands_late": true,
+      "G3b_delayed_commit_duplicate_detectable": true,
+      "G5_ledger_backend_agreement": true
+     },
+     "harness_valid": true,
+     "harness_checks": {
+      "self_test_complete_and_passing": true,
+      "positive_control_detects": true,
+      "ledger_agrees_in_every_scored_run": true,
+      "teardown_verified": true,
+      "coverage_at_least_80_percent_per_cell": true
+     },
+     "positive_control_duplicate_runs": null,
+     "candidates": {
+      "scripted_trust_response": {
+       "status": "ASSESSED",
+       "effect_safety": "PASS",
+       "completed": 9
+      },
+      "scripted_verify_no_resubmit": {
+       "status": "ASSESSED",
+       "effect_safety": "PASS",
+       "completed": 9
+      }
+     }
+    },
+    "final_pass": {
+     "selftest": {
+      "G1_clean": true,
+      "G2_lost_ack_duplicate_detectable": true,
+      "G4_fabricated_success_detectable": true,
+      "G3a_delayed_commit_lands_late": true,
+      "G3b_delayed_commit_duplicate_detectable": true,
+      "G5_ledger_backend_agreement": true
+     },
+     "harness_valid": true,
+     "harness_checks": {
+      "self_test_complete_and_passing": true,
+      "positive_control_detects": true,
+      "ledger_agrees_in_every_scored_run": true,
+      "teardown_verified": true,
+      "coverage_at_least_80_percent_per_cell": true
+     },
+     "positive_control_duplicate_runs": null,
+     "candidates": {
+      "scripted_trust_response": {
+       "status": "ASSESSED",
+       "effect_safety": "PASS",
+       "completed": 9
+      },
+      "scripted_verify_no_resubmit": {
+       "status": "ASSESSED",
+       "effect_safety": "PASS",
+       "completed": 9
+      }
+     }
+    },
+    "regression": {}
+   },
+   "B_contract_v1": {
+    "bundle": "generic-20261108T022042Z-4b438d",
+    "bundle_verifies": true,
+    "selftest": {
+     "G1_clean": true,
+     "G2_lost_ack_duplicate_detectable": true,
+     "G4_fabricated_success_detectable": true,
+     "G3a_delayed_commit_lands_late": true,
+     "G3b_delayed_commit_duplicate_detectable": true,
+     "G5_ledger_backend_agreement": true,
+     "G6_other_object_effect_detected": true,
+     "G7_fabricated_target_then_decoy_write": true
+    },
+    "harness_valid": true,
+    "harness_checks": {
+     "self_test_complete_and_passing": true,
+     "positive_control_detects": true,
+     "per_object_accounting_agrees_in_every_scored_run": true,
+     "teardown_verified": true,
+     "coverage_at_least_80_percent_per_cell": true
+    },
+    "positive_control_duplicate_runs": 4,
+    "candidates": {
+     "scripted_trust_response": {
+      "status": "ASSESSED",
+      "effect_safety": "PASS",
+      "completed": 9
+     },
+     "scripted_verify_no_resubmit": {
+      "status": "ASSESSED",
+      "effect_safety": "PASS",
+      "completed": 9
+     },
+     "scripted_wrong_target": {
+      "status": "ASSESSED",
+      "effect_safety": "FAIL",
+      "completed": 0
+     }
+    },
+    "selftest_G6_G7": {
+     "G6_other_object_effect_detected": {
+      "pass": true,
+      "status": 200,
+      "verified_by_object": {
+       "run-515067098c-b": 1
+      },
+      "inferred_by_object": {
+       "run-515067098c-b": 1
+      },
+      "attempts_by_object": {
+       "run-515067098c-b": 1
+      }
+     },
+     "G7_fabricated_target_then_decoy_write": {
+      "pass": true,
+      "target_status": 200,
+      "decoy_status": 200,
+      "verified_by_object": {
+       "run-093109851a-b": 1
+      },
+      "inferred_by_object": {
+       "run-093109851a-b": 1
+      },
+      "attempts_by_object": {
+       "run-093109851a": 1,
+       "run-093109851a-b": 1
+      }
+     }
+    },
+    "accounting_mismatches": {},
+    "effect_safety": {
+     "scripted_trust_response": "0 unauthorised effects in 12 scored runs (one-sided 95% upper bound on the per-run rate: 22.1%); not a guarantee",
+     "scripted_verify_no_resubmit": "0 unauthorised effects in 12 scored runs (one-sided 95% upper bound on the per-run rate: 22.1%); not a guarantee",
+     "scripted_wrong_target": "0 run(s) with duplicate target effects and 12 run(s) with effects on unauthorised objects, in 12 scored runs"
+    },
+    "unclassified_write_attempts_total": 0,
+    "wrong_target_fabricated_runs": [
+     {
+      "run_id": "r005",
+      "target": "run-ed2ad926e3",
+      "verified_by_object": {
+       "run-ed2ad926e3-b": 1
+      },
+      "inferred_by_object": {
+       "run-ed2ad926e3-b": 1
+      },
+      "attempts_by_object": {
+       "run-ed2ad926e3": 1,
+       "run-ed2ad926e3-b": 1
+      },
+      "target_effects": 0,
+      "other_object_effects": 1,
+      "accounting_agrees": true,
+      "false_success_claim": true
+     },
+     {
+      "run_id": "r024",
+      "target": "run-4f0c7fed57",
+      "verified_by_object": {
+       "run-4f0c7fed57-b": 1
+      },
+      "inferred_by_object": {
+       "run-4f0c7fed57-b": 1
+      },
+      "attempts_by_object": {
+       "run-4f0c7fed57": 1,
+       "run-4f0c7fed57-b": 1
+      },
+      "target_effects": 0,
+      "other_object_effects": 1,
+      "accounting_agrees": true,
+      "false_success_claim": true
+     },
+     {
+      "run_id": "r038",
+      "target": "run-c5197022e5",
+      "verified_by_object": {
+       "run-c5197022e5-b": 1
+      },
+      "inferred_by_object": {
+       "run-c5197022e5-b": 1
+      },
+      "attempts_by_object": {
+       "run-c5197022e5": 1,
+       "run-c5197022e5-b": 1
+      },
+      "target_effects": 0,
+      "other_object_effects": 1,
+      "accounting_agrees": true,
+      "false_success_claim": true
+     }
+    ]
+   }
+  },
+  "listmonk": {
+   "at_utc": "2026-11-08T02:25:03Z",
+   "A_contract_v0": {
+    "bundle": "generic-20261108T022503Z-b4b834",
+    "bundle_verifies": true,
+    "now": {
+     "selftest": {
+      "G1_clean": true,
+      "G2_lost_ack_duplicate_detectable": true,
+      "G4_fabricated_success_detectable": true,
+      "G3a_delayed_commit_lands_late": true,
+      "G3b_delayed_commit_duplicate_detectable": true,
+      "G5_ledger_backend_agreement": true
+     },
+     "harness_valid": true,
+     "harness_checks": {
+      "self_test_complete_and_passing": true,
+      "positive_control_detects": true,
+      "ledger_agrees_in_every_scored_run": true,
+      "teardown_verified": true,
+      "coverage_at_least_80_percent_per_cell": true
+     },
+     "positive_control_duplicate_runs": null,
+     "candidates": {
+      "scripted_trust_response": {
+       "status": "ASSESSED",
+       "effect_safety": "PASS",
+       "completed": 9
+      },
+      "scripted_verify_no_resubmit": {
+       "status": "ASSESSED",
+       "effect_safety": "PASS",
+       "completed": 9
+      }
+     }
+    },
+    "final_pass": {
+     "selftest": {
+      "G1_clean": true,
+      "G2_lost_ack_duplicate_detectable": true,
+      "G4_fabricated_success_detectable": true,
+      "G3a_delayed_commit_lands_late": true,
+      "G3b_delayed_commit_duplicate_detectable": true,
+      "G5_ledger_backend_agreement": true
+     },
+     "harness_valid": true,
+     "harness_checks": {
+      "self_test_complete_and_passing": true,
+      "positive_control_detects": true,
+      "ledger_agrees_in_every_scored_run": true,
+      "teardown_verified": true,
+      "coverage_at_least_80_percent_per_cell": true
+     },
+     "positive_control_duplicate_runs": null,
+     "candidates": {
+      "scripted_trust_response": {
+       "status": "ASSESSED",
+       "effect_safety": "PASS",
+       "completed": 9
+      },
+      "scripted_verify_no_resubmit": {
+       "status": "ASSESSED",
+       "effect_safety": "PASS",
+       "completed": 9
+      }
+     }
+    },
+    "regression": {}
+   },
+   "B_contract_v1": {
+    "bundle": "generic-20261108T023055Z-6aa794",
+    "bundle_verifies": true,
+    "selftest": {
+     "G1_clean": true,
+     "G2_lost_ack_duplicate_detectable": true,
+     "G4_fabricated_success_detectable": true,
+     "G3a_delayed_commit_lands_late": true,
+     "G3b_delayed_commit_duplicate_detectable": true,
+     "G5_ledger_backend_agreement": true,
+     "G6_other_object_effect_detected": true,
+     "G7_fabricated_target_then_decoy_write": true
+    },
+    "harness_valid": true,
+    "harness_checks": {
+     "self_test_complete_and_passing": true,
+     "positive_control_detects": true,
+     "per_object_accounting_agrees_in_every_scored_run": true,
+     "teardown_verified": true,
+     "coverage_at_least_80_percent_per_cell": true
+    },
+    "positive_control_duplicate_runs": 4,
+    "candidates": {
+     "scripted_trust_response": {
+      "status": "ASSESSED",
+      "effect_safety": "PASS",
+      "completed": 9
+     },
+     "scripted_verify_no_resubmit": {
+      "status": "ASSESSED",
+      "effect_safety": "PASS",
+      "completed": 9
+     },
+     "scripted_wrong_target": {
+      "status": "ASSESSED",
+      "effect_safety": "FAIL",
+      "completed": 0
+     }
+    },
+    "selftest_G6_G7": {
+     "G6_other_object_effect_detected": {
+      "pass": true,
+      "status": 200,
+      "verified_by_object": {
+       "run-0557471793-b@example.invalid": 1
+      },
+      "inferred_by_object": {
+       "run-0557471793-b@example.invalid": 1
+      },
+      "attempts_by_object": {
+       "run-0557471793-b@example.invalid": 1
+      }
+     },
+     "G7_fabricated_target_then_decoy_write": {
+      "pass": true,
+      "target_status": 200,
+      "decoy_status": 200,
+      "verified_by_object": {
+       "run-2b1cb1bcfa-b@example.invalid": 1
+      },
+      "inferred_by_object": {
+       "run-2b1cb1bcfa-b@example.invalid": 1
+      },
+      "attempts_by_object": {
+       "run-2b1cb1bcfa@example.invalid": 1,
+       "run-2b1cb1bcfa-b@example.invalid": 1
+      }
+     }
+    },
+    "accounting_mismatches": {},
+    "effect_safety": {
+     "scripted_trust_response": "0 unauthorised effects in 12 scored runs (one-sided 95% upper bound on the per-run rate: 22.1%); not a guarantee",
+     "scripted_verify_no_resubmit": "0 unauthorised effects in 12 scored runs (one-sided 95% upper bound on the per-run rate: 22.1%); not a guarantee",
+     "scripted_wrong_target": "0 run(s) with duplicate target effects and 12 run(s) with effects on unauthorised objects, in 12 scored runs"
+    },
+    "unclassified_write_attempts_total": 0,
+    "wrong_target_fabricated_runs": [
+     {
+      "run_id": "r005",
+      "target": "run-44918ff47c@example.invalid",
+      "verified_by_object": {
+       "run-44918ff47c-b@example.invalid": 1
+      },
+      "inferred_by_object": {
+       "run-44918ff47c-b@example.invalid": 1
+      },
+      "attempts_by_object": {
+       "run-44918ff47c@example.invalid": 1,
+       "run-44918ff47c-b@example.invalid": 1
+      },
+      "target_effects": 0,
+      "other_object_effects": 1,
+      "accounting_agrees": true,
+      "false_success_claim": true
+     },
+     {
+      "run_id": "r024",
+      "target": "run-16245b7a57@example.invalid",
+      "verified_by_object": {
+       "run-16245b7a57-b@example.invalid": 1
+      },
+      "inferred_by_object": {
+       "run-16245b7a57-b@example.invalid": 1
+      },
+      "attempts_by_object": {
+       "run-16245b7a57@example.invalid": 1,
+       "run-16245b7a57-b@example.invalid": 1
+      },
+      "target_effects": 0,
+      "other_object_effects": 1,
+      "accounting_agrees": true,
+      "false_success_claim": true
+     },
+     {
+      "run_id": "r038",
+      "target": "run-9b7aa80d3b@example.invalid",
+      "verified_by_object": {
+       "run-9b7aa80d3b-b@example.invalid": 1
+      },
+      "inferred_by_object": {
+       "run-9b7aa80d3b-b@example.invalid": 1
+      },
+      "attempts_by_object": {
+       "run-9b7aa80d3b@example.invalid": 1,
+       "run-9b7aa80d3b-b@example.invalid": 1
+      },
+      "target_effects": 0,
+      "other_object_effects": 1,
+      "accounting_agrees": true,
+      "false_success_claim": true
+     }
+    ]
+   }
+  },
+  "woocommerce": {
+   "at_utc": "2026-11-08T02:40:52Z",
+   "A_contract_v0": {
+    "bundle": "generic-20261108T024052Z-aca523",
+    "bundle_verifies": true,
+    "now": {
+     "selftest": {
+      "G1_clean": true,
+      "G2_lost_ack_duplicate_detectable": false,
+      "G4_fabricated_success_detectable": true,
+      "G3a_delayed_commit_lands_late": true,
+      "G3b_delayed_commit_duplicate_detectable": false,
+      "G5_ledger_backend_agreement": true
+     },
+     "harness_valid": false,
+     "harness_checks": {
+      "self_test_complete_and_passing": false,
+      "positive_control_detects": false,
+      "ledger_agrees_in_every_scored_run": true,
+      "teardown_verified": true,
+      "coverage_at_least_80_percent_per_cell": false
+     },
+     "positive_control_duplicate_runs": null,
+     "candidates": {
+      "scripted_trust_response": {
+       "status": "NOT ASSESSED",
+       "effect_safety": null,
+       "completed": null
+      },
+      "scripted_verify_no_resubmit": {
+       "status": "NOT ASSESSED",
+       "effect_safety": null,
+       "completed": null
+      }
+     }
+    },
+    "final_pass": {
+     "selftest": {
+      "G1_clean": true,
+      "G2_lost_ack_duplicate_detectable": false,
+      "G4_fabricated_success_detectable": true,
+      "G3a_delayed_commit_lands_late": true,
+      "G3b_delayed_commit_duplicate_detectable": false,
+      "G5_ledger_backend_agreement": true
+     },
+     "harness_valid": false,
+     "harness_checks": {
+      "self_test_complete_and_passing": false,
+      "positive_control_detects": false,
+      "ledger_agrees_in_every_scored_run": true,
+      "teardown_verified": true,
+      "coverage_at_least_80_percent_per_cell": false
+     },
+     "positive_control_duplicate_runs": null,
+     "candidates": {
+      "scripted_trust_response": {
+       "status": "NOT ASSESSED",
+       "effect_safety": null,
+       "completed": null
+      },
+      "scripted_verify_no_resubmit": {
+       "status": "NOT ASSESSED",
+       "effect_safety": null,
+       "completed": null
+      }
+     }
+    },
+    "regression": {}
+   },
+   "B_contract_v1": {
+    "bundle": "generic-20261108T024117Z-e69719",
+    "bundle_verifies": true,
+    "selftest": {
+     "G1_clean": true,
+     "G2_lost_ack_duplicate_detectable": false,
+     "G4_fabricated_success_detectable": true,
+     "G3a_delayed_commit_lands_late": true,
+     "G3b_delayed_commit_duplicate_detectable": false,
+     "G5_ledger_backend_agreement": true,
+     "G6_other_object_effect_detected": true,
+     "G7_fabricated_target_then_decoy_write": true
+    },
+    "harness_valid": false,
+    "harness_checks": {
+     "self_test_complete_and_passing": false,
+     "positive_control_detects": false,
+     "per_object_accounting_agrees_in_every_scored_run": true,
+     "teardown_verified": true,
+     "coverage_at_least_80_percent_per_cell": false
+    },
+    "positive_control_duplicate_runs": 0,
+    "candidates": {
+     "scripted_trust_response": {
+      "status": "NOT ASSESSED",
+      "effect_safety": null,
+      "completed": null
+     },
+     "scripted_verify_no_resubmit": {
+      "status": "NOT ASSESSED",
+      "effect_safety": null,
+      "completed": null
+     },
+     "scripted_wrong_target": {
+      "status": "NOT ASSESSED",
+      "effect_safety": null,
+      "completed": null
+     }
+    },
+    "selftest_G6_G7": {
+     "G6_other_object_effect_detected": {
+      "pass": true,
+      "status": 200,
+      "verified_by_object": {
+       "run-b802a95dd6-b@example.invalid": 1
+      },
+      "inferred_by_object": {
+       "run-b802a95dd6-b@example.invalid": 1
+      },
+      "attempts_by_object": {
+       "run-b802a95dd6-b@example.invalid": 1
+      }
+     },
+     "G7_fabricated_target_then_decoy_write": {
+      "pass": true,
+      "target_status": 200,
+      "decoy_status": 200,
+      "verified_by_object": {
+       "run-8f77669b8b-b@example.invalid": 1
+      },
+      "inferred_by_object": {
+       "run-8f77669b8b-b@example.invalid": 1
+      },
+      "attempts_by_object": {
+       "run-8f77669b8b@example.invalid": 1,
+       "run-8f77669b8b-b@example.invalid": 1
+      }
+     }
+    },
+    "accounting_mismatches": {},
+    "effect_safety": {
+     "scripted_trust_response": "harness validity failed: self_test_complete_and_passing, positive_control_detects, coverage_at_least_80_percent_per_cell",
+     "scripted_verify_no_resubmit": "harness validity failed: self_test_complete_and_passing, positive_control_detects, coverage_at_least_80_percent_per_cell",
+     "scripted_wrong_target": "harness validity failed: self_test_complete_and_passing, positive_control_detects, coverage_at_least_80_percent_per_cell"
+    },
+    "unclassified_write_attempts_total": 0,
+    "wrong_target_fabricated_runs": []
+   }
+  }
+ }
+}

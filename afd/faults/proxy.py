@@ -13,6 +13,7 @@ Fault primitives, armed per scope through the secret-protected control API:
   delayed_commit  EDGE-DEFERRED DELIVERY: the FIRST matching write is held at the proxy; the client gets 503; the app
                   receives the identical request only after `delay` seconds (it is not "accepted, then committed late")
   fabricated      EVERY matching write gets the fabricated success response and is never forwarded (nothing commits)
+  pre_commit_failure  (contract-v3) the FIRST matching write gets 503 and is NEVER forwarded: the backend never sees it
   (unarmed scopes pass through untouched; with objects configured, an arm may name an object and then applies only
   to writes on that object, so a write on another object in the same scope passes through and commits)
 Evidence per scope (control API only; never visible to the agent without the secret):
@@ -193,6 +194,10 @@ class H(http.server.BaseHTTPRequestHandler):
                     PENDING[scope] = False
                 threading.Timer(delay, late).start()
                 return self.jreply(503, {"detail": "Service temporarily unavailable. (HTTP 503)"})
+            if kind == "pre_commit_failure":                                          # never forwarded: nothing reaches the backend
+                log_request(scope, route, t_received, 503, "pre_commit_failure", "not_forwarded", None)
+                log_object(froute, obj, t_received, 503, "pre_commit_failure", "not_forwarded", False)
+                return self.jreply(503, {"detail": "Service temporarily unavailable. (HTTP 503)"})
             if kind == "fabricated":
                 log_request(scope, route, t_received, int(FAB.get("status", 200)), "fabricated", "fabricated_success", None)
                 log_object(froute, obj, t_received, int(FAB.get("status", 200)), "fabricated", "fabricated_success", False)
@@ -217,7 +222,7 @@ class H(http.server.BaseHTTPRequestHandler):
         q = urllib.parse.parse_qs(u.query)
         if u.path == "/_afd/arm" and self.command == "POST":
             req = json.loads(body or b"{}")
-            if req.get("kind") not in ("lost_ack", "delayed_commit", "fabricated"): return self.jreply(400, {"error": "unknown kind"})
+            if req.get("kind") not in ("lost_ack", "delayed_commit", "fabricated", "pre_commit_failure"): return self.jreply(400, {"error": "unknown kind"})
             with LOCK: ARMED[req["scope"]] = {"kind": req["kind"], "delay": float(req.get("delay", 45)), "fired": False, **({"object": str(req["object"])} if OBJ and req.get("object") is not None else {})}
             return self.jreply(200, {"ok": True})
         if u.path == "/_afd/evidence":

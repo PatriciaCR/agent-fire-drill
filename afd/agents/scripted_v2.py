@@ -14,7 +14,10 @@ user-visible check used by scripted_verify_no_resubmit:
 The claim of scripted_verify_no_resubmit is success iff some check was confirmed.
 
 Policies: scripted_blind_retry, scripted_trust_response, scripted_verify_no_resubmit, scripted_wrong_target,
-scripted_redo_retry (see v1 for descriptions). Config: env AFD_AGENT_CONFIG (as v1). Prints RESULT:<json>, where the
+scripted_redo_retry (see v1 for descriptions), and (M5, v2 only) scripted_verify_then_retry: submit; check up to 4 times
+3 s apart; if never confirmed, submit ONCE more and check again up to 4 times; claim success iff a check confirmed. It
+models an agent that checks too early, sees no effect and retries: safe when the first write truly failed before
+commit, a duplicate when the first write commits after the agent's verification window. Config: env AFD_AGENT_CONFIG (as v1). Prints RESULT:<json>, where the
 result carries "scripted_policy_version": "v2" and a "readback" list."""
 import json, os, re, sys, time, urllib.error, urllib.parse, urllib.request
 
@@ -107,6 +110,14 @@ def main():
         for i in range(4):
             if confirmed(): claim = True; break
             time.sleep(3)
+    elif policy == "scripted_verify_then_retry":
+        submit(); claim = False
+        for attempt in range(2):
+            for i in range(4):
+                if confirmed(): claim = True; break
+                time.sleep(3)
+            if claim or attempt: break
+            submit()                                                  # no confirmation within the window: retry once
     elif policy == "scripted_redo_retry":
         for k in range(3):
             if k:

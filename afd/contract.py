@@ -39,6 +39,13 @@ v1.2 (afd-workflow-contract/1.2, protocol contract-v2) = v1.1 plus application-c
                  that re-establish the action's preconditions; sent THROUGH the proxy inside the sandbox (PC-B, G8)
   objects.effect_id {from: json, pointer} | {from: header, name}; objects.error_code {pointer}: one allow-listed
                  response field each, for causal attribution and protection classes
+v1.3 (afd-workflow-contract/1.3, protocol contract-v3) = v1.2 plus optional fault hooks (M5):
+  fault_hooks    {"late_backend_commit": {"steps": [<= 5 HTTP steps {service, port?, method POST|PUT|PATCH, path "/...",
+                 json|form?, headers?, expect}], "max_delay_s": N}}: how the HARNESS makes this application commit an
+                 accepted write later (template variable {delay_s}). Executed directly against a declared service on
+                 the sealed app network, never through the proxy; part of the approved contract bytes. Without it the
+                 late_backend_commit conditions are NOT APPLICABLE for the app.
+  oracles and setup HTTP steps may name a non-public `port` of a declared service (e.g. a fixture's internal port)
 Safety rules (all versions): containerised apps inside the AFD sandbox only (no remote URLs), synthetic data, an
 authorisation attestation, repo-confined mounts."""
 import copy, json, re, urllib.error, urllib.request
@@ -84,11 +91,13 @@ def load(path):
     c = json.loads(Path(path).read_text())
     _check_authorization(c)
     if c.get("contract") == "afd-workflow-contract/0": c = _normalise_v0(c)
-    elif c.get("contract") not in ("afd-workflow-contract/1", "afd-workflow-contract/1.1", "afd-workflow-contract/1.2"): raise ContractError("unsupported contract version")
-    if c.get("contract") in ("afd-workflow-contract/1.1", "afd-workflow-contract/1.2"): _check_objects(c)
+    elif c.get("contract") not in ("afd-workflow-contract/1", "afd-workflow-contract/1.1", "afd-workflow-contract/1.2", "afd-workflow-contract/1.3"): raise ContractError("unsupported contract version")
+    if c.get("contract") in ("afd-workflow-contract/1.1", "afd-workflow-contract/1.2", "afd-workflow-contract/1.3"): _check_objects(c)
     elif "objects" in c: raise ContractError("an 'objects' section requires afd-workflow-contract/1.1 or later")
-    if c.get("contract") == "afd-workflow-contract/1.2": _check_v12(c)
-    elif any(k in c for k in ("guarantees", "fresh_attempt")): raise ContractError("'guarantees' / 'fresh_attempt' require afd-workflow-contract/1.2")
+    if c.get("contract") in ("afd-workflow-contract/1.2", "afd-workflow-contract/1.3"): _check_v12(c)
+    elif any(k in c for k in ("guarantees", "fresh_attempt")): raise ContractError("'guarantees' / 'fresh_attempt' require afd-workflow-contract/1.2 or later")
+    if c.get("contract") == "afd-workflow-contract/1.3": _check_v13(c)
+    elif "fault_hooks" in c: raise ContractError("'fault_hooks' require afd-workflow-contract/1.3")
     for k in ("name", "services", "setup_per_run", "scope", "action", "user_check", "oracle", "intent", "fabricated"):
         if k not in c: raise ContractError(f"missing field: {k}")
     pub = [s for s in c["services"] if s.get("public")]
@@ -164,6 +173,22 @@ def _check_v12(c):
         if k in o:
             f = o[k]
             if not (isinstance(f, dict) and ((f.get("from", "json") == "json" and isinstance(f.get("pointer"), str)) or (f.get("from") == "header" and f.get("name")))): raise ContractError(f"objects.{k} must be {{from: json, pointer}} or {{from: header, name}}")
+
+def _check_v13(c):
+    fh = c.get("fault_hooks") or {}
+    if set(fh) - {"late_backend_commit"}: raise ContractError(f"unknown fault hooks: {sorted(set(fh) - {'late_backend_commit'})}")
+    names = {s["name"] for s in c["services"]}
+    for name, h in fh.items():
+        st = h.get("steps")
+        if not (isinstance(st, list) and 1 <= len(st) <= 5): raise ContractError(f"fault_hooks.{name}.steps must be 1-5 HTTP steps")
+        if not (isinstance(h.get("max_delay_s"), (int, float)) and 0 < h["max_delay_s"] <= 600): raise ContractError(f"fault_hooks.{name}.max_delay_s must be in (0, 600]")
+        for x in st:
+            if set(x) - {"service", "port", "method", "path", "json", "form", "headers", "expect"}: raise ContractError("fault hook steps are HTTP steps only (no exec, no set)")
+            if x.get("service") not in names: raise ContractError("fault hook steps must target a declared service")
+            if str(x.get("method", "")).upper() not in ("POST", "PUT", "PATCH"): raise ContractError("fault hook method must be POST, PUT or PATCH")
+            if not str(x.get("path", "")).startswith("/") or "://" in str(x.get("path")): raise ContractError("fault hook path must be relative")
+            if not (isinstance(x.get("expect"), list) and x["expect"]): raise ContractError("fault hook steps must declare expected statuses")
+            if x.get("port") is not None and not (isinstance(x["port"], int) and 0 < x["port"] < 65536): raise ContractError("fault hook port must be a port number")
 
 def snapshot_from(o, doc=None, stdout=None):
     """Parse a per-object oracle reading into {object id: number}."""
@@ -255,7 +280,8 @@ def protocol_for(contract, base_protocol_path=None):
     contracts; contract-v1 (per-object accounting) for v1.1 contracts."""
     if base_protocol_path is None:
         v = contract.get("contract")
-        base_protocol_path = ROOT / "protocols" / ("contract-v2.json" if v == "afd-workflow-contract/1.2" else "contract-v1.json" if "objects" in contract else "contract-v0.json")
+        base_protocol_path = ROOT / "protocols" / ("contract-v3.json" if v == "afd-workflow-contract/1.3" else "contract-v2.json" if v == "afd-workflow-contract/1.2"
+                                                   else "contract-v1.json" if "objects" in contract else "contract-v0.json")
     p = copy.deepcopy(json.loads(Path(base_protocol_path).read_text()))
     p["workflow"] = {"environment": contract["name"], "task": contract["action"]["name"], "authorised_intent": f"exactly {contract['intent']['exactly']} effect(s)"}
     return p

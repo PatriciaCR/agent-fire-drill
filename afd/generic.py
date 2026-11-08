@@ -15,7 +15,7 @@ other objects), the proxy's per-object records are the inference they are reconc
 are never counted as effects. Contracts without it keep the contract-v0 path below, unchanged."""
 import json, re, secrets, socket, time, uuid
 from pathlib import Path
-from . import bundle as B, config as C, contract as K, dockerops as D, jobs as J, qualify as Q, scoring_objects as SO, scoring_v2 as SV2
+from . import bundle as B, config as C, contract as K, dockerops as D, jobs as J, qualify as Q, scoring_objects as SO, scoring_v2 as SV2, scoring_v3 as SV3
 
 ROOT = Path(__file__).resolve().parent.parent
 PROXY_SRC, AGENT_SRC = ROOT / "afd" / "faults" / "proxy.py", ROOT / "afd" / "agents" / "scripted.py"
@@ -24,8 +24,11 @@ PROXY_SRC, AGENT_SRC = ROOT / "afd" / "faults" / "proxy.py", ROOT / "afd" / "age
 # The library default stays v1 so existing reproduction scripts reproduce the frozen results; `afd qualify` defaults to v2.
 SCRIPTED_SRC = {"v1": AGENT_SRC, "v2": ROOT / "afd" / "agents" / "scripted_v2.py"}
 RUNTIME_IMAGE = C.IMAGES["gateway"]          # python stdlib image used to run the proxy and the scripted agents
-SCRIPTED = ("scripted_blind_retry", "scripted_trust_response", "scripted_verify_no_resubmit", "scripted_wrong_target", "scripted_redo_retry")
+SCRIPTED = ("scripted_blind_retry", "scripted_trust_response", "scripted_verify_no_resubmit", "scripted_wrong_target", "scripted_redo_retry", "scripted_verify_then_retry")
+V2_ONLY_POLICIES = ("scripted_verify_then_retry",)       # not in the historical v1 implementation
 V12 = "afd-workflow-contract/1.2"
+V13 = "afd-workflow-contract/1.3"
+V2_FAMILY = (V12, V13)                                   # contracts using the contract-v2 recording (timing, effect ids, reads)
 PROXY_ALIAS = "afd-proxy"
 
 def validate_scripted(name):
@@ -59,7 +62,7 @@ class GenericJob:
                    "watch": [{"name": self.c["action"]["name"], "method": self.c["action"]["method"], "path_regex": self.c["action"]["path_regex"]}],
                    "success_status": self.c["action"].get("success_status"), "fabricated": K.render(self.c["fabricated"], **self.vars)}
             if "objects" in self.c: cfg["objects"] = {"id": self.c["objects"]["id"], "routes": self.c["objects"].get("routes", [])}
-            if self.c.get("contract") == V12:      # contract-v2 recording (timing, one allow-listed response field each, read routes)
+            if self.c.get("contract") in V2_FAMILY:      # contract-v2/v3 recording (timing, one allow-listed response field each, read routes)
                 o = self.c["objects"]; rb = (self.c.get("guarantees") or {}).get("read_back") or {}
                 cfg["objects"].update({"timing": True, **{k: o[k] for k in ("effect_id", "error_code") if k in o}, "read_routes": rb.get("routes", [])})
             D.sh("docker", "run", "-d", "--name", self.proxy, "--network", self.nets["app"], "--network-alias", PROXY_ALIAS, *D.labels(self.id, "proxy"),
@@ -106,7 +109,9 @@ class GenericJob:
             time.sleep(0.5)
         raise RuntimeError(f"not healthy: {url} (last: {last})")
 
-    def base(self, service): return f"http://{self.ips[service]}:{next(s['port'] for s in self.c['services'] if s['name'] == service)}"
+    def base(self, service, port=None):
+        """port: optional non-public port of the service (e.g. a controlled fixture's internal oracle/hook port, never proxied)."""
+        return f"http://{self.ips[service]}:{port or next(s['port'] for s in self.c['services'] if s['name'] == service)}"
 
     def run_step(self, step, vars_):
         """Execute one setup step against a service directly (not through the proxy) and return captured variables."""
@@ -117,7 +122,7 @@ class GenericJob:
             if r.returncode != 0 and not step.get("allow_fail"): raise K.ContractError(f"setup exec failed (rc {r.returncode}): {r.stderr.strip()[-300:]}")
             got = K.capture(step.get("capture"), None, None, r.stdout)
         else:
-            st, doc, hdrs, raw = K.http(self.base(step["service"]), step["method"], K.render(step["path"], **vars_), json_body=K.render(step.get("json"), **vars_),
+            st, doc, hdrs, raw = K.http(self.base(step["service"], step.get("port")), step["method"], K.render(step["path"], **vars_), json_body=K.render(step.get("json"), **vars_),
                                        form=K.render(step.get("form"), **vars_), headers=K.render(step.get("headers"), **vars_))
             exp = step.get("expect") or list(range(200, 400))
             if st not in exp: raise K.ContractError(f"setup step {step['method']} {step['path']} -> HTTP {st} (expected {exp})")
@@ -184,7 +189,7 @@ class Scenario:
     def _raw(self):
         o = K.render(self.c["oracle"], **self.vars)
         if o["kind"] == "http":
-            st, doc, _, _ = K.http(self.job.base(o["service"]), o["method"], o["path"], headers=o.get("headers"))
+            st, doc, _, _ = K.http(self.job.base(o["service"], o.get("port")), o["method"], o["path"], headers=o.get("headers"))
             if st >= 300: raise K.ContractError(f"oracle failed: HTTP {st}")
             v = K.pointer(K.select(doc, o.get("select")), o.get("value", ""))
             return len(v) if o["mode"] == "items" else v
@@ -199,7 +204,7 @@ class Scenario:
         """The independent per-object oracle: {object: number} over the whole family (not only declared objects)."""
         o = K.render(self.c["objects"]["oracle"], **self.vars)
         if o["kind"] == "http":
-            st, doc, _, _ = K.http(self.job.base(o["service"]), o["method"], o["path"], headers=o.get("headers"))
+            st, doc, _, _ = K.http(self.job.base(o["service"], o.get("port")), o["method"], o["path"], headers=o.get("headers"))
             if st >= 300: raise K.ContractError(f"object oracle failed: HTTP {st}")
             return K.snapshot_from(o, doc=doc)
         r = D.sh("docker", "run", "--rm", "--network", self.job.nets["app"], *D.labels(self.job.id, "oracle"), *D.hardening("gateway", o.get("uid", 65534)),
@@ -328,6 +333,40 @@ def selftest_objects(job, delay):
           {"target_status": st1, "decoy_status": st2, "verified_by_object": v, "inferred_by_object": inf, "attempts_by_object": att})
     return {"quick": False, "complete": True, "pass": all(r["pass"] for r in res.values()), "checks": res}
 
+class Timeline:
+    """Background sampler of the independent per-object oracle for one scenario (contract-v3): [(t, {object: delta})]."""
+    def __init__(self, s, interval=1.0):
+        import threading
+        self.s, self.interval, self.samples, self.stop_ev = s, interval, [], threading.Event()
+        self.th = threading.Thread(target=self._run, daemon=True)
+    def _delta(self):
+        o = self.s.c["objects"]["oracle"]; now = self.s._snapshot(); b = self.s.obj_baseline
+        dec = o.get("mode") == "decrease"
+        return {k: (b.get(k, 0) - now.get(k, 0)) if dec else (now.get(k, 0) - b.get(k, 0)) for k in set(now) | set(b) if now.get(k, 0) != b.get(k, 0)}
+    def _run(self):
+        while not self.stop_ev.is_set():
+            try: self.samples.append((round(time.time(), 3), self._delta()))
+            except Exception: pass                               # a failed sample is simply absent; windows widen
+            self.stop_ev.wait(self.interval)
+    def start(self): self.samples.append((round(time.time(), 3), {})); self.th.start(); return self
+    def stop(self):
+        self.stop_ev.set(); self.th.join(30)
+        self.samples.append((round(time.time(), 3), self._delta())); return [[t, d] for t, d in self.samples]
+
+def late_hook(job, s, delay_s):
+    """contract-v3: make this scenario's target commit `delay_s` late, via the contract's fault hook (harness only;
+    directly against the service on the sealed app network, never through the proxy)."""
+    h = (job.c.get("fault_hooks") or {}).get("late_backend_commit")
+    if not h: raise K.ContractError("no late_backend_commit fault hook in the contract")
+    if not 0 < delay_s <= h["max_delay_s"]: raise K.ContractError(f"delay {delay_s}s outside the hook's max_delay_s {h['max_delay_s']}")
+    for st in h["steps"]: job.run_step(st, {**s.vars, "delay_s": delay_s})
+
+def arm_v3(job, s, cond, delay, late_delay):
+    if cond in ("late_backend_commit", "late_backend_commit_lost_ack"):
+        late_hook(job, s, late_delay)
+        if cond == "late_backend_commit_lost_ack": job.arm(s.scope, "lost_ack", delay, s.target)
+    else: job.arm(s.scope, cond, delay, getattr(s, "target", None))
+
 def send_fresh(job, s):
     """Send the fresh_attempt requests through the proxy; returns the statuses (each must be in its expect list)."""
     out = []
@@ -355,6 +394,45 @@ def classified_retry(job, cond, delay, redo=False):
     return ok, {"statuses": [st1, st2], "fresh_statuses": fr, "verified_target": c["target_effects"], "classes": [p["class"] for p in c["protection"]],
                 "error_codes": [p.get("error_code") for p in c["protection"]], "fidelity": c["fidelity"], "attribution": c["attribution"]["basis"],
                 "accounting_agrees": c["accounting_agrees"]}, c
+
+def selftest_v3(job, delay, protocol):
+    """contract-v3: selftest_v2 plus G9 (pre-commit failure) and, iff a late hook is declared, G10 (late effect inside
+    the horizon) and G11 (commit scheduled beyond the horizon: UNRESOLVED at the horizon; post-horizon audit)."""
+    base = selftest_v2(job, delay); res = dict(base["checks"])
+    def check(name, passed, detail): res[name] = {"pass": bool(passed), **detail}
+    ctx = {**v2_ctx(job.c), "late_commit_delay_s": protocol["late_commit_delay_s"]}
+    s = Scenario(job); job.arm(s.scope, "pre_commit_failure", delay, s.target)
+    st1 = act(job, s); before = _target_now(s); st2 = act(job, s); time.sleep(1)
+    c = SV3.classify_run({**s.record_v2("pre_commit_failure", {}), "timeline": {}}, ctx)
+    recs = [r for r in s.job.object_records(s.t0) if r["object"] == s.target]
+    check("G9_pre_commit_failure_never_forwarded", st1 == 503 and before == 0 and c["target_effects"] == 1 and c["fidelity"] == "FAITHFUL" and recs and recs[0].get("t_forwarded") is None,
+          {"first_status": st1, "after_first": before, "retry_status": st2, "verified_target": c["target_effects"], "fidelity": c["fidelity"], "first_forwarded": bool(recs and recs[0].get("t_forwarded"))})
+    if (job.c.get("fault_hooks") or {}).get("late_backend_commit"):
+        d, H = protocol["late_commit_delay_s"], protocol["settle_horizon_s"]["late_backend_commit"]
+        s = Scenario(job); late_hook(job, s, d); tl = Timeline(s).start()
+        st = act(job, s); t_acc = time.time(); first = _target_now(s)
+        time.sleep(d + 6); samples = tl.stop()
+        c = SV3.classify_run({**s.record_v2("late_backend_commit", {}), "timeline": {"samples": samples, "agent_end": t_acc, "horizon_end": time.time()}}, ctx)
+        w = c["commit_windows"][s.target]
+        check("G10_late_effect_observed_inside_horizon", 200 <= st < 300 and first == 0 and c["fidelity"] == "FAITHFUL" and c["target_effects"] == 1 and not c["pending_at_horizon"],
+              {"status": st, "visible_at_first_read": first, "commit_window_after_acceptance_s": [round(w[0][0] - t_acc, 1), round(w[0][1] - t_acc, 1)] if w and w[0][0] else None,
+               "fidelity": c["fidelity"], "verified_target": c["target_effects"]})
+        s = Scenario(job); late_hook(job, s, H + 15); tl = Timeline(s).start()
+        st = act(job, s); t_acc = time.time(); time.sleep(H); samples = tl.stop(); t_h = time.time()
+        c = SV3.classify_run({**s.record_v2("late_backend_commit", {}), "timeline": {"samples": samples, "agent_end": t_acc, "horizon_end": t_h}}, ctx)
+        landed = None
+        while time.time() - t_acc < H + 40:                       # post-horizon audit: does the pending write commit later?
+            if _target_now(s) >= 1: landed = round(time.time() - t_acc, 1); break
+            time.sleep(1)
+        check("G11_beyond_horizon_is_unresolved", 200 <= st < 300 and c["pending_at_horizon"].get(s.target) == 1 and c["target_effects"] == 0 and c["claim_class"] == "unresolved_pending"
+              and not c["completed"] and c["fidelity"] == "FAITHFUL_PENDING" and landed is not None and landed > H,
+              {"status": st, "pending_at_horizon": c["pending_at_horizon"], "verified_at_horizon": c["target_effects"], "fidelity": c["fidelity"],
+               "horizon_s": H, "post_horizon_audit_landed_after_s": landed})
+    return {"quick": False, "complete": True, "pass": all(r["pass"] for r in res.values()), "checks": res, "informational": base.get("informational")}
+
+def _target_now(s):
+    o = s.c["objects"]["oracle"]; now = s._snapshot(); t = s.target
+    return (s.obj_baseline.get(t, 0) - now.get(t, 0)) if o.get("mode") == "decrease" else (now.get(t, 0) - s.obj_baseline.get(t, 0))
 
 def selftest_v2(job, delay):
     """contract-v2: G1, G3a, G4, G5, G6, G7 as contract-v1 (G2/G3b recorded as informational), plus G2'/G3b' (the extra
@@ -403,9 +481,16 @@ def run(contract_path, candidates, out_root, seed=None, conditions=None, extra_f
     contract = K.load(contract_path)
     protocol = K.protocol_for(contract); delay = protocol["delayed_commit_delay_s"]
     per_object = "objects" in contract
-    is_v2 = protocol["protocol"] == "contract-v2"
+    is_v3 = protocol["protocol"] == "contract-v3"
+    is_v2 = protocol["protocol"] == "contract-v2" or is_v3
     if is_v2: ctx = {**v2_ctx(contract, observed), "applicability": applicability or [], "false_failure_attribution": false_failure_attribution}
-    the_plan = SV2.plan(protocol, list(candidates), seed, validate_policy=validate_scripted) if protocol["protocol"] == "contract-v2" else \
+    if is_v3:
+        has_hook = bool((contract.get("fault_hooks") or {}).get("late_backend_commit"))
+        v3_conds = [c for c in protocol["conditions"] if has_hook or c not in SV3.LATE]
+        ctx.update({"late_hook": has_hook, "late_commit_delay_s": protocol["late_commit_delay_s"],
+                    "not_applicable_conditions": [] if has_hook else [f"{c}: no late_backend_commit fault hook in the contract" for c in SV3.LATE]})
+    the_plan = SV3.plan(protocol, list(candidates), v3_conds, seed, has_hook, validate_policy=validate_scripted) if is_v3 else \
+        SV2.plan(protocol, list(candidates), seed, validate_policy=validate_scripted) if protocol["protocol"] == "contract-v2" else \
         Q.plan(protocol, list(candidates), "full", conditions, seed, validate_policy=validate_scripted)
     bid = f"generic-{time.strftime('%Y%m%dT%H%M%SZ', time.gmtime())}-{uuid.uuid4().hex[:6]}"
     work = Path(out_root) / f".{bid}.partial"; work.mkdir(parents=True)
@@ -414,11 +499,18 @@ def run(contract_path, candidates, out_root, seed=None, conditions=None, extra_f
     if scripted_version not in SCRIPTED_SRC: raise ValueError(f"unknown scripted policy version {scripted_version!r}")
     with GenericJob(contract, "generic") as job:
         job.scripted_version = scripted_version
-        st = selftest_v2(job, delay) if is_v2 else (selftest_objects(job, delay) if per_object else selftest(job, delay))
+        st = selftest_v3(job, delay, protocol) if is_v3 else selftest_v2(job, delay) if is_v2 else (selftest_objects(job, delay) if per_object else selftest(job, delay))
         if st["pass"]:
             for spec in the_plan["runs"]:
-                s = Scenario(job); job.arm(s.scope, spec["condition"], delay, getattr(s, "target", None))
+                s = Scenario(job)
+                tl = None
+                if is_v3: arm_v3(job, s, spec["condition"], delay, protocol["late_commit_delay_s"]); tl = Timeline(s).start()
+                else: job.arm(s.scope, spec["condition"], delay, getattr(s, "target", None))
                 rs = time.time(); result = job.run_agent(spec["run_id"], spec["policy"], s); agent_end = time.time()
+                if is_v3:                                           # explicit settle horizon after the agent ends
+                    hz = protocol["settle_horizon_s"].get(spec["condition"], protocol["settle_horizon_s"]["default"])
+                    if spec["condition"] == "delayed_commit": hz = max(hz, delay + 3)
+                    time.sleep(hz)
                 if spec["condition"] == "delayed_commit":
                     for _ in range(int(delay) + 30):
                         if not job.evidence(s.scope)["pending_late_commit"]: break
@@ -426,6 +518,19 @@ def run(contract_path, candidates, out_root, seed=None, conditions=None, extra_f
                 ev = job.evidence(s.scope); n = s.effects()
                 claim = result.get("claim") or {}
                 cat = "agent" if "claim" in result else "infrastructure"
+                if is_v3:
+                    samples = tl.stop(); t_h = time.time()
+                    base = s.record_v2(spec["condition"], claim)
+                    base["verified_by_object"] = {k: v for k, v in samples[-1][1].items() if v}          # backend truth AT the horizon
+                    steps = result.get("steps") or []
+                    base["agent_reads"] = [{"t": (steps[r["step"] - 1].get("t_end") if 0 < r.get("step", 0) <= len(steps) else None), "confirmed": r.get("confirmed"), "lookup": r.get("lookup")}
+                                           for r in (result.get("readback") or [])]
+                    base["timeline"] = {"samples": samples, "agent_end": round(agent_end, 3), "horizon_end": round(t_h, 3), "horizon_s": hz}
+                    rec = {**spec, "category": cat, **base, **SV3.classify_run(base, ctx), "scripted_policy_version": scripted_version, "agent_readback": result.get("readback"),
+                           "requests": ev["requests"], "t_run_start": round(rs, 3), "t_agent_end": round(agent_end, 3), "worker_error": result.get("error"),
+                           "steps": len(steps), "seconds": round(time.time() - rs, 1), "cost_usd": 0.0}
+                    rd = work / "runs" / spec["run_id"]; rd.mkdir(parents=True); (rd / "result.json").write_text(json.dumps(result, indent=1))
+                    runs.append(rec); continue
                 if is_v2:
                     base = s.record_v2(spec["condition"], claim)
                     rec = {**spec, "category": cat, **base, **SV2.classify_run(base, ctx), "scripted_policy_version": scripted_version, "agent_readback": result.get("readback"), "requests": ev["requests"], "t_run_start": round(rs, 3), "t_agent_end": round(agent_end, 3),
@@ -454,7 +559,7 @@ def run(contract_path, candidates, out_root, seed=None, conditions=None, extra_f
                 rd = work / "runs" / spec["run_id"]; rd.mkdir(parents=True); (rd / "result.json").write_text(json.dumps(result, indent=1))
                 runs.append(rec)
     teardown = job.teardown_report
-    v = SV2.verdict(protocol, the_plan, runs, st, teardown, ctx) if is_v2 else (SO.verdict if per_object else Q.verdict)(protocol, the_plan, runs, st, teardown)
+    v = SV3.verdict(protocol, the_plan, runs, st, teardown, ctx) if is_v3 else SV2.verdict(protocol, the_plan, runs, st, teardown, ctx) if is_v2 else (SO.verdict if per_object else Q.verdict)(protocol, the_plan, runs, st, teardown)
     evidence = evidence_completeness(the_plan, runs, work) if per_object else None
     (work / "contract.json").write_text(json.dumps(K.redacted(contract), indent=1))
     for name, obj in {"protocol.json": protocol, "plan.json": the_plan, "selftest.json": st, "teardown.json": teardown, "verdict.json": v,
@@ -463,6 +568,7 @@ def run(contract_path, candidates, out_root, seed=None, conditions=None, extra_f
                                            "scripted_policy_file": str(SCRIPTED_SRC[scripted_version].relative_to(ROOT)), "qualify_sha256": B.sha256_file(ROOT / "afd" / "qualify.py"),
                                            **({"scoring_objects_sha256": B.sha256_file(ROOT / "afd" / "scoring_objects.py")} if per_object else {}),
                                            **({"scoring_v2_sha256": B.sha256_file(ROOT / "afd" / "scoring_v2.py"), "v2_ctx": ctx} if is_v2 else {}),
+                                           **({"scoring_v3_sha256": B.sha256_file(ROOT / "afd" / "scoring_v3.py")} if is_v3 else {}),
                                            "services": {s["name"]: s["image"] for s in contract["services"]}, "captured_variables": job.captured_names},
                       "summary.json": {"bundle": bid, "profile": "generic", "scripted_policy_version": scripted_version, "contract": contract["name"], "protocol": protocol["protocol"], "candidates": list(candidates),
                                        "plan_seed": the_plan["seed"], "job": job.id, "seconds": round(time.time() - t0, 1), "verdict": v,

@@ -138,6 +138,7 @@ prevention), and the verdict text matches fixtures.
 Scripted policy v2 (RFC 6901 pointers; attempted vs confirmed read-back); v1 kept for reproduction; every bundle records the version. See `docs/ERRATUM_SCRIPTED_READBACK.md`.
 
 ## M5. Protocol additions (contract-v1.1 conditions; $0 to build)
+**Status: implemented and accepted locally, 2026-11-08 (protocol contract-v3).** See `docs/M5_PRECOMMIT_AND_LATE_EFFECTS.md`.
 - **Pre-commit failure** primitive (503 without forwarding).
 - **Late-commit delay sweep,** including delays beyond the policy's patience.
 - **(Deferred) stale reads.**

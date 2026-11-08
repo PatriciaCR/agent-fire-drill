@@ -20,7 +20,8 @@ def cli(*args, timeout=5400):
     return {"rc": r.returncode, "seconds": round(time.time() - t0, 1), "out": j, "stderr_tail": r.stderr.strip()[-900:]}
 
 def main():
-    only = sys.argv[1:]; res_f = OUT / "acceptance.json"
+    import os
+    only = sys.argv[1:]; res_f = Path(os.environ["AFD_ACCEPT_OUT"]) if os.environ.get("AFD_ACCEPT_OUT") else OUT / "acceptance.json"   # override: re-runs never overwrite the M4 record
     res = json.loads(res_f.read_text()) if res_f.exists() else {"apps": {}}
     for name, contract, ui in CASES:
         if only and name not in only: continue
@@ -29,7 +30,9 @@ def main():
         r["approve_without_destructive_flag"] = cli("contract", "approve", contract, "--approver", "M4 acceptance - local operator", "--ui", ui)
         r["approve"] = cli("contract", "approve", contract, "--approver", "M4 acceptance - local operator", "--ui", ui, "--accept-destructive-controls")
         r["probe"] = cli("contract", "probe", contract, "--ui", ui)
-        r["qualify"] = cli("qualify", "--contract", contract, "--ui", ui, "--seed", "20261107")
+        import os
+        sv = ["--scripted-version", os.environ["AFD_SCRIPTED_VERSION"]] if os.environ.get("AFD_SCRIPTED_VERSION") else []      # regression re-runs: reproduce v1-era records
+        r["qualify"] = cli("qualify", "--contract", contract, "--ui", ui, "--seed", "20261107", *sv)
         b = (r["qualify"].get("out") or {}).get("bundle")
         if b:
             r["verify_bundle"] = cli("contract", "verify-bundle", b)

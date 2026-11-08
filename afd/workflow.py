@@ -15,7 +15,7 @@ locally: this workflow never pulls (a missing image is refused, not fetched). LL
 No application-specific identifiers (tests/test_contract.py)."""
 import hashlib, json, re, time
 from pathlib import Path
-from . import bundle as B, config as C, contract as K, dockerops as D, generic as GEN, scoring_objects as SO, scoring_v2 as SV2
+from . import bundle as B, config as C, contract as K, dockerops as D, generic as GEN, scoring_objects as SO, scoring_v2 as SV2, scoring_v3 as SV3
 
 ROOT = Path(__file__).resolve().parent.parent
 STATE = C.VAR / "workflow"
@@ -33,6 +33,8 @@ DESTRUCTIVE_V2 = ["PC-A scripted_blind_retry: identical resubmissions after lost
                   "PC-B scripted_redo_retry: re-establishes preconditions (fresh_attempt) and acts again; is EXPECTED to commit DUPLICATE effects",
                   "self-test G8 and probe observations: deliberate extra effects on synthetic objects",
                   "only against the contract's own containerised services inside the AFD sandbox (remote URLs are refused by check)"]
+DESTRUCTIVE_V3 = DESTRUCTIVE_V2[:3] + ["PC-C scripted_blind_retry under late_backend_commit_lost_ack: a retry of a write that commits late; is EXPECTED to commit DUPLICATE effects",
+                                      "self-test G9-G11: a pre-commit failure plus retry, and accepted writes whose commit the fault hook delays (beyond the settle horizon for G11)"] + DESTRUCTIVE_V2[3:]
 
 def sha_file(p): return hashlib.sha256(Path(p).read_bytes()).hexdigest()
 def sha_obj(o): return hashlib.sha256(json.dumps(o, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
@@ -67,8 +69,8 @@ def check(path, ui_path=None):
     except (OSError, ValueError) as e: return {"pass": False, "problems": [f"unreadable contract: {e}"], "warnings": [], "images": []}
     try: c = K.load(path)
     except (K.ContractError, KeyError, TypeError, re.error) as e: return {"pass": False, "problems": [f"contract invalid: {e}"], "warnings": [], "images": [], "contract_sha256": sha_file(path)}
-    if c.get("contract") not in ("afd-workflow-contract/1.1", "afd-workflow-contract/1.2"):
-        probs.append("contract must be afd-workflow-contract/1.1 or 1.2 (per-object accounting: objects.target, decoys, family oracle)")
+    if c.get("contract") not in ("afd-workflow-contract/1.1", "afd-workflow-contract/1.2", "afd-workflow-contract/1.3"):
+        probs.append("contract must be afd-workflow-contract/1.1, 1.2 or 1.3 (per-object accounting: objects.target, decoys, family oracle)")
     names = {s["name"] for s in c["services"]}
     for s in c["services"]:
         extra = set(s) - SERVICE_KEYS
@@ -111,7 +113,7 @@ def check(path, ui_path=None):
                 if st and st[0] == "nav" and not str(st[1]).startswith(f"http://{GEN.PROXY_ALIAS}:8080/"): probs.append(f"UI nav must stay on http://{GEN.PROXY_ALIAS}:8080/: {st[1]!r}")
     prot = K.protocol_for(c)["protocol"]
     return {"pass": not probs, "contract": str(path), "contract_name": c.get("name"), "contract_sha256": sha_file(path), "protocol": prot,
-            "destructive_controls": DESTRUCTIVE_V2 if prot == "contract-v2" else [],
+            "destructive_controls": DESTRUCTIVE_V3 if prot == "contract-v3" else DESTRUCTIVE_V2 if prot == "contract-v2" else [],
             "problems": probs, "warnings": warns, "images": images_of(c), "ui": (ui and ("steps" if ui.get("steps") else "none")), "ui_sha256": ui_sha}
 
 # ------------------------------------------------------------------------------------------------------------- approval
@@ -254,9 +256,10 @@ def probe(path, ui_path=None, delay=6):
     ui, ui_sha = load_ui(ui_path) if ui_path else (None, None)
     c = K.load(path); res = {"probe": "afd-contract-probe/1", "contract_sha256": rep["contract_sha256"], "approval_record_sha256": sha_obj(approval), "ui_sha256": ui_sha,
                              "started_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}
-    is_v2 = rep["protocol"] == "contract-v2"
+    is_v3 = rep["protocol"] == "contract-v3"
+    is_v2 = rep["protocol"] == "contract-v2" or is_v3
     with GL.LLMEpisodeJob(c, "probe", with_gateway=False) as job:
-        st = GEN.selftest_v2(job, delay) if is_v2 else GEN.selftest_objects(job, delay); res["selftest"] = st
+        st = GEN.selftest_v3(job, delay, K.protocol_for(c)) if is_v3 else GEN.selftest_v2(job, delay) if is_v2 else GEN.selftest_objects(job, delay); res["selftest"] = st
         if is_v2:
             res["observed"] = observe_v2(job, delay)
             res["declared"] = c.get("guarantees") or {}
@@ -309,6 +312,7 @@ def qualify(path, ui_path=None, candidates=("scripted_trust_response", "scripted
     if agent != "scripted": raise Refused("only --agent scripted is enabled ($0); LLM candidates are not part of M3")
     if scripted_version not in GEN.SCRIPTED_SRC: raise Refused(f"unknown --scripted-version {scripted_version!r} (v1 historical, v2 corrected)")
     for p in candidates: GEN.validate_scripted(p)
+    if scripted_version == "v1" and set(candidates) & set(GEN.V2_ONLY_POLICIES): raise Refused(f"{sorted(set(candidates) & set(GEN.V2_ONLY_POLICIES))} exist only in scripted-policy v2")
     approval, rep = require_approval(path, ui_path); require_local_images(rep["images"])
     pf = PROBES / f"{rep['contract_sha256']}.json"
     if not pf.exists(): raise Refused("no probe for this contract: run `afd contract probe` first")
@@ -320,7 +324,7 @@ def qualify(path, ui_path=None, candidates=("scripted_trust_response", "scripted
              "probe.json": {k: pr.get(k) for k in ("probe", "status", "pass", "contract_sha256", "approval_record_sha256", "ui_sha256", "capabilities", "limitations", "finished_utc")}
                            | {"ui_traffic": {k: (pr.get("ui_traffic") or {}).get(k) for k in ("status", "reason", "action_requests_intercepted", "verified_by_object")},
                               "selftest_checks": {k: v["pass"] for k, v in pr["selftest"]["checks"].items()}}}
-    if rep["protocol"] == "contract-v2":
+    if rep["protocol"] in ("contract-v2", "contract-v3"):
         extra["probe.json"].update({k: pr.get(k) for k in ("observed", "declared", "declared_vs_observed", "applicability", "false_failure_attribution")})
         b, digest = GEN.run(path, list(candidates), RUNS, seed=seed, extra_files=extra, observed=pr.get("observed"), applicability=pr.get("applicability"),
                             false_failure_attribution=pr.get("false_failure_attribution"), scripted_version=scripted_version)
@@ -359,7 +363,7 @@ def _verify_bundle(b):
     try: summ, prot, plan, st, td, v = J("summary.json"), J("protocol.json"), J("plan.json"), J("selftest.json"), J("teardown.json"), J("verdict.json")
     except (OSError, ValueError) as e: return {"ok": False, "problems": [f"missing bundle file: {e}"]}
     runs = [json.loads(l) for l in (b / "runs.jsonl").read_text().splitlines() if l.strip()]
-    if prot.get("protocol") == "contract-v2": return _verify_v2(b, m, summ, prot, plan, st, td, v, runs)
+    if prot.get("protocol") in ("contract-v2", "contract-v3"): return _verify_v2(b, m, summ, prot, plan, st, td, v, runs)
     if prot.get("protocol") != "contract-v1": probs.append("not a contract-v1 bundle")
     intent = int(re.search(r"exactly (\d+)", prot["workflow"]["authorised_intent"]).group(1))
     for r in runs:
@@ -382,6 +386,8 @@ def _verify_bundle(b):
 V2_FIELDS = ("target_effects", "duplicate_target_effects", "other_object_effects", "accounting_agrees", "attribution", "fidelity", "protection",
              "application_protected", "recovery", "claim_class", "completed", "unclassified_writes")
 
+V3_FIELDS = ("pending_at_horizon", "commit_windows", "lifecycle", "early_read", "run_effect_safety", "horizon")
+
 def _verify_v2(b, m, summ, prot, plan, st, td, v, runs):
     """contract-v2: recompute every per-run classification and the verdict from the stored inputs."""
     probs = []
@@ -389,13 +395,21 @@ def _verify_v2(b, m, summ, prot, plan, st, td, v, runs):
     try: env, pr = J("environment.json"), J("probe.json")
     except (OSError, ValueError) as e: return {"ok": False, "problems": [f"missing bundle file: {e}"]}
     ctx = env.get("v2_ctx") or {}
-    want_ctx = {**GEN.v2_ctx(J("contract.json"), pr.get("observed")), "applicability": pr.get("applicability") or [], "false_failure_attribution": pr.get("false_failure_attribution")}
-    if ctx != want_ctx: probs.append("v2 context does not match the bundle's contract and probe record")
+    v3 = prot["protocol"] == "contract-v3"
+    con = J("contract.json")
+    want_ctx = {**GEN.v2_ctx(con, pr.get("observed")), "applicability": pr.get("applicability") or [], "false_failure_attribution": pr.get("false_failure_attribution")}
+    if v3:
+        hook = bool((con.get("fault_hooks") or {}).get("late_backend_commit"))
+        want_ctx.update({"late_hook": hook, "late_commit_delay_s": prot["late_commit_delay_s"],
+                         "not_applicable_conditions": [] if hook else [f"{c}: no late_backend_commit fault hook in the contract" for c in SV3.LATE]})
+    if ctx != want_ctx: probs.append("v2/v3 context does not match the bundle's contract and probe record")
+    S = SV3 if v3 else SV2
+    fields = V2_FIELDS + (V3_FIELDS if v3 else ())
     for r in runs:
-        c = SV2.classify_run(r, ctx)
-        for k in V2_FIELDS:
+        c = S.classify_run(r, ctx)
+        for k in fields:
             if c[k] != r.get(k): probs.append(f"{r['run_id']}: stored {k} differs from the recomputed value")
-    if SV2.verdict(prot, plan, runs, st, td, ctx) != v: probs.append("verdict.json does not match the verdict recomputed from runs.jsonl")
+    if S.verdict(prot, plan, runs, st, td, ctx) != v: probs.append("verdict.json does not match the verdict recomputed from runs.jsonl")
     ev = GEN.evidence_completeness(plan, runs, b)
     if ev != summ.get("evidence_completeness"): probs.append("evidence_completeness does not match the bundle's runs")
     if summ.get("qualification_status", "").startswith("QUALIFICATION RESULT") != (v["harness_validity"]["valid"] and ev["complete"]): probs.append("qualification_status inconsistent with harness validity / evidence")
@@ -405,5 +419,5 @@ def _verify_v2(b, m, summ, prot, plan, st, td, v, runs):
         if sorted(ap["images"]) != sorted(images_of(con)): probs.append("approved images differ from the images in the bundle's contract")
         if not ap.get("destructive_controls_accepted"): probs.append("approval does not record acceptance of the destructive controls")
     except (OSError, ValueError, KeyError) as e: probs.append(f"approval binding missing: {e}")
-    return {"ok": not probs, "digest": m["digest"], "files": m["files"], "problems": probs, "protocol": "contract-v2", "harness_valid": v["harness_validity"]["valid"],
+    return {"ok": not probs, "digest": m["digest"], "files": m["files"], "problems": probs, "protocol": prot["protocol"], "harness_valid": v["harness_validity"]["valid"],
             "evidence_complete": ev["complete"], "qualification_status": summ.get("qualification_status")}
